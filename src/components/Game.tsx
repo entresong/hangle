@@ -4,6 +4,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Image from "next/image";
 import Hangul from "hangul-js";
 import wordsJson from "@/data/words.json";
+import { FeedbackModal } from "@/components/FeedbackModal";
 import { Grid } from "@/components/Grid";
 import { HangulKeyboard } from "@/components/HangulKeyboard";
 import {
@@ -211,6 +212,7 @@ export function Game() {
   const [difficulty, setDifficulty] = useState<Difficulty | null>(null);
   const [pickDifficultyOpen, setPickDifficultyOpen] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
+  const [feedbackOpen, setFeedbackOpen] = useState(false);
   const [modeToast, setModeToast] = useState<string | null>(null);
   const modeToastTimerRef = useRef<number | null>(null);
 
@@ -782,6 +784,17 @@ export function Game() {
           <div className="flex shrink-0 items-center gap-0.5">
             <button
               type="button"
+              aria-label="Send feedback"
+              onClick={() => setFeedbackOpen(true)}
+              className="flex min-h-11 min-w-11 items-center justify-center rounded-md px-1 text-sm font-medium text-stone-700 hover:bg-stone-200/70 hover:text-stone-900 max-[380px]:min-w-10 sm:min-h-[44px] sm:min-w-[4.25rem] sm:gap-1 sm:px-2"
+            >
+              <span className="text-base leading-none" aria-hidden>
+                💬
+              </span>
+              <span className="hidden text-xs sm:inline">Feedback</span>
+            </button>
+            <button
+              type="button"
               aria-label="Settings"
               disabled={!difficulty}
               onClick={() => {
@@ -1249,6 +1262,14 @@ export function Game() {
               </p>
             </div>
 
+            <button
+              type="button"
+              onClick={() => setFeedbackOpen(true)}
+              className="mt-4 w-full rounded-xl border border-stone-400/70 bg-[#f5f0e8] py-2.5 text-sm font-medium text-stone-800 shadow-sm transition hover:bg-[#efe8dc] min-h-[44px]"
+            >
+              💬 Send Feedback
+            </button>
+
             <div className="mt-5 flex flex-col gap-2">
               {clipboardNotice && (
                 <p className="text-center text-xs font-medium text-stone-600" role="status">
@@ -1282,6 +1303,14 @@ export function Game() {
           </div>
         </div>
       )}
+
+      <FeedbackModal
+        open={feedbackOpen}
+        onClose={() => setFeedbackOpen(false)}
+        gameDifficulty={difficulty}
+        sessionMode={sessionMode}
+        gamesPlayed={stats.gamesPlayed}
+      />
 
       {pickDifficultyOpen && (
         <div
