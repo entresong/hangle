@@ -75,30 +75,32 @@ export function Grid({
 
   const tight = dense || compact;
 
-  /** Default = tablet/desktop; max-[480px] = phone; min sizes for touch */
+  /**
+   * Mobile-first: compact 50px 2-syllable grid; 3-col smaller; desktop scales up.
+   */
   const cellSize =
     cols >= 3
       ? tight
         ? [
-            "h-[44px] w-[44px] text-[1.2rem] md:h-[46px] md:w-[46px] md:text-[1.28rem]",
-            "max-[480px]:h-[45px] max-[480px]:w-[45px] max-[480px]:min-h-[44px] max-[480px]:min-w-[44px] max-[480px]:text-[clamp(1.05rem,4.8vw,1.35rem)]",
+            "h-[44px] w-[44px] text-[1.15rem] sm:text-[1.2rem] md:h-[46px] md:w-[46px] md:text-[1.28rem]",
+            "max-[480px]:h-[42px] max-[480px]:w-[42px] max-[480px]:min-h-[42px] max-[480px]:min-w-[42px] max-[480px]:text-[clamp(1rem,4.5vw,1.2rem)]",
           ].join(" ")
         : [
-            "h-[46px] w-[46px] text-[1.25rem] sm:h-[48px] sm:w-[48px] sm:text-[1.35rem] md:h-[54px] md:w-[54px] md:text-[1.48rem]",
-            "max-[480px]:h-[46px] max-[480px]:w-[46px] max-[480px]:min-h-[44px] max-[480px]:min-w-[44px] max-[480px]:text-[clamp(1.1rem,5vw,1.4rem)]",
+            "h-[46px] w-[46px] text-[1.2rem] sm:h-[48px] sm:w-[48px] sm:text-[1.35rem] md:h-[54px] md:w-[54px] md:text-[1.48rem]",
+            "max-[480px]:h-[42px] max-[480px]:w-[42px] max-[480px]:min-h-[42px] max-[480px]:min-w-[42px] max-[480px]:text-[clamp(1.05rem,4.8vw,1.25rem)]",
           ].join(" ")
       : tight
         ? [
-            "h-[46px] w-[46px] text-[1.3rem] sm:h-[48px] sm:w-[48px] md:h-[52px] md:w-[52px]",
-            "max-[480px]:h-[50px] max-[480px]:w-[50px] max-[480px]:min-h-[48px] max-[480px]:min-w-[48px] max-[480px]:text-[clamp(1.25rem,5.5vw,1.65rem)]",
+            "h-[46px] w-[46px] text-[1.25rem] sm:h-[48px] sm:w-[48px] md:h-[52px] md:w-[52px]",
+            "max-[480px]:h-[50px] max-[480px]:w-[50px] max-[480px]:min-h-[50px] max-[480px]:min-w-[50px] max-[480px]:text-[clamp(1.2rem,5.2vw,1.5rem)]",
           ].join(" ")
         : [
-            "h-[48px] w-[48px] text-[1.4rem] sm:h-[52px] sm:w-[52px] sm:text-[1.55rem] md:h-16 md:w-16 md:text-[1.85rem]",
-            "max-[480px]:h-[52px] max-[480px]:w-[52px] max-[480px]:min-h-[48px] max-[480px]:min-w-[48px] max-[480px]:text-[clamp(1.3rem,5.8vw,1.75rem)]",
+            "h-[48px] w-[48px] text-[1.35rem] sm:h-[52px] sm:w-[52px] sm:text-[1.55rem] md:h-16 md:w-16 md:text-[1.85rem]",
+            "max-[480px]:h-[50px] max-[480px]:w-[50px] max-[480px]:min-h-[50px] max-[480px]:min-w-[50px] max-[480px]:text-[clamp(1.2rem,5.2vw,1.55rem)]",
           ].join(" ");
 
-  const rowGap = "gap-y-1 max-[480px]:gap-y-1.5 sm:gap-y-2";
-  const colGap = "gap-1.5 max-[480px]:gap-2 sm:gap-2";
+  const rowGap = "gap-y-1 max-[480px]:gap-y-1 sm:gap-y-2";
+  const colGap = "gap-x-[5px] max-[480px]:gap-x-[5px] sm:gap-2";
 
   return (
     <div className={`flex w-full shrink-0 flex-col items-center ${rowGap}`}>

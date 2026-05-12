@@ -9,7 +9,7 @@ import {
   parseAssembled,
 } from "@/lib/hangulBuffer";
 
-/** 표준 두벌식 3줄 */
+/** 표준 두벌식 3줄 — grid로 한 줄 고정 (모바일 줄바꿈 방지) */
 const ROW1 = ["ㅂ", "ㅈ", "ㄷ", "ㄱ", "ㅅ", "ㅛ", "ㅕ", "ㅑ", "ㅐ", "ㅔ"];
 const ROW2 = ["ㅁ", "ㄴ", "ㅇ", "ㄹ", "ㅎ", "ㅗ", "ㅓ", "ㅏ", "ㅣ"];
 const ROW3 = ["ㅋ", "ㅌ", "ㅊ", "ㅍ", "ㅠ", "ㅜ", "ㅡ"];
@@ -52,8 +52,7 @@ function keyHighlighted(
   highlightJamos: Set<string>,
 ): boolean {
   const shifted = SHIFT_MAP[baseKey];
-  const label =
-    shiftActive && shifted !== undefined ? shifted : baseKey;
+  const label = shiftActive && shifted !== undefined ? shifted : baseKey;
   if (highlightJamos.has(label)) return true;
   if (!shiftActive && shifted !== undefined && highlightJamos.has(shifted)) return true;
   return false;
@@ -64,15 +63,17 @@ type HangulKeyboardProps = {
   onBufferChange: (next: string[]) => void;
   onEnter: () => void;
   disabled?: boolean;
-  /** Blocks Enter briefly after a successful row submit (next row reveal delay). */
   enterPaused?: boolean;
-  /** Smaller keys / gaps for short viewports */
-  compact?: boolean;
   targetSyllables: number;
   highlightAnswer?: string;
-  /** When set, only these jamo keys get the highlight ring (e.g. HARD safety: first jamo). */
   highlightFirstJamo?: string;
 };
+
+const JAMO_ROWS: readonly { keys: readonly string[]; id: string }[] = [
+  { keys: ROW1, id: "r1" },
+  { keys: ROW2, id: "r2" },
+  { keys: ROW3, id: "r3" },
+];
 
 export function HangulKeyboard({
   buffer,
@@ -80,7 +81,6 @@ export function HangulKeyboard({
   onEnter,
   disabled,
   enterPaused = false,
-  compact = false,
   targetSyllables,
   highlightAnswer = "",
   highlightFirstJamo = "",
@@ -102,8 +102,7 @@ export function HangulKeyboard({
   const emitJamo = (baseKey: string, rowId: string, index: number) => {
     if (disabled) return;
     const shifted = SHIFT_MAP[baseKey];
-    const jamo =
-      shiftActive && shifted !== undefined ? shifted : baseKey;
+    const jamo = shiftActive && shifted !== undefined ? shifted : baseKey;
     if (!canAcceptJamo(buffer, jamo, targetSyllables)) return;
     flashPress(`${rowId}-${index}`);
     onBufferChange([...buffer, jamo]);
@@ -128,14 +127,6 @@ export function HangulKeyboard({
   const baseBtn =
     "rounded-md border border-stone-300/90 bg-white font-medium text-stone-900 shadow-sm transition hover:bg-stone-50 disabled:pointer-events-none disabled:opacity-40 active:scale-[0.96]";
 
-  /** ≤480px: 32–36px wide × ≥44px tall tap targets, 16–18px labels */
-  const jamoBtn = compact
-    ? "min-h-[clamp(1.05rem,5vmin,1.55rem)] min-w-[clamp(1.22rem,5.8vmin,1.72rem)] px-0.5 text-[clamp(0.52rem,2.35vmin,0.68rem)] max-[667px]:min-h-[1rem] max-[667px]:min-w-[1.15rem] max-[667px]:text-[0.5rem] sm:min-w-[1.85rem] sm:text-[0.68rem]"
-    : [
-        "max-[480px]:min-h-[44px] max-[480px]:min-w-[34px] max-[480px]:px-1 max-[480px]:py-0 max-[480px]:text-[17px] max-[480px]:leading-none",
-        "min-h-[clamp(1.38rem,6.5vmin,1.88rem)] min-w-[clamp(1.45rem,7vmin,2.05rem)] px-0.5 text-[clamp(0.62rem,2.75vmin,0.78rem)] sm:min-w-[2rem] sm:text-[0.74rem]",
-      ].join(" ");
-
   const highlightRing =
     "border-amber-500/95 bg-amber-50 text-stone-900 ring-2 ring-amber-400/70";
 
@@ -148,61 +139,50 @@ export function HangulKeyboard({
     trailing.length > 0 ||
     syllables.length > targetSyllables;
 
-  const shiftBtnClass = `${baseBtn} ${compact ? "min-h-[clamp(1.05rem,5vmin,1.55rem)] min-w-[2.6rem] px-1.5 text-[clamp(0.48rem,2.1vmin,0.62rem)] sm:min-w-[3rem]" : "max-[480px]:min-h-[48px] max-[480px]:min-w-[48px] max-[480px]:text-[13px] min-h-[clamp(1.38rem,6.5vmin,1.88rem)] min-w-[3rem] px-2 text-[clamp(0.55rem,2.35vmin,0.68rem)] sm:min-w-[3.25rem] sm:text-[0.7rem]"} shrink-0 font-semibold ${
+  const shiftBtnClass = `${baseBtn} h-10 min-h-[40px] shrink-0 rounded-md px-2 text-[11px] font-semibold sm:h-11 sm:min-h-[44px] sm:px-3 sm:text-xs ${
     shiftActive
       ? "border-amber-600 bg-amber-200 text-amber-950 ring-2 ring-amber-500 shadow-inner"
       : "border-stone-400 bg-stone-100 text-stone-700"
   } ${pressedKey === "shift" ? pressFlash : ""}`;
 
-  const renderRow = (keys: readonly string[], rowId: string) => (
-    <div
-      className={`flex w-full flex-wrap justify-center ${compact ? "gap-x-1 gap-y-1 max-[667px]:gap-x-[3px] max-[667px]:gap-y-[3px] sm:gap-x-1.5 sm:gap-y-1.5" : "gap-x-1 gap-y-1 max-[480px]:gap-x-1 max-[480px]:gap-y-1 sm:gap-x-[5px] sm:gap-y-[5px] md:gap-x-1.5"}`}
-    >
-      {keys.map((baseKey, index) => {
-        const shifted = SHIFT_MAP[baseKey];
-        const label =
-          shiftActive && shifted !== undefined ? shifted : baseKey;
-        const hi = keyHighlighted(baseKey, shiftActive, highlightJamos);
-        const id = `${rowId}-${index}`;
-        const pressed = pressedKey === id;
-
-        return (
-          <button
-            key={`${rowId}-${baseKey}`}
-            type="button"
-            disabled={disabled}
-            onClick={() => emitJamo(baseKey, rowId, index)}
-            className={`${baseBtn} ${jamoBtn} ${hi ? highlightRing : ""} ${pressed ? pressFlash : ""}`}
-          >
-            {label}
-          </button>
-        );
-      })}
-    </div>
-  );
-
   return (
-    <div className="mx-auto w-full max-w-[500px] select-none px-0 font-sans">
-      <p
-        className={`truncate text-center tabular-nums leading-snug text-stone-600 ${compact ? "mb-0.5 min-h-[0.875rem] text-[9px] sm:text-[10px]" : "mb-1 min-h-[1rem] text-[13px] max-[480px]:text-[14px] sm:text-[11px]"}`}
-      >
+    <div className="mx-auto w-full max-w-[500px] shrink-0 select-none px-0 font-sans">
+      <p className="mb-0.5 truncate px-1 text-center text-[11px] leading-tight text-stone-600 max-[480px]:mb-0 sm:mb-1 sm:min-h-[1rem] sm:text-[12px]">
         {preview ? (
           <span className="font-semibold tracking-wide text-stone-900">{preview}</span>
         ) : (
-          <span className="text-stone-400">Compose Hangul · Shift for double consonants</span>
+          <span className="text-stone-400 max-[480px]:text-[10px]">Shift · double jamo</span>
         )}
       </p>
 
-      <div
-        className={`flex flex-col ${compact ? "gap-1 max-[667px]:gap-[5px] sm:gap-1.5" : "gap-1 max-[480px]:gap-1.5 sm:gap-[6px] md:gap-2"}`}
-      >
-        {renderRow(ROW1, "r1")}
-        {renderRow(ROW2, "r2")}
-        {renderRow(ROW3, "r3")}
+      <div className="flex flex-col gap-[3px] sm:gap-1.5 md:gap-2">
+        {JAMO_ROWS.map(({ keys, id }) => (
+          <div
+            key={id}
+            className="mx-auto grid w-full max-w-[min(100%,26rem)] gap-[3px] px-0.5 sm:max-w-[26rem] sm:gap-1 md:gap-1.5"
+            style={{ gridTemplateColumns: `repeat(${keys.length}, minmax(0, 1fr))` }}
+          >
+            {keys.map((baseKey, index) => {
+              const shifted = SHIFT_MAP[baseKey];
+              const label = shiftActive && shifted !== undefined ? shifted : baseKey;
+              const hi = keyHighlighted(baseKey, shiftActive, highlightJamos);
+              const pressed = pressedKey === `${id}-${index}`;
+              return (
+                <button
+                  key={`${id}-${baseKey}`}
+                  type="button"
+                  disabled={disabled}
+                  onClick={() => emitJamo(baseKey, id, index)}
+                  className={`${baseBtn} h-10 min-h-[40px] w-full min-w-0 text-[clamp(12px,3.5vw,16px)] leading-none sm:h-11 sm:min-h-[44px] sm:text-[0.95rem] md:text-base ${hi ? highlightRing : ""} ${pressed ? pressFlash : ""}`}
+                >
+                  {label}
+                </button>
+              );
+            })}
+          </div>
+        ))}
 
-        <div
-          className={`flex items-stretch pt-0.5 ${compact ? "gap-1 max-[667px]:gap-0.5 sm:gap-1.5" : "gap-1.5 max-[480px]:gap-2 sm:gap-2"}`}
-        >
+        <div className="mx-auto flex w-full max-w-[min(100%,26rem)] items-stretch gap-[3px] px-0.5 pt-0.5 sm:gap-2">
           <button
             type="button"
             disabled={disabled}
@@ -216,13 +196,12 @@ export function HangulKeyboard({
             type="button"
             disabled={disabled}
             onClick={onBack}
-            className={`${baseBtn} ${compact ? "min-h-[clamp(1.05rem,5vmin,1.55rem)] min-w-[3.75rem] px-2 text-[clamp(0.52rem,2.2vmin,0.66rem)]" : "max-[480px]:min-h-[48px] max-[480px]:min-w-[5.25rem] max-[480px]:px-3 max-[480px]:text-[14px] min-h-[clamp(1.38rem,6.5vmin,1.88rem)] min-w-[4.5rem] px-3 text-[clamp(0.58rem,2.4vmin,0.72rem)]"} shrink-0 ${
+            className={`${baseBtn} h-10 min-h-[40px] shrink-0 rounded-md px-2 text-[11px] font-semibold sm:h-11 sm:min-h-[44px] sm:px-3 sm:text-xs ${
               pressedKey === "del" ? pressFlash : ""
             }`}
           >
             Delete
           </button>
-          <div className="min-w-0 flex-1" aria-hidden />
           <button
             type="button"
             disabled={enterDisabled}
@@ -231,7 +210,7 @@ export function HangulKeyboard({
               flashPress("ent");
               onEnter();
             }}
-            className={`${compact ? "min-h-[clamp(1.05rem,5vmin,1.55rem)] min-w-[4rem] px-3 text-[clamp(0.52rem,2.2vmin,0.66rem)]" : "max-[480px]:min-h-[48px] max-[480px]:min-w-[5.5rem] max-[480px]:px-4 max-[480px]:text-[15px] min-h-[clamp(1.38rem,6.5vmin,1.88rem)] min-w-[4.75rem] px-4 text-[clamp(0.58rem,2.4vmin,0.72rem)]"} shrink-0 rounded-md border border-stone-700 bg-stone-800 font-semibold text-white shadow-sm transition hover:bg-stone-700 active:scale-[0.97] disabled:bg-stone-400 disabled:opacity-40 ${pressedKey === "ent" ? "ring-2 ring-amber-400 ring-offset-1" : ""}`}
+            className={`h-10 min-h-[40px] min-w-0 flex-1 rounded-md border border-stone-700 bg-stone-800 px-2 text-[12px] font-semibold text-white shadow-sm transition hover:bg-stone-700 active:scale-[0.97] disabled:bg-stone-400 disabled:opacity-40 sm:h-11 sm:min-h-[44px] sm:text-sm ${pressedKey === "ent" ? "ring-2 ring-amber-400 ring-offset-1" : ""}`}
           >
             Enter
           </button>

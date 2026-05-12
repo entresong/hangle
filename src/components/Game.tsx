@@ -742,51 +742,36 @@ export function Game() {
     return "Practice · full hints · streak = daily only";
   }, [difficulty]);
 
+  /** One-line tagline for narrow phones */
+  const mobileTagline = useMemo(() => {
+    if (!difficulty) return "Pick a mode to start";
+    if (sessionMode === "practice") return "Guess the practice word";
+    const syl = answerLen === 1 ? "1-syllable" : `${answerLen}-syllable`;
+    return `Guess today's ${syl} Korean word`;
+  }, [difficulty, sessionMode, answerLen]);
+
   return (
     <div
-      className="mx-auto flex h-[100dvh] max-h-[100dvh] min-h-0 w-full max-w-[500px] flex-col gap-0.5 overflow-hidden px-[max(0.5rem,env(safe-area-inset-left))] pr-[max(0.5rem,env(safe-area-inset-right))] pt-[max(0.25rem,env(safe-area-inset-top))] pb-[max(0.25rem,env(safe-area-inset-bottom))] font-sans text-stone-800 max-[480px]:gap-1 sm:gap-1.5 sm:px-3"
+      className="mx-auto flex h-[100dvh] max-h-[100dvh] min-h-0 w-full max-w-[500px] flex-col overflow-hidden px-[max(0.4rem,env(safe-area-inset-left))] pr-[max(0.4rem,env(safe-area-inset-right))] pb-[max(0.25rem,env(safe-area-inset-bottom))] pt-[max(0.35rem,env(safe-area-inset-top))] font-sans text-stone-800 max-[480px]:gap-0 sm:gap-1 sm:px-3"
     >
-      <header className="flex max-h-[3.125rem] shrink-0 flex-col justify-center gap-0 sm:max-h-none sm:gap-0.5">
-        <div className="flex items-center justify-between gap-1">
+      <header className="flex shrink-0 flex-col gap-1 max-[480px]:gap-0.5">
+        <div className="flex items-center justify-between gap-1.5">
           <button
             type="button"
             onClick={() => setShowStats(true)}
-            className="flex min-h-11 min-w-11 shrink-0 items-center justify-center rounded-md px-2 text-xs text-stone-700 hover:bg-stone-200/70 hover:text-stone-900 sm:min-h-[44px] sm:min-w-[44px] sm:text-xs"
+            className="flex min-h-10 min-w-10 shrink-0 items-center justify-center rounded-md px-1.5 text-[11px] font-medium text-stone-700 hover:bg-stone-200/70 hover:text-stone-900 sm:min-h-11 sm:min-w-11 sm:px-2 sm:text-xs"
           >
             Stats
           </button>
-          <div className="flex min-w-0 flex-1 flex-col items-center gap-0.5 px-1">
-            <h1 className="font-serif text-[clamp(1.125rem,4.5vw,1.375rem)] leading-none tracking-tight text-stone-900 sm:text-2xl">
-              Hangle
-            </h1>
-            <div className="flex flex-wrap items-center justify-center gap-1">
-              <span
-                className={`shrink-0 rounded-full border px-2 py-0.5 text-[10px] font-medium uppercase tracking-wide sm:text-[11px] ${
-                  sessionMode === "daily"
-                    ? "border-amber-400/80 bg-amber-50 text-amber-900"
-                    : "border-stone-400/60 bg-stone-100 text-stone-700"
-                }`}
-              >
-                {sessionMode === "daily" ? "Today's word" : "Practice"}
-              </span>
-              {difficulty !== null && (
-                <button
-                  type="button"
-                  aria-label="Change difficulty"
-                  onClick={() => setSettingsOpen(true)}
-                  className="shrink-0 rounded-full border border-amber-500/75 bg-[#f5f0e8] px-2 py-0.5 text-[10px] font-semibold tabular-nums text-stone-900 shadow-sm ring-2 ring-amber-400/30 transition hover:bg-[#efe8dc] hover:ring-amber-500/45 active:scale-[0.98] sm:text-[11px]"
-                >
-                  {difficultyBadgeLabel(difficulty)}
-                </button>
-              )}
-            </div>
-          </div>
+          <h1 className="min-w-0 flex-1 truncate text-center font-serif text-[clamp(1.2rem,5.2vw,1.55rem)] leading-none tracking-tight text-stone-900 sm:text-2xl">
+            Hangle
+          </h1>
           <div className="flex shrink-0 items-center gap-0.5">
             <button
               type="button"
               aria-label="Send feedback"
               onClick={() => setFeedbackOpen(true)}
-              className="flex min-h-11 min-w-11 items-center justify-center rounded-md px-1 text-sm font-medium text-stone-700 hover:bg-stone-200/70 hover:text-stone-900 max-[380px]:min-w-10 sm:min-h-[44px] sm:min-w-[4.25rem] sm:gap-1 sm:px-2"
+              className="flex min-h-10 min-w-10 items-center justify-center rounded-md text-stone-700 hover:bg-stone-200/70 hover:text-stone-900 sm:min-h-11 sm:min-w-11 sm:gap-1 sm:px-2"
             >
               <span className="text-base leading-none" aria-hidden>
                 💬
@@ -801,7 +786,7 @@ export function Game() {
                 if (!difficulty) return;
                 setSettingsOpen(true);
               }}
-              className={`flex min-h-11 min-w-11 items-center justify-center rounded-md px-1 text-lg leading-none sm:min-h-[44px] sm:min-w-[44px] ${
+              className={`flex min-h-10 min-w-10 items-center justify-center rounded-md text-lg leading-none sm:min-h-11 sm:min-w-11 ${
                 difficulty
                   ? "text-stone-700 hover:bg-stone-200/70 hover:text-stone-900"
                   : "cursor-not-allowed text-stone-400"
@@ -815,7 +800,7 @@ export function Game() {
                 (status === "won" || status === "lost") &&
                 setEndModal({ open: true, kind: status === "won" ? "won" : "lost" })
               }
-              className={`flex min-h-11 min-w-[4.25rem] shrink-0 items-center justify-center rounded-md px-2 text-xs sm:min-h-[44px] sm:min-w-[4.5rem] sm:text-xs ${
+              className={`flex min-h-10 min-w-[3.25rem] max-w-[4.75rem] shrink-0 items-center justify-center truncate rounded-md px-1 text-[10px] font-medium sm:min-h-11 sm:min-w-[4.25rem] sm:max-w-none sm:px-2 sm:text-xs ${
                 status === "won" || status === "lost"
                   ? "text-stone-700 hover:bg-stone-200/70 hover:text-stone-900"
                   : "pointer-events-none invisible"
@@ -825,7 +810,30 @@ export function Game() {
             </button>
           </div>
         </div>
-        <p className="text-center text-[11px] tabular-nums leading-tight text-stone-600 max-[480px]:text-[12px] sm:text-[10px] sm:text-stone-500">
+
+        <div className="flex flex-wrap items-center justify-center gap-x-1 gap-y-0.5 px-1">
+          <span
+            className={`shrink-0 rounded-full border px-1.5 py-0.5 text-[9px] font-medium uppercase leading-tight tracking-wide sm:px-2 sm:py-0.5 sm:text-[10px] ${
+              sessionMode === "daily"
+                ? "border-amber-400/80 bg-amber-50 text-amber-900"
+                : "border-stone-400/60 bg-stone-100 text-stone-700"
+            }`}
+          >
+            {sessionMode === "daily" ? "Today's word" : "Practice"}
+          </span>
+          {difficulty !== null && (
+            <button
+              type="button"
+              aria-label="Change difficulty"
+              onClick={() => setSettingsOpen(true)}
+              className="shrink-0 rounded-full border border-amber-500/75 bg-[#f5f0e8] px-1.5 py-0.5 text-[9px] font-semibold tabular-nums leading-tight text-stone-900 shadow-sm ring-1 ring-amber-400/35 transition hover:bg-[#efe8dc] active:scale-[0.98] sm:px-2 sm:py-0.5 sm:text-[10px] sm:ring-2"
+            >
+              {difficultyBadgeLabel(difficulty)}
+            </button>
+          )}
+        </div>
+
+        <p className="text-center text-[10px] tabular-nums leading-tight text-stone-500 max-[480px]:leading-none sm:text-[11px] sm:text-stone-500">
           Today · {playedToday} played
         </p>
       </header>
@@ -842,13 +850,18 @@ export function Game() {
         </div>
       )}
 
-      <div className="shrink-0 space-y-0.5 text-center">
-        <p className="line-clamp-2 text-balance text-[13px] leading-snug text-stone-600 max-[480px]:text-[14px] sm:text-[10px] sm:leading-snug sm:text-stone-500 md:text-[11px]">
-          {sessionMode === "daily" ? dailyHowToLine : practiceHowToLine}
+      <div className="shrink-0 px-0.5 text-center max-[480px]:py-0 sm:py-0.5">
+        <p className="truncate text-[12px] font-medium leading-snug text-stone-700 max-[480px]:text-[11px] sm:hidden">
+          {mobileTagline}
         </p>
-        <p className="text-[11px] leading-snug text-stone-500 max-[480px]:text-[12px] sm:text-[10px] sm:text-stone-500">
-          For Korean learners (Easy) and Wordle veterans (Hard)
-        </p>
+        <div className="hidden space-y-0.5 sm:block">
+          <p className="line-clamp-2 text-balance text-[10px] leading-snug text-stone-600 md:text-[11px]">
+            {sessionMode === "daily" ? dailyHowToLine : practiceHowToLine}
+          </p>
+          <p className="text-[10px] leading-snug text-stone-500 md:text-[11px]">
+            For Korean learners (Easy) and Wordle veterans (Hard)
+          </p>
+        </div>
       </div>
 
       {hydrated && status === "playing" && difficulty !== null && visible && (
@@ -871,9 +884,9 @@ export function Game() {
           {visible.showFullHintCard && (
             <section
               aria-label="Hints"
-              className={`game-hint-card flex max-h-[min(180px,32dvh)] shrink-0 flex-col overflow-hidden rounded-xl border border-stone-300/55 bg-[var(--hint-card-bg)] shadow-sm transition-shadow max-[480px]:max-h-[180px] sm:max-h-[200px] ${hintCardPulse ? "hint-card-pulse-once" : ""}`}
+              className={`game-hint-card flex max-h-[min(150px,22dvh)] shrink-0 flex-col overflow-hidden rounded-xl border border-stone-300/55 bg-[var(--hint-card-bg)] shadow-sm transition-shadow max-[480px]:max-h-[min(140px,20dvh)] sm:max-h-[200px] ${hintCardPulse ? "hint-card-pulse-once" : ""}`}
             >
-              <div className="shrink-0 border-b border-stone-400/25 px-3 pb-2 pt-3 text-left max-[480px]:px-3 max-[480px]:pb-2 max-[480px]:pt-3 sm:px-5 sm:pb-3 sm:pt-4">
+              <div className="shrink-0 border-b border-stone-400/25 px-2 pb-1.5 pt-2 text-left max-[480px]:px-2 max-[480px]:pb-1 max-[480px]:pt-2 sm:px-5 sm:pb-3 sm:pt-4">
                 {visible.showHintDotsRow && visible.hintDotsTotal > 0 && (
                   <div className="flex items-center justify-between gap-2">
                     <span className="font-serif text-[11px] font-semibold tabular-nums text-stone-800 sm:text-xs">
@@ -895,19 +908,19 @@ export function Game() {
 
                 <div className="mt-2 flex flex-wrap items-center gap-2.5">
                   {visible.showWordImage && showImage && imageSrc ? (
-                    <div className="relative h-10 w-10 shrink-0 overflow-hidden rounded-lg border border-stone-300/50 bg-white/80">
+                    <div className="relative h-8 w-8 shrink-0 overflow-hidden rounded-lg border border-stone-300/50 bg-white/80 sm:h-10 sm:w-10">
                       <Image
                         src={imageSrc}
                         alt=""
                         fill
-                        sizes="40px"
+                        sizes="32px"
                         className="object-cover"
                         onError={() => setImgBroken(true)}
                       />
                     </div>
                   ) : visible.showEmoji ? (
                     <span
-                      className="flex h-10 w-10 shrink-0 select-none items-center justify-center text-[1.65rem] leading-none sm:text-[1.75rem]"
+                      className="flex h-8 w-8 shrink-0 select-none items-center justify-center text-[1.35rem] leading-none sm:h-10 sm:w-10 sm:text-[1.75rem]"
                       style={{
                         fontFamily:
                           "system-ui, 'Segoe UI Emoji', 'Apple Color Emoji', sans-serif",
@@ -1013,7 +1026,7 @@ export function Game() {
           {visible.showHardCategoryStrip && (
             <section
               aria-label="Hard mode clues"
-              className={`game-hint-card flex max-h-[min(140px,26dvh)] shrink-0 flex-col overflow-hidden rounded-xl border border-stone-300/55 bg-[var(--hint-card-bg)] shadow-sm transition-shadow max-[480px]:max-h-[130px] sm:max-h-[150px] ${hintCardPulse ? "hint-card-pulse-once" : ""}`}
+              className={`game-hint-card flex max-h-[min(120px,18dvh)] shrink-0 flex-col overflow-hidden rounded-xl border border-stone-300/55 bg-[var(--hint-card-bg)] shadow-sm transition-shadow max-[480px]:max-h-[min(110px,16dvh)] sm:max-h-[150px] ${hintCardPulse ? "hint-card-pulse-once" : ""}`}
             >
               <div className="px-3 py-3 text-left sm:px-5 sm:py-4">
                 {visible.showHintDotsRow && (
@@ -1057,9 +1070,9 @@ export function Game() {
         </div>
       )}
 
-      <div className="flex min-h-0 flex-1 flex-col gap-0.5 overflow-hidden pt-0.5 max-[480px]:gap-1">
-        <div className="relative flex min-h-0 flex-1 flex-col items-center justify-center overflow-hidden">
-          <div className="flex w-full max-w-[min(100%,22rem)] shrink-0 flex-col items-center gap-1 px-0.5 py-0 sm:max-w-[22rem]">
+      <div className="flex min-h-0 flex-1 flex-col gap-0 overflow-hidden max-[480px]:gap-0 sm:gap-0.5 sm:pt-0.5">
+        <div className="relative flex min-h-0 flex-1 flex-col items-center justify-center overflow-hidden py-0">
+          <div className="flex w-full max-w-[min(100%,20rem)] shrink-0 flex-col items-center gap-0 px-0.5 sm:max-w-[22rem] sm:gap-0.5">
             {inputNotice && (
               <p
                 key={inputNotice}
@@ -1086,7 +1099,7 @@ export function Game() {
           </div>
         </div>
 
-        <div className="game-keyboard-zone mt-auto w-full shrink-0 overflow-x-hidden overflow-y-auto pt-1 max-[480px]:max-h-[min(260px,42dvh)] sm:pt-0.5">
+        <div className="game-keyboard-zone mt-0 w-full shrink-0 overflow-x-hidden overflow-y-visible pt-0 max-[480px]:max-h-[min(200px,32dvh)] sm:mt-auto sm:max-h-none sm:overflow-y-auto sm:pt-0.5">
           <HangulKeyboard
             buffer={buffer}
             onBufferChange={setBuffer}
