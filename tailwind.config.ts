@@ -8,6 +8,10 @@ const config: Config = {
   ],
   theme: {
     extend: {
+      fontFamily: {
+        sans: ["var(--font-sans)", "system-ui", "Segoe UI", "Apple SD Gothic Neo", "sans-serif"],
+        serif: ["var(--font-serif)", "Georgia", "Times New Roman", "serif"],
+      },
       colors: {
         background: "var(--background)",
         foreground: "var(--foreground)",
