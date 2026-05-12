@@ -25,6 +25,17 @@ const SHIFT_MAP: Record<string, string> = {
   "ㅔ": "ㅖ",
 };
 
+function jamoSetFromFirstJamo(jamo: string): Set<string> {
+  const set = new Set<string>();
+  const t = jamo.trim();
+  if (!t) return set;
+  const parts = Hangul.disassemble(t, false);
+  for (const j of parts) {
+    if (typeof j === "string" && j.length === 1) set.add(j);
+  }
+  return set;
+}
+
 function jamoSetFromAnswer(answer: string): Set<string> {
   const set = new Set<string>();
   if (!answer) return set;
@@ -59,6 +70,8 @@ type HangulKeyboardProps = {
   compact?: boolean;
   targetSyllables: number;
   highlightAnswer?: string;
+  /** When set, only these jamo keys get the highlight ring (e.g. HARD safety: first jamo). */
+  highlightFirstJamo?: string;
 };
 
 export function HangulKeyboard({
@@ -70,14 +83,16 @@ export function HangulKeyboard({
   compact = false,
   targetSyllables,
   highlightAnswer = "",
+  highlightFirstJamo = "",
 }: HangulKeyboardProps) {
   const [shiftActive, setShiftActive] = useState(false);
   const [pressedKey, setPressedKey] = useState<string | null>(null);
 
-  const highlightJamos = useMemo(
-    () => jamoSetFromAnswer(highlightAnswer),
-    [highlightAnswer],
-  );
+  const highlightJamos = useMemo(() => {
+    const first = highlightFirstJamo.trim();
+    if (first) return jamoSetFromFirstJamo(first);
+    return jamoSetFromAnswer(highlightAnswer);
+  }, [highlightAnswer, highlightFirstJamo]);
 
   const flashPress = (id: string) => {
     setPressedKey(id);
@@ -113,9 +128,13 @@ export function HangulKeyboard({
   const baseBtn =
     "rounded-md border border-stone-300/90 bg-white font-medium text-stone-900 shadow-sm transition hover:bg-stone-50 disabled:pointer-events-none disabled:opacity-40 active:scale-[0.96]";
 
+  /** ≤480px: 32–36px wide × ≥44px tall tap targets, 16–18px labels */
   const jamoBtn = compact
     ? "min-h-[clamp(1.05rem,5vmin,1.55rem)] min-w-[clamp(1.22rem,5.8vmin,1.72rem)] px-0.5 text-[clamp(0.52rem,2.35vmin,0.68rem)] max-[667px]:min-h-[1rem] max-[667px]:min-w-[1.15rem] max-[667px]:text-[0.5rem] sm:min-w-[1.85rem] sm:text-[0.68rem]"
-    : "min-h-[clamp(1.42rem,6.8vmin,1.95rem)] min-w-[clamp(1.48rem,7.2vmin,2.05rem)] px-0.5 text-[clamp(0.62rem,2.75vmin,0.78rem)] sm:min-w-[2rem] sm:text-[0.74rem]";
+    : [
+        "max-[480px]:min-h-[44px] max-[480px]:min-w-[34px] max-[480px]:px-1 max-[480px]:py-0 max-[480px]:text-[17px] max-[480px]:leading-none",
+        "min-h-[clamp(1.38rem,6.5vmin,1.88rem)] min-w-[clamp(1.45rem,7vmin,2.05rem)] px-0.5 text-[clamp(0.62rem,2.75vmin,0.78rem)] sm:min-w-[2rem] sm:text-[0.74rem]",
+      ].join(" ");
 
   const highlightRing =
     "border-amber-500/95 bg-amber-50 text-stone-900 ring-2 ring-amber-400/70";
@@ -129,7 +148,7 @@ export function HangulKeyboard({
     trailing.length > 0 ||
     syllables.length > targetSyllables;
 
-  const shiftBtnClass = `${baseBtn} ${compact ? "min-h-[clamp(1.05rem,5vmin,1.55rem)] min-w-[2.6rem] px-1.5 text-[clamp(0.48rem,2.1vmin,0.62rem)] sm:min-w-[3rem]" : "min-h-[clamp(1.38rem,6.5vmin,1.88rem)] min-w-[3rem] px-2 text-[clamp(0.55rem,2.35vmin,0.68rem)] sm:min-w-[3.25rem] sm:text-[0.7rem]"} shrink-0 font-semibold ${
+  const shiftBtnClass = `${baseBtn} ${compact ? "min-h-[clamp(1.05rem,5vmin,1.55rem)] min-w-[2.6rem] px-1.5 text-[clamp(0.48rem,2.1vmin,0.62rem)] sm:min-w-[3rem]" : "max-[480px]:min-h-[48px] max-[480px]:min-w-[48px] max-[480px]:text-[13px] min-h-[clamp(1.38rem,6.5vmin,1.88rem)] min-w-[3rem] px-2 text-[clamp(0.55rem,2.35vmin,0.68rem)] sm:min-w-[3.25rem] sm:text-[0.7rem]"} shrink-0 font-semibold ${
     shiftActive
       ? "border-amber-600 bg-amber-200 text-amber-950 ring-2 ring-amber-500 shadow-inner"
       : "border-stone-400 bg-stone-100 text-stone-700"
@@ -137,7 +156,7 @@ export function HangulKeyboard({
 
   const renderRow = (keys: readonly string[], rowId: string) => (
     <div
-      className={`flex w-full flex-wrap justify-center ${compact ? "gap-x-1 gap-y-1 max-[667px]:gap-x-[3px] max-[667px]:gap-y-[3px] sm:gap-x-1.5 sm:gap-y-1.5" : "gap-x-[5px] gap-y-[5px] sm:gap-x-1.5"}`}
+      className={`flex w-full flex-wrap justify-center ${compact ? "gap-x-1 gap-y-1 max-[667px]:gap-x-[3px] max-[667px]:gap-y-[3px] sm:gap-x-1.5 sm:gap-y-1.5" : "gap-x-1 gap-y-1 max-[480px]:gap-x-1 max-[480px]:gap-y-1 sm:gap-x-[5px] sm:gap-y-[5px] md:gap-x-1.5"}`}
     >
       {keys.map((baseKey, index) => {
         const shifted = SHIFT_MAP[baseKey];
@@ -165,7 +184,7 @@ export function HangulKeyboard({
   return (
     <div className="mx-auto w-full max-w-[500px] select-none px-0 font-sans">
       <p
-        className={`truncate text-center tabular-nums leading-snug text-stone-500 ${compact ? "mb-0.5 min-h-[0.875rem] text-[9px] sm:text-[10px]" : "mb-1 min-h-[1rem] text-[10px] sm:text-[11px]"}`}
+        className={`truncate text-center tabular-nums leading-snug text-stone-600 ${compact ? "mb-0.5 min-h-[0.875rem] text-[9px] sm:text-[10px]" : "mb-1 min-h-[1rem] text-[13px] max-[480px]:text-[14px] sm:text-[11px]"}`}
       >
         {preview ? (
           <span className="font-semibold tracking-wide text-stone-900">{preview}</span>
@@ -174,13 +193,15 @@ export function HangulKeyboard({
         )}
       </p>
 
-      <div className={`flex flex-col ${compact ? "gap-1 max-[667px]:gap-[5px] sm:gap-1.5" : "gap-[6px] sm:gap-2"}`}>
+      <div
+        className={`flex flex-col ${compact ? "gap-1 max-[667px]:gap-[5px] sm:gap-1.5" : "gap-1 max-[480px]:gap-1.5 sm:gap-[6px] md:gap-2"}`}
+      >
         {renderRow(ROW1, "r1")}
         {renderRow(ROW2, "r2")}
         {renderRow(ROW3, "r3")}
 
         <div
-          className={`flex items-stretch pt-0.5 ${compact ? "gap-1 max-[667px]:gap-0.5 sm:gap-1.5" : "gap-2"}`}
+          className={`flex items-stretch pt-0.5 ${compact ? "gap-1 max-[667px]:gap-0.5 sm:gap-1.5" : "gap-1.5 max-[480px]:gap-2 sm:gap-2"}`}
         >
           <button
             type="button"
@@ -195,7 +216,7 @@ export function HangulKeyboard({
             type="button"
             disabled={disabled}
             onClick={onBack}
-            className={`${baseBtn} ${compact ? "min-h-[clamp(1.05rem,5vmin,1.55rem)] min-w-[3.75rem] px-2 text-[clamp(0.52rem,2.2vmin,0.66rem)]" : "min-h-[clamp(1.38rem,6.5vmin,1.88rem)] min-w-[4.5rem] px-3 text-[clamp(0.58rem,2.4vmin,0.72rem)]"} shrink-0 ${
+            className={`${baseBtn} ${compact ? "min-h-[clamp(1.05rem,5vmin,1.55rem)] min-w-[3.75rem] px-2 text-[clamp(0.52rem,2.2vmin,0.66rem)]" : "max-[480px]:min-h-[48px] max-[480px]:min-w-[5.25rem] max-[480px]:px-3 max-[480px]:text-[14px] min-h-[clamp(1.38rem,6.5vmin,1.88rem)] min-w-[4.5rem] px-3 text-[clamp(0.58rem,2.4vmin,0.72rem)]"} shrink-0 ${
               pressedKey === "del" ? pressFlash : ""
             }`}
           >
@@ -210,7 +231,7 @@ export function HangulKeyboard({
               flashPress("ent");
               onEnter();
             }}
-            className={`${compact ? "min-h-[clamp(1.05rem,5vmin,1.55rem)] min-w-[4rem] px-3 text-[clamp(0.52rem,2.2vmin,0.66rem)]" : "min-h-[clamp(1.38rem,6.5vmin,1.88rem)] min-w-[4.75rem] px-4 text-[clamp(0.58rem,2.4vmin,0.72rem)]"} shrink-0 rounded-md border border-stone-700 bg-stone-800 font-semibold text-white shadow-sm transition hover:bg-stone-700 active:scale-[0.97] disabled:bg-stone-400 disabled:opacity-40 ${pressedKey === "ent" ? "ring-2 ring-amber-400 ring-offset-1" : ""}`}
+            className={`${compact ? "min-h-[clamp(1.05rem,5vmin,1.55rem)] min-w-[4rem] px-3 text-[clamp(0.52rem,2.2vmin,0.66rem)]" : "max-[480px]:min-h-[48px] max-[480px]:min-w-[5.5rem] max-[480px]:px-4 max-[480px]:text-[15px] min-h-[clamp(1.38rem,6.5vmin,1.88rem)] min-w-[4.75rem] px-4 text-[clamp(0.58rem,2.4vmin,0.72rem)]"} shrink-0 rounded-md border border-stone-700 bg-stone-800 font-semibold text-white shadow-sm transition hover:bg-stone-700 active:scale-[0.97] disabled:bg-stone-400 disabled:opacity-40 ${pressedKey === "ent" ? "ring-2 ring-amber-400 ring-offset-1" : ""}`}
           >
             Enter
           </button>

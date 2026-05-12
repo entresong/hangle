@@ -25,6 +25,13 @@ import {
   saveGame,
   saveStats,
 } from "@/lib/storage";
+import {
+  difficultyBadgeLabel,
+  loadDifficulty,
+  saveDifficulty,
+  shareDifficultySuffix,
+  type Difficulty,
+} from "@/lib/difficulty";
 import { assembleBuffer } from "@/lib/hangulBuffer";
 import {
   cancelSpeech,
@@ -33,6 +40,7 @@ import {
   playPronunciation,
 } from "@/lib/pronunciation";
 import { validateWordEntries } from "@/lib/validateWords";
+import { getVisibleHints } from "@/lib/visibleHints";
 import type { PersistedGame, PuzzleMode, TileState, WordEntry } from "@/types/game";
 
 const WORDS = wordsJson as WordEntry[];
@@ -67,6 +75,37 @@ function pickLengthFeedbackMessage(requiredSyllables: number): string {
     pools[requiredSyllables] ??
     [`Need ${requiredSyllables} syllables!`, `Type ${requiredSyllables} Korean syllables`];
   return list[Math.floor(Math.random() * list.length)]!;
+}
+
+/** Last-chance strip: reveal all syllables but the last. */
+function almostAnswerLine(answer: string): string {
+  const arr = Array.from(answer);
+  if (arr.length <= 1) return "One syllable — almost there!";
+  return `${arr.slice(0, -1).join("")} · ?`;
+}
+
+/** Scroll / header row tier that just unlocked (drives toast + emphasis). */
+function freshUnlockedHintTier(
+  d: Difficulty,
+  prevWrong: number,
+  newWrong: number,
+): number | null {
+  if (newWrong <= prevWrong) return null;
+  if (d === "hard") {
+    if (newWrong === 5) return 7;
+    return null;
+  }
+  if (d === "normal") {
+    if (newWrong === 3) return 1;
+    if (newWrong === 5) return 5;
+    return null;
+  }
+  if (newWrong === 1) return 2;
+  if (newWrong === 2) return 3;
+  if (newWrong === 3) return 4;
+  if (newWrong === 4) return 5;
+  if (newWrong === 5) return 6;
+  return null;
 }
 
 function freshGame(
@@ -168,6 +207,13 @@ export function Game() {
   });
   const [countdownTick, setCountdownTick] = useState(0);
 
+  /** Saved preference; null until first pick from LS */
+  const [difficulty, setDifficulty] = useState<Difficulty | null>(null);
+  const [pickDifficultyOpen, setPickDifficultyOpen] = useState(false);
+  const [settingsOpen, setSettingsOpen] = useState(false);
+  const [modeToast, setModeToast] = useState<string | null>(null);
+  const modeToastTimerRef = useRef<number | null>(null);
+
   /** Safe strings for UI — words.json or merged entries must never crash on missing fields */
   const safeWordDisplay = useMemo(() => {
     const catRaw = answerEntry?.category ?? "WORD";
@@ -199,6 +245,31 @@ export function Game() {
   useEffect(() => () => clearHintsTimers(), [clearHintsTimers]);
 
   useEffect(() => {
+    const d = loadDifficulty();
+    if (d) {
+      setDifficulty(d);
+    } else {
+      setPickDifficultyOpen(true);
+    }
+  }, []);
+
+  const flashModeToast = useCallback((d: Difficulty) => {
+    const label = d === "easy" ? "EASY" : d === "normal" ? "NORMAL" : "HARD";
+    setModeToast(`Now playing on ${label} mode`);
+    if (modeToastTimerRef.current !== null) window.clearTimeout(modeToastTimerRef.current);
+    modeToastTimerRef.current = window.setTimeout(() => {
+      modeToastTimerRef.current = null;
+      setModeToast(null);
+    }, 2800);
+  }, []);
+
+  useEffect(() => {
+    return () => {
+      if (modeToastTimerRef.current !== null) window.clearTimeout(modeToastTimerRef.current);
+    };
+  }, []);
+
+  useEffect(() => {
     setTtsMountReady(true);
   }, []);
 
@@ -218,6 +289,7 @@ export function Game() {
   }, [answerEntry]);
 
   const currentRow = guesses.length;
+  const wrongGuessCount = guesses.filter((g) => g !== answer).length;
 
   const speakKoreanWord = useCallback(
     (which: TtsPlayingSlot, text: unknown) => {
@@ -336,7 +408,7 @@ export function Game() {
         hintScrollTimerRef.current = null;
       }
     };
-  }, [guesses.length, hydrated, status]);
+  }, [guesses.length, wrongGuessCount, difficulty, hydrated, status]);
 
   useEffect(() => {
     if (typeof window === "undefined") return;
@@ -395,6 +467,7 @@ export function Game() {
   const submitGuess = () => {
     if (status !== "playing" || !hydrated) return;
     if (rowRevealBlock) return;
+    if (!difficulty) return;
     const assembled = assembleBuffer(buffer);
     if (!isFullHangulWord(assembled, answerLen)) {
       rejectBadInput(pickLengthFeedbackMessage(answerLen));
@@ -413,6 +486,12 @@ export function Game() {
     const nextGuesses = [...guesses, assembled];
     const nextEval = [...evaluations, ev];
     const statsKind = sessionMode === "practice" ? "practice" : "daily";
+    const prevWrong = guesses.filter((g) => g !== answer).length;
+    const newWrong = nextGuesses.filter((g) => g !== answer).length;
+    const hintTierUnlocked =
+      wonImmediate || lostImmediate
+        ? null
+        : freshUnlockedHintTier(difficulty!, prevWrong, newWrong);
 
     const persist = (
       nextStatus: PersistedGame["status"],
@@ -457,18 +536,24 @@ export function Game() {
     clearHintsTimers();
     const revealId = window.setTimeout(() => {
       setRowRevealBlock(false);
-      setHintToastVisible(true);
-      setHintCardPulse(true);
-      setFreshHintTier(nextGuesses.length);
-      hintsTimersRef.current.push(
-        window.setTimeout(() => setHintToastVisible(false), 3000),
-      );
-      hintsTimersRef.current.push(
-        window.setTimeout(() => setHintCardPulse(false), 520),
-      );
-      hintsTimersRef.current.push(
-        window.setTimeout(() => setFreshHintTier(null), 2000),
-      );
+      if (hintTierUnlocked !== null) {
+        setHintToastVisible(true);
+        setHintCardPulse(true);
+        setFreshHintTier(hintTierUnlocked);
+        hintsTimersRef.current.push(
+          window.setTimeout(() => setHintToastVisible(false), 3000),
+        );
+        hintsTimersRef.current.push(
+          window.setTimeout(() => setHintCardPulse(false), 520),
+        );
+        hintsTimersRef.current.push(
+          window.setTimeout(() => setFreshHintTier(null), 2000),
+        );
+      } else {
+        setHintToastVisible(false);
+        setHintCardPulse(false);
+        setFreshHintTier(null);
+      }
     }, ROW_REVEAL_MS);
     hintsTimersRef.current.push(revealId);
   };
@@ -530,16 +615,16 @@ export function Game() {
     const resultLine =
       status === "won" ? `${guesses.length}/6` : status === "lost" ? "X/6" : "";
     const modeTag = sessionMode === "practice" ? " (Practice)" : "";
+    const diffSuffix = shareDifficultySuffix(difficulty ?? "easy");
+    const headParts = [`Hangle #${dayNumber}${modeTag}`];
+    if (resultLine) headParts.push(resultLine);
+    headParts.push(diffSuffix);
+    const firstLine = headParts.join(" ");
     const syllableNote =
       answer.length === 1
         ? "1 syllable"
         : `${answer.length} syllables`;
-    const body = [
-      `Hangle #${dayNumber}${modeTag} ${resultLine}`,
-      ...lines,
-      "",
-      `hangle — Korean spelling (${syllableNote}, learning mode · UTC)`,
-    ];
+    const body = [firstLine, ...lines, "", `hangle — Korean spelling (${syllableNote}, learning mode · UTC)`];
     if (shareBaseUrl) {
       body.push("", shareBaseUrl);
     }
@@ -552,6 +637,7 @@ export function Game() {
     shareBaseUrl,
     sessionMode,
     answer.length,
+    difficulty,
   ]);
 
   const copyShare = async () => {
@@ -593,23 +679,25 @@ export function Game() {
   const playedToday =
     stats.utcStatsDate === today ? (stats.gamesFinishedToday ?? 0) : 0;
 
-  const hintsUnlocked = Math.min(guesses.length, 5);
-  const newestScrollTier =
-    guesses.length >= 5
-      ? 5
-      : guesses.length >= 4
-        ? 4
-        : guesses.length >= 3
-          ? 3
-          : guesses.length >= 2
-            ? 2
-            : null;
+  const visible = useMemo(
+    () => (difficulty ? getVisibleHints(difficulty, wrongGuessCount) : null),
+    [difficulty, wrongGuessCount],
+  );
 
-  const nextHintSubtitle = useMemo(() => {
-    if (hintsUnlocked >= 5) return "All 5 hints unlocked.";
-    if (guesses.length === 0) return "Hint 1 unlocks after your first guess.";
-    return `Hint ${hintsUnlocked + 1} unlocks after your next guess.`;
-  }, [hintsUnlocked, guesses.length]);
+  const newestScrollTier = useMemo(() => {
+    if (!difficulty) return null;
+    if (difficulty === "easy") {
+      if (wrongGuessCount >= 5) return 6;
+      if (wrongGuessCount >= 4) return 5;
+      if (wrongGuessCount >= 3) return 4;
+      if (wrongGuessCount >= 2) return 3;
+      if (wrongGuessCount >= 1) return 2;
+      return null;
+    }
+    if (difficulty === "normal" && wrongGuessCount >= 5) return 5;
+    if (difficulty === "hard" && wrongGuessCount >= 5) return 7;
+    return null;
+  }, [difficulty, wrongGuessCount]);
 
   const scrollHintRowClass = (tier: number) => {
     const dim = newestScrollTier !== null && tier < newestScrollTier;
@@ -637,66 +725,124 @@ export function Game() {
 
   const speechUnavailable = ttsMountReady && !isSpeechSynthesisSupported();
 
+  const dailyHowToLine = useMemo(() => {
+    const base = `${answerLen} ${answerLen === 1 ? "syllable" : "syllables"} · 6 tries · UTC`;
+    if (!difficulty) return `Choose a mode to start · ${base}`;
+    if (difficulty === "hard") return `Category + tile colors · safety after 5 wrong · ${base}`;
+    if (difficulty === "normal") return `Emoji + category · milestones on wrong guesses · ${base}`;
+    return `Learner hints · wrong-guess milestones · ${base}`;
+  }, [difficulty, answerLen]);
+
+  const practiceHowToLine = useMemo(() => {
+    if (!difficulty) return "Practice · choose a mode to start";
+    if (difficulty === "hard") return "Practice · minimal hints · streak = daily only";
+    if (difficulty === "normal") return "Practice · limited hints · streak = daily only";
+    return "Practice · full hints · streak = daily only";
+  }, [difficulty]);
+
   return (
     <div
-      className="mx-auto flex h-[100dvh] max-h-[100dvh] min-h-0 w-full max-w-[500px] flex-col gap-1 overflow-hidden px-2 pt-[max(0.1rem,env(safe-area-inset-top))] pb-[max(0.15rem,env(safe-area-inset-bottom))] font-sans text-stone-800 sm:gap-1.5 sm:px-3"
+      className="mx-auto flex h-[100dvh] max-h-[100dvh] min-h-0 w-full max-w-[500px] flex-col gap-0.5 overflow-hidden px-[max(0.5rem,env(safe-area-inset-left))] pr-[max(0.5rem,env(safe-area-inset-right))] pt-[max(0.25rem,env(safe-area-inset-top))] pb-[max(0.25rem,env(safe-area-inset-bottom))] font-sans text-stone-800 max-[480px]:gap-1 sm:gap-1.5 sm:px-3"
     >
-      <header className="flex shrink-0 flex-col gap-0">
+      <header className="flex max-h-[3.125rem] shrink-0 flex-col justify-center gap-0 sm:max-h-none sm:gap-0.5">
         <div className="flex items-center justify-between gap-1">
           <button
             type="button"
             onClick={() => setShowStats(true)}
-            className="min-h-[28px] min-w-[2.5rem] shrink-0 rounded-md px-1.5 py-0.5 text-[9px] text-stone-600 hover:bg-stone-200/60 hover:text-stone-900 sm:min-h-[32px] sm:px-2 sm:py-1 sm:text-xs"
+            className="flex min-h-11 min-w-11 shrink-0 items-center justify-center rounded-md px-2 text-xs text-stone-700 hover:bg-stone-200/70 hover:text-stone-900 sm:min-h-[44px] sm:min-w-[44px] sm:text-xs"
           >
             Stats
           </button>
-          <div className="flex min-w-0 flex-1 flex-col items-center gap-0 px-1">
-            <h1 className="font-serif text-lg leading-none tracking-tight text-stone-900 sm:text-2xl">
+          <div className="flex min-w-0 flex-1 flex-col items-center gap-0.5 px-1">
+            <h1 className="font-serif text-[clamp(1.125rem,4.5vw,1.375rem)] leading-none tracking-tight text-stone-900 sm:text-2xl">
               Hangle
             </h1>
-            <span
-              className={`shrink-0 rounded-full border px-2 py-0.5 text-[10px] font-medium uppercase tracking-wide sm:text-[11px] ${
-                sessionMode === "daily"
-                  ? "border-amber-400/80 bg-amber-50 text-amber-900"
-                  : "border-stone-400/60 bg-stone-100 text-stone-700"
+            <div className="flex flex-wrap items-center justify-center gap-1">
+              <span
+                className={`shrink-0 rounded-full border px-2 py-0.5 text-[10px] font-medium uppercase tracking-wide sm:text-[11px] ${
+                  sessionMode === "daily"
+                    ? "border-amber-400/80 bg-amber-50 text-amber-900"
+                    : "border-stone-400/60 bg-stone-100 text-stone-700"
+                }`}
+              >
+                {sessionMode === "daily" ? "Today's word" : "Practice"}
+              </span>
+              {difficulty !== null && (
+                <button
+                  type="button"
+                  aria-label="Change difficulty"
+                  onClick={() => setSettingsOpen(true)}
+                  className="shrink-0 rounded-full border border-amber-500/75 bg-[#f5f0e8] px-2 py-0.5 text-[10px] font-semibold tabular-nums text-stone-900 shadow-sm ring-2 ring-amber-400/30 transition hover:bg-[#efe8dc] hover:ring-amber-500/45 active:scale-[0.98] sm:text-[11px]"
+                >
+                  {difficultyBadgeLabel(difficulty)}
+                </button>
+              )}
+            </div>
+          </div>
+          <div className="flex shrink-0 items-center gap-0.5">
+            <button
+              type="button"
+              aria-label="Settings"
+              disabled={!difficulty}
+              onClick={() => {
+                if (!difficulty) return;
+                setSettingsOpen(true);
+              }}
+              className={`flex min-h-11 min-w-11 items-center justify-center rounded-md px-1 text-lg leading-none sm:min-h-[44px] sm:min-w-[44px] ${
+                difficulty
+                  ? "text-stone-700 hover:bg-stone-200/70 hover:text-stone-900"
+                  : "cursor-not-allowed text-stone-400"
               }`}
             >
-              {sessionMode === "daily" ? "Today's word" : "Practice"}
-            </span>
+              ⚙️
+            </button>
+            <button
+              type="button"
+              onClick={() =>
+                (status === "won" || status === "lost") &&
+                setEndModal({ open: true, kind: status === "won" ? "won" : "lost" })
+              }
+              className={`flex min-h-11 min-w-[4.25rem] shrink-0 items-center justify-center rounded-md px-2 text-xs sm:min-h-[44px] sm:min-w-[4.5rem] sm:text-xs ${
+                status === "won" || status === "lost"
+                  ? "text-stone-700 hover:bg-stone-200/70 hover:text-stone-900"
+                  : "pointer-events-none invisible"
+              }`}
+            >
+              Summary
+            </button>
           </div>
-          <button
-            type="button"
-            onClick={() =>
-              (status === "won" || status === "lost") &&
-              setEndModal({ open: true, kind: status === "won" ? "won" : "lost" })
-            }
-            className={`min-h-[28px] min-w-[2.5rem] shrink-0 rounded-md px-1.5 py-0.5 text-[9px] sm:min-h-[32px] sm:px-2 sm:py-1 sm:text-xs ${
-              status === "won" || status === "lost"
-                ? "text-stone-600 hover:bg-stone-200/60 hover:text-stone-900"
-                : "pointer-events-none invisible"
-            }`}
-          >
-            Summary
-          </button>
         </div>
-        <p className="text-center text-[8px] tabular-nums leading-tight text-stone-500 sm:text-[10px]">
+        <p className="text-center text-[11px] tabular-nums leading-tight text-stone-600 max-[480px]:text-[12px] sm:text-[10px] sm:text-stone-500">
           Today · {playedToday} played
         </p>
       </header>
 
-      <p className="line-clamp-2 shrink-0 text-balance text-center text-[9px] leading-tight text-stone-500 max-[667px]:text-[8px] sm:text-[10px] sm:leading-snug">
-        {sessionMode === "daily" ? (
-          <>
-            Hints unlock each guess · {answerLen}{" "}
-            {answerLen === 1 ? "syllable" : "syllables"} · 6 tries · UTC
-          </>
-        ) : (
-          <>Practice · hints stack · streak = daily only</>
-        )}
-      </p>
+      {modeToast && (
+        <div
+          role="status"
+          aria-live="polite"
+          className="pointer-events-none fixed left-1/2 top-[max(0.35rem,env(safe-area-inset-top))] z-[60] flex -translate-x-1/2 justify-center px-3 sm:top-[max(0.5rem,env(safe-area-inset-top))]"
+        >
+          <p className="hint-fade-in rounded-full border border-stone-400/80 bg-[#faf7f0]/98 px-4 py-2 text-center text-[11px] font-semibold text-stone-900 shadow-lg backdrop-blur-[2px] sm:text-xs">
+            {modeToast}
+          </p>
+        </div>
+      )}
 
-      {hydrated && status === "playing" && (
-        <div className="relative z-[1] w-full shrink-0">
+      <div className="shrink-0 space-y-0.5 text-center">
+        <p className="line-clamp-2 text-balance text-[13px] leading-snug text-stone-600 max-[480px]:text-[14px] sm:text-[10px] sm:leading-snug sm:text-stone-500 md:text-[11px]">
+          {sessionMode === "daily" ? dailyHowToLine : practiceHowToLine}
+        </p>
+        <p className="text-[11px] leading-snug text-stone-500 max-[480px]:text-[12px] sm:text-[10px] sm:text-stone-500">
+          For Korean learners (Easy) and Wordle veterans (Hard)
+        </p>
+      </div>
+
+      {hydrated && status === "playing" && difficulty !== null && visible && (
+        <div
+          key={`hints-${difficulty}`}
+          className="relative z-[1] w-full shrink-0 transition-opacity duration-300 ease-out"
+        >
           {hintToastVisible && (
             <div className="pointer-events-none absolute bottom-full left-1/2 z-30 mb-1 flex -translate-x-1/2 justify-center">
               <div
@@ -708,141 +854,199 @@ export function Game() {
               </div>
             </div>
           )}
-          <section
-            aria-label="Hints"
-            className={`flex max-h-[150px] shrink-0 flex-col overflow-hidden rounded-xl border border-stone-300/55 bg-[var(--hint-card-bg)] shadow-sm transition-shadow sm:max-h-[200px] ${hintCardPulse ? "hint-card-pulse-once" : ""}`}
-          >
-            {/* Fixed header: progress + emoji + category + meaning (once unlocked) */}
-            <div className="shrink-0 border-b border-stone-400/25 px-4 pb-3 pt-4 text-left sm:px-5">
-              <div className="flex items-center justify-between gap-2">
-                <span className="font-serif text-[11px] font-semibold tabular-nums text-stone-800 sm:text-xs">
-                  Hint {hintsUnlocked}/5
-                </span>
-                <div className="flex shrink-0 gap-1" aria-hidden>
-                  {[0, 1, 2, 3, 4].map((i) => (
-                    <span
-                      key={i}
-                      className={`h-1.5 w-1.5 rounded-full ${
-                        i < hintsUnlocked ? "bg-amber-600" : "bg-stone-300/90"
-                      }`}
-                    />
-                  ))}
-                </div>
-              </div>
-              <p className="mt-1 text-[9px] leading-snug text-stone-500 sm:text-[10px]">{nextHintSubtitle}</p>
 
-              <div className="mt-2 flex items-center gap-2.5">
-                {showImage && imageSrc ? (
-                  <div className="relative h-10 w-10 shrink-0 overflow-hidden rounded-lg border border-stone-300/50 bg-white/80">
-                    <Image
-                      src={imageSrc}
-                      alt=""
-                      fill
-                      sizes="40px"
-                      className="object-cover"
-                      onError={() => setImgBroken(true)}
-                    />
-                  </div>
-                ) : (
-                  <span
-                    className="flex h-10 w-10 shrink-0 select-none items-center justify-center text-[1.65rem] leading-none sm:text-[1.75rem]"
-                    style={{
-                      fontFamily:
-                        "system-ui, 'Segoe UI Emoji', 'Apple Color Emoji', sans-serif",
-                    }}
-                    aria-hidden
-                  >
-                    {safeWordDisplay.emoji}
-                  </span>
-                )}
-                <span className="max-w-[min(100%,14rem)] truncate rounded-full border border-stone-400/55 bg-white/40 px-2.5 py-1 text-[9px] font-semibold uppercase tracking-[0.14em] text-stone-800">
-                  {safeWordDisplay.categoryUpper}
-                </span>
-              </div>
-
-              {guesses.length >= 1 ? (
-                <div
-                  className={`mt-2 rounded-md px-1 py-1 ${freshHintTier === 1 ? "hint-row-bg-fresh" : ""}`}
-                >
-                  <p className="hint-scroll-row-title text-[8px] font-semibold uppercase tracking-wide text-stone-500">
-                    Meaning
-                  </p>
-                  <p className="font-serif text-[12px] leading-snug text-stone-900 sm:text-[13px]">
-                    &ldquo;{safeWordDisplay.meaning}&rdquo;
-                  </p>
-                </div>
-              ) : (
-                <p className="mt-2 text-[11px] font-medium leading-snug text-stone-600">
-                  Try to guess the Korean word!
-                </p>
-              )}
-            </div>
-
-            {/* Scroll body: incremental hints (definition → jamo → keyboard note → example) */}
-            <div
-              ref={hintScrollBodyRef}
-              className="hint-card-inner-scroll flex min-h-0 flex-1 flex-col divide-y divide-stone-400/25 overflow-y-auto overscroll-contain px-4 pb-4 pt-2 sm:px-5"
+          {visible.showFullHintCard && (
+            <section
+              aria-label="Hints"
+              className={`game-hint-card flex max-h-[min(180px,32dvh)] shrink-0 flex-col overflow-hidden rounded-xl border border-stone-300/55 bg-[var(--hint-card-bg)] shadow-sm transition-shadow max-[480px]:max-h-[180px] sm:max-h-[200px] ${hintCardPulse ? "hint-card-pulse-once" : ""}`}
             >
-              {guesses.length >= 2 && (
-                <div className={`hint-fade-in py-2 ${scrollHintRowClass(2)}`}>
-                  <p className="hint-scroll-row-title text-[8px] font-semibold uppercase tracking-wide text-stone-500">
-                    Definition
-                  </p>
-                  <p className="text-[11px] leading-snug text-stone-800 sm:text-xs">{safeWordDisplay.definition}</p>
-                </div>
-              )}
-
-              {guesses.length >= 3 && firstWordJamo && (
-                <div className={`hint-fade-in py-2 ${scrollHintRowClass(3)}`}>
-                  <p className="text-[11px] font-semibold leading-snug text-stone-900 sm:text-xs">
-                    Starts with{" "}
-                    <span className="font-mono text-sm tracking-wide text-stone-950">{firstWordJamo}</span>
-                  </p>
-                </div>
-              )}
-
-              {guesses.length >= 4 && (
-                <div className={`hint-fade-in py-2 ${scrollHintRowClass(4)}`}>
-                  <p className="hint-scroll-row-title text-[8px] font-semibold uppercase tracking-wide text-stone-500">
-                    Keyboard
-                  </p>
-                  <p className="text-[11px] leading-snug text-stone-800 sm:text-xs">
-                    Jamo used in the answer are highlighted on the keyboard below.
-                  </p>
-                </div>
-              )}
-
-              {guesses.length >= 5 && (
-                <div className={`hint-fade-in py-2 ${scrollHintRowClass(5)}`}>
-                  <p className="mb-1 text-center text-[9px] font-bold uppercase tracking-wide text-red-700">
-                    Last chance!
-                  </p>
-                  <div className="flex items-start justify-between gap-2">
-                    <p className="hint-scroll-row-title text-[8px] font-semibold uppercase tracking-wide text-stone-500">
-                      Example
-                    </p>
-                    {exampleKoreanForTts ? (
-                      <button
-                        type="button"
-                        onClick={() => speakKoreanWord("hint-example", exampleKoreanForTts)}
-                        aria-label="Listen to Korean pronunciation from this example"
-                        className={`shrink-0 rounded-md border border-stone-400/70 bg-white/90 px-2 py-1 text-[13px] leading-none text-stone-800 shadow-sm transition hover:bg-white active:scale-95 ${ttsPlaying === "hint-example" ? "ring-2 ring-amber-400/75 bg-amber-50/90" : ""}`}
-                      >
-                        🔊
-                      </button>
-                    ) : null}
+              <div className="shrink-0 border-b border-stone-400/25 px-3 pb-2 pt-3 text-left max-[480px]:px-3 max-[480px]:pb-2 max-[480px]:pt-3 sm:px-5 sm:pb-3 sm:pt-4">
+                {visible.showHintDotsRow && visible.hintDotsTotal > 0 && (
+                  <div className="flex items-center justify-between gap-2">
+                    <span className="font-serif text-[11px] font-semibold tabular-nums text-stone-800 sm:text-xs">
+                      {visible.dotsTitle} · {visible.hintProgressLabel}
+                    </span>
+                    <div className="flex shrink-0 gap-1" aria-hidden>
+                      {Array.from({ length: visible.hintDotsTotal }, (_, i) => (
+                        <span
+                          key={i}
+                          className={`h-1.5 w-1.5 rounded-full ${
+                            i < visible.hintDotsFilled ? "bg-amber-600" : "bg-stone-300/90"
+                          }`}
+                        />
+                      ))}
+                    </div>
                   </div>
-                  <p className="mt-1 text-[11px] leading-snug text-stone-900 sm:text-xs">{safeWordDisplay.example}</p>
+                )}
+                <p className="mt-1 text-[9px] leading-snug text-stone-500 sm:text-[10px]">{visible.nextHintSubtitle}</p>
+
+                <div className="mt-2 flex flex-wrap items-center gap-2.5">
+                  {visible.showWordImage && showImage && imageSrc ? (
+                    <div className="relative h-10 w-10 shrink-0 overflow-hidden rounded-lg border border-stone-300/50 bg-white/80">
+                      <Image
+                        src={imageSrc}
+                        alt=""
+                        fill
+                        sizes="40px"
+                        className="object-cover"
+                        onError={() => setImgBroken(true)}
+                      />
+                    </div>
+                  ) : visible.showEmoji ? (
+                    <span
+                      className="flex h-10 w-10 shrink-0 select-none items-center justify-center text-[1.65rem] leading-none sm:text-[1.75rem]"
+                      style={{
+                        fontFamily:
+                          "system-ui, 'Segoe UI Emoji', 'Apple Color Emoji', sans-serif",
+                      }}
+                      aria-hidden
+                    >
+                      {safeWordDisplay.emoji}
+                    </span>
+                  ) : null}
+                  {visible.showCategoryPill && (
+                    <span className="max-w-[min(100%,14rem)] truncate rounded-full border border-stone-400/55 bg-white/40 px-2.5 py-1 text-[9px] font-semibold uppercase tracking-[0.14em] text-stone-800">
+                      {safeWordDisplay.categoryUpper}
+                    </span>
+                  )}
                 </div>
-              )}
-            </div>
-          </section>
+
+                {visible.showMeaning ? (
+                  <div
+                    className={`mt-2 rounded-md px-1 py-1 ${freshHintTier === 1 && difficulty === "normal" ? "hint-row-bg-fresh" : ""}`}
+                  >
+                    <p className="hint-scroll-row-title text-[8px] font-semibold uppercase tracking-wide text-stone-500">
+                      Meaning
+                    </p>
+                    <p className="font-serif text-[12px] leading-snug text-stone-900 sm:text-[13px]">
+                      &ldquo;{safeWordDisplay.meaning}&rdquo;
+                    </p>
+                  </div>
+                ) : visible.tryGuessPlaceholder ? (
+                  <p className="mt-2 text-[11px] font-medium leading-snug text-stone-600">
+                    Try to guess the Korean word!
+                  </p>
+                ) : null}
+              </div>
+
+              <div
+                ref={hintScrollBodyRef}
+                className="hint-card-inner-scroll flex min-h-0 flex-1 flex-col divide-y divide-stone-400/25 overflow-y-auto overscroll-contain px-4 pb-4 pt-2 sm:px-5"
+              >
+                {difficulty === "easy" && visible.showDefinition && (
+                  <div className={`hint-fade-in py-2 ${scrollHintRowClass(2)}`}>
+                    <p className="hint-scroll-row-title text-[8px] font-semibold uppercase tracking-wide text-stone-500">
+                      Definition
+                    </p>
+                    <p className="text-[11px] leading-snug text-stone-800 sm:text-xs">{safeWordDisplay.definition}</p>
+                  </div>
+                )}
+
+                {difficulty === "easy" && visible.showExample && (
+                  <div className={`hint-fade-in py-2 ${scrollHintRowClass(3)}`}>
+                    <div className="flex items-start justify-between gap-2">
+                      <p className="hint-scroll-row-title text-[8px] font-semibold uppercase tracking-wide text-stone-500">
+                        Example
+                      </p>
+                      {exampleKoreanForTts ? (
+                        <button
+                          type="button"
+                          onClick={() => speakKoreanWord("hint-example", exampleKoreanForTts)}
+                          aria-label="Listen to Korean pronunciation from this example"
+                          className={`flex min-h-11 min-w-11 shrink-0 items-center justify-center rounded-md border border-stone-400/70 bg-white/90 text-[15px] leading-none text-stone-800 shadow-sm transition hover:bg-white active:scale-95 sm:text-[13px] ${ttsPlaying === "hint-example" ? "ring-2 ring-amber-400/75 bg-amber-50/90" : ""}`}
+                        >
+                          🔊
+                        </button>
+                      ) : null}
+                    </div>
+                    <p className="mt-1 text-[11px] leading-snug text-stone-900 sm:text-xs">{safeWordDisplay.example}</p>
+                  </div>
+                )}
+
+                {difficulty === "easy" && visible.showJamo && firstWordJamo && (
+                  <div className={`hint-fade-in py-2 ${scrollHintRowClass(4)}`}>
+                    <p className="text-[11px] font-semibold leading-snug text-stone-900 sm:text-xs">
+                      Starts with{" "}
+                      <span className="font-mono text-sm tracking-wide text-stone-950">{firstWordJamo}</span>
+                    </p>
+                  </div>
+                )}
+
+                {visible.showKeyboardHelpRow && (
+                  <div className={`hint-fade-in py-2 ${scrollHintRowClass(5)}`}>
+                    <p className="hint-scroll-row-title text-[8px] font-semibold uppercase tracking-wide text-stone-500">
+                      Keyboard
+                    </p>
+                    <p className="text-[11px] leading-snug text-stone-800 sm:text-xs">
+                      Jamo used in the answer are highlighted on the keyboard below.
+                    </p>
+                  </div>
+                )}
+
+                {difficulty === "easy" && visible.lastChanceEasy && (
+                  <div className={`hint-fade-in py-2 ${scrollHintRowClass(6)}`}>
+                    <p className="mb-1 text-center text-[9px] font-bold uppercase tracking-wide text-red-700">
+                      Last chance · 거의 정답
+                    </p>
+                    <p className="text-center font-serif text-sm font-semibold text-stone-900 sm:text-base">
+                      {almostAnswerLine(answer)}
+                    </p>
+                  </div>
+                )}
+              </div>
+            </section>
+          )}
+
+          {visible.showHardCategoryStrip && (
+            <section
+              aria-label="Hard mode clues"
+              className={`game-hint-card flex max-h-[min(140px,26dvh)] shrink-0 flex-col overflow-hidden rounded-xl border border-stone-300/55 bg-[var(--hint-card-bg)] shadow-sm transition-shadow max-[480px]:max-h-[130px] sm:max-h-[150px] ${hintCardPulse ? "hint-card-pulse-once" : ""}`}
+            >
+              <div className="px-3 py-3 text-left sm:px-5 sm:py-4">
+                {visible.showHintDotsRow && (
+                  <div className="flex items-center justify-between gap-2">
+                    <span className="font-serif text-[11px] font-semibold tabular-nums text-stone-800 sm:text-xs">
+                      {visible.dotsTitle} · {visible.hintProgressLabel}
+                    </span>
+                    <div className="flex shrink-0 gap-1" aria-hidden>
+                      {Array.from({ length: visible.hintDotsTotal }, (_, i) => (
+                        <span
+                          key={i}
+                          className={`h-1.5 w-1.5 rounded-full ${
+                            i < visible.hintDotsFilled ? "bg-amber-600" : "bg-stone-300/90"
+                          }`}
+                        />
+                      ))}
+                    </div>
+                  </div>
+                )}
+                <p className="mt-1 text-[9px] leading-snug text-stone-500 sm:text-[10px]">{visible.nextHintSubtitle}</p>
+                <div className="mt-3 flex items-center gap-2">
+                  <span className="max-w-full truncate rounded-full border border-stone-400/55 bg-white/40 px-3 py-1.5 text-[10px] font-semibold uppercase tracking-[0.14em] text-stone-800 sm:text-[11px]">
+                    {safeWordDisplay.categoryUpper}
+                  </span>
+                </div>
+                {visible.showHardSafetyBanner && (
+                  <div
+                    className={`mt-3 rounded-lg border border-amber-400/75 bg-amber-50/95 px-3 py-2.5 ${freshHintTier === 7 ? "hint-row-bg-fresh" : ""}`}
+                  >
+                    <p className="text-center text-[11px] font-bold uppercase tracking-wide text-amber-950 sm:text-xs">
+                      {visible.hardSafetyTitle}
+                    </p>
+                    <p className="mt-1 text-center text-[10px] leading-snug text-amber-950/90 sm:text-[11px]">
+                      First consonant/vowel of the answer is highlighted on the keyboard.
+                    </p>
+                  </div>
+                )}
+              </div>
+            </section>
+          )}
         </div>
       )}
 
-      <div className="flex min-h-0 flex-1 flex-col gap-1 overflow-hidden pt-0.5">
+      <div className="flex min-h-0 flex-1 flex-col gap-0.5 overflow-hidden pt-0.5 max-[480px]:gap-1">
         <div className="relative flex min-h-0 flex-1 flex-col items-center justify-center overflow-hidden">
-          <div className="flex w-full max-w-[min(100%,22rem)] shrink-0 flex-col items-center gap-1 px-0.5 py-0">
+          <div className="flex w-full max-w-[min(100%,22rem)] shrink-0 flex-col items-center gap-1 px-0.5 py-0 sm:max-w-[22rem]">
             {inputNotice && (
               <p
                 key={inputNotice}
@@ -869,32 +1073,35 @@ export function Game() {
           </div>
         </div>
 
-        <div className="mt-auto w-full shrink-0 pb-0 pt-0.5">
+        <div className="game-keyboard-zone mt-auto w-full shrink-0 overflow-x-hidden overflow-y-auto pt-1 max-[480px]:max-h-[min(260px,42dvh)] sm:pt-0.5">
           <HangulKeyboard
             buffer={buffer}
             onBufferChange={setBuffer}
             onEnter={submitGuess}
-            disabled={status !== "playing" || !hydrated}
+            disabled={status !== "playing" || !hydrated || !difficulty}
             enterPaused={rowRevealBlock}
             targetSyllables={answerLen}
-            highlightAnswer={guesses.length >= 4 ? answer : ""}
+            highlightAnswer={visible?.highlightFullKeyboard ? answer : ""}
+            highlightFirstJamo={
+              visible?.highlightFirstJamoOnly && firstWordJamo ? firstWordJamo : ""
+            }
           />
         </div>
       </div>
 
       {showStats && (
         <div
-          className="fixed inset-0 z-40 flex items-end justify-center bg-black/30 p-4 sm:items-center"
+          className="fixed inset-0 z-40 flex items-end justify-center bg-black/30 p-3 sm:items-center sm:p-4"
           role="dialog"
           aria-modal="true"
           aria-labelledby="stats-title"
           onClick={() => setShowStats(false)}
         >
           <div
-            className="w-full max-w-sm rounded-xl border border-stone-200 bg-[#fafaf9] p-6 font-sans shadow-xl"
+            className="max-h-[90dvh] w-[min(100%,90vw)] max-w-[90vw] overflow-y-auto rounded-xl border border-stone-200 bg-[#fafaf9] p-4 font-sans shadow-xl sm:max-w-sm sm:p-6"
             onClick={(e) => e.stopPropagation()}
           >
-            <h2 id="stats-title" className="mb-4 font-serif text-2xl text-stone-900">
+            <h2 id="stats-title" className="mb-3 font-serif text-xl text-stone-900 sm:mb-4 sm:text-2xl">
               Statistics
             </h2>
             <div className="mb-6 grid grid-cols-4 gap-3 text-center">
@@ -958,20 +1165,20 @@ export function Game() {
 
       {endModal.open && (status === "won" || status === "lost") && (
         <div
-          className="fixed inset-0 z-40 flex items-end justify-center bg-black/30 p-4 sm:items-center"
+          className="fixed inset-0 z-40 flex items-end justify-center bg-black/30 p-3 sm:items-center sm:p-4"
           role="dialog"
           aria-modal="true"
           aria-labelledby="result-title"
           onClick={handleResultClose}
         >
           <div
-            className="max-h-[min(90dvh,640px)] w-full max-w-sm overflow-y-auto rounded-xl border border-stone-200 bg-[#fafaf9] p-6 font-sans shadow-xl"
+            className="max-h-[90dvh] w-[min(100%,90vw)] max-w-[90vw] overflow-y-auto rounded-xl border border-stone-200 bg-[#fafaf9] p-4 font-sans shadow-xl sm:max-w-sm sm:p-6"
             onClick={(e) => e.stopPropagation()}
           >
-            <h2 id="result-title" className="font-serif text-xl text-stone-900 sm:text-2xl">
+            <h2 id="result-title" className="font-serif text-[clamp(1.125rem,4vw,1.375rem)] text-stone-900 sm:text-2xl">
               {endModal.kind === "won" ? "🎉 정답!" : "Better luck next time!"}
             </h2>
-            <p className="mt-1 text-sm text-stone-500">
+            <p className="mt-1 text-sm text-stone-600">
               {endModal.kind === "won"
                 ? `You got it! · ${guesses.length}/6`
                 : `${guesses.length}/6 tries`}
@@ -1072,6 +1279,142 @@ export function Game() {
                 Close
               </button>
             </div>
+          </div>
+        </div>
+      )}
+
+      {pickDifficultyOpen && (
+        <div
+          className="fixed inset-0 z-50 flex animate-modal-backdrop max-[480px]:items-stretch max-[480px]:p-0 items-end justify-center bg-black/35 p-3 sm:items-center sm:p-4"
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="pick-mode-title"
+        >
+          <div
+            className="flex max-h-[92dvh] w-full max-w-md flex-col overflow-y-auto rounded-2xl border border-stone-300/70 bg-[#f5f0e8] p-4 shadow-2xl animate-modal-panel max-[480px]:max-h-none max-[480px]:min-h-0 max-[480px]:flex-1 max-[480px]:rounded-none max-[480px]:p-4 sm:max-h-[92dvh] sm:p-6"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <h2 id="pick-mode-title" className="font-serif text-xl font-semibold text-stone-900 sm:text-2xl">
+              🇰🇷 Choose your mode
+            </h2>
+            <p className="mt-1 text-sm text-stone-600">Pick once — we&apos;ll remember on this device.</p>
+            <div className="mt-4 flex min-h-0 flex-1 flex-col gap-3 sm:mt-5">
+              <button
+                type="button"
+                onClick={() => {
+                  saveDifficulty("easy");
+                  setDifficulty("easy");
+                  flashModeToast("easy");
+                  setPickDifficultyOpen(false);
+                }}
+                className="difficulty-card-hover w-full min-h-[48px] rounded-xl border border-stone-300/80 bg-[#faf7f0] px-4 py-4 text-left shadow-sm sm:min-h-[52px] sm:px-5 sm:py-5"
+              >
+                <p className="text-sm font-bold text-stone-900">🟢 EASY</p>
+                <p className="mt-1 text-[13px] leading-snug text-stone-700 sm:text-sm">
+                  All hints revealed. Best for Korean learners.
+                </p>
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  saveDifficulty("normal");
+                  setDifficulty("normal");
+                  flashModeToast("normal");
+                  setPickDifficultyOpen(false);
+                }}
+                className="difficulty-card-hover w-full min-h-[48px] rounded-xl border border-stone-300/80 bg-[#faf7f0] px-4 py-4 text-left shadow-sm sm:min-h-[52px] sm:px-5 sm:py-5"
+              >
+                <p className="text-sm font-bold text-stone-900">🟡 NORMAL</p>
+                <p className="mt-1 text-[13px] leading-snug text-stone-700 sm:text-sm">
+                  Some hints. Balanced challenge.
+                </p>
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  saveDifficulty("hard");
+                  setDifficulty("hard");
+                  flashModeToast("hard");
+                  setPickDifficultyOpen(false);
+                }}
+                className="difficulty-card-hover w-full min-h-[48px] rounded-xl border border-stone-300/80 bg-[#faf7f0] px-4 py-4 text-left shadow-sm sm:min-h-[52px] sm:px-5 sm:py-5"
+              >
+                <p className="text-sm font-bold text-stone-900">🔴 HARD</p>
+                <p className="mt-1 text-[13px] leading-snug text-stone-700 sm:text-sm">
+                  Minimal hints. For Wordle pros.
+                </p>
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {settingsOpen && difficulty !== null && (
+        <div
+          className="fixed inset-0 z-50 flex animate-modal-backdrop max-[480px]:items-stretch max-[480px]:p-0 items-end justify-center bg-black/35 p-3 sm:items-center sm:p-4"
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="settings-mode-title"
+          onClick={() => setSettingsOpen(false)}
+        >
+          <div
+            className="flex max-h-[92dvh] w-full max-w-md flex-col overflow-y-auto rounded-2xl border border-stone-300/70 bg-[#f5f0e8] p-4 shadow-2xl animate-modal-panel max-[480px]:max-h-none max-[480px]:min-h-0 max-[480px]:flex-1 max-[480px]:rounded-none max-[480px]:p-4 sm:max-h-[92dvh] sm:p-6"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <h2 id="settings-mode-title" className="font-serif text-xl font-semibold text-stone-900 sm:text-2xl">
+              Difficulty
+            </h2>
+            <p className="mt-1 text-sm text-stone-600">
+              Playing as <span className="font-semibold">{difficultyBadgeLabel(difficulty)}</span> · tap a mode to
+              switch instantly
+            </p>
+            <div className="mt-4 flex min-h-0 flex-1 flex-col gap-3 sm:mt-5">
+              {(
+                [
+                  {
+                    id: "easy" as const,
+                    title: "🟢 EASY",
+                    line: "All hints revealed. Best for Korean learners.",
+                  },
+                  {
+                    id: "normal" as const,
+                    title: "🟡 NORMAL",
+                    line: "Some hints. Balanced challenge.",
+                  },
+                  {
+                    id: "hard" as const,
+                    title: "🔴 HARD",
+                    line: "Minimal hints. For Wordle pros.",
+                  },
+                ] as const
+              ).map((opt) => (
+                <button
+                  key={opt.id}
+                  type="button"
+                  onClick={() => {
+                    const next = opt.id;
+                    saveDifficulty(next);
+                    if (next !== difficulty) flashModeToast(next);
+                    setDifficulty(next);
+                  }}
+                  className={`difficulty-card-hover w-full min-h-[48px] rounded-xl border px-4 py-4 text-left shadow-sm sm:min-h-[52px] sm:px-5 sm:py-5 ${
+                    difficulty === opt.id
+                      ? "border-amber-500/80 bg-amber-50/50 ring-2 ring-amber-400/40"
+                      : "border-stone-300/80 bg-[#faf7f0]"
+                  }`}
+                >
+                  <p className="text-sm font-bold text-stone-900">{opt.title}</p>
+                  <p className="mt-1 text-[13px] leading-snug text-stone-700 sm:text-sm">{opt.line}</p>
+                </button>
+              ))}
+            </div>
+            <button
+              type="button"
+              className="mt-5 w-full min-h-[44px] rounded-md border border-stone-400/70 bg-white py-2.5 text-sm font-medium text-stone-800 hover:bg-stone-50 sm:min-h-[48px]"
+              onClick={() => setSettingsOpen(false)}
+            >
+              Done
+            </button>
           </div>
         </div>
       )}
