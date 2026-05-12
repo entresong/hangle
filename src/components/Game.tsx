@@ -16,7 +16,7 @@ import {
   pickDailyWord,
   pickPracticeWord,
 } from "@/lib/dailyWord";
-import { evaluateGuess, tileToEmoji } from "@/lib/evaluate";
+import { evaluateGuess } from "@/lib/evaluate";
 import {
   appendPracticeClearedWord,
   defaultStats,
@@ -31,10 +31,10 @@ import {
   difficultyBadgeLabel,
   loadDifficulty,
   saveDifficulty,
-  shareDifficultySuffix,
   type Difficulty,
 } from "@/lib/difficulty";
 import { assembleBuffer } from "@/lib/hangulBuffer";
+import { copyTextToClipboard } from "@/lib/copyToClipboard";
 import { maskAnswerInText } from "@/lib/maskAnswerInText";
 import {
   cancelSpeech,
@@ -45,9 +45,10 @@ import {
 import phrasesJson from "@/data/phrases.json";
 import { TodayPhraseBonus } from "@/components/TodayPhraseBonus";
 import { WelcomeHelpModal } from "@/components/WelcomeHelpModal";
-import { pickTodayPhrase } from "@/lib/todayPhrase";
+import { getNextPhrase } from "@/lib/phraseRotation";
 import { validateWordEntries } from "@/lib/validateWords";
 import { getVisibleHints } from "@/lib/visibleHints";
+import { buildViralShareText } from "@/lib/viralShareText";
 import type { PhraseEntry } from "@/types/phrase";
 import type { PersistedGame, PuzzleMode, TileState, WordEntry } from "@/types/game";
 
@@ -59,12 +60,10 @@ const HANGLE_VISITED_KEY = "hangle_visited";
 /** Delay after color feedback before next-row draft + hint cues */
 const ROW_REVEAL_MS = 300;
 
-type TtsPlayingSlot =
-  | "result-word"
-  | "result-example"
-  | "hint-example"
-  | "bonus-phrase"
-  | "bonus-example";
+/** How long the “Brag” clipboard toast stays visible (read time on mobile). */
+const BRAG_TOAST_MS = 3800;
+
+type TtsPlayingSlot = "result-word" | "bonus-phrase" | "bonus-example";
 
 function pickLengthFeedbackMessage(requiredSyllables: number): string {
   const pools: Record<number, string[]> = {
@@ -177,10 +176,11 @@ export function Game() {
   const dayNumber = useMemo(() => getUtcDayNumber(), []);
   const dailyEntry = useMemo(() => pickDailyWord(WORDS), []);
   const dailyAnswer = dailyEntry.word;
-  const todayPhrase = useMemo(() => pickTodayPhrase(PHRASES), []);
-  const todayPhraseExampleKo = useMemo(
-    () => hangulChunksFromText(todayPhrase.example),
-    [todayPhrase],
+
+  const [bonusPhrase, setBonusPhrase] = useState<PhraseEntry | null>(null);
+  const bonusPhraseExampleKo = useMemo(
+    () => (bonusPhrase ? hangulChunksFromText(bonusPhrase.example) : ""),
+    [bonusPhrase],
   );
 
   const [sessionMode, setSessionMode] = useState<PuzzleMode>("daily");
@@ -215,7 +215,7 @@ export function Game() {
   const [ttsPlaying, setTtsPlaying] = useState<null | TtsPlayingSlot>(null);
   const [speechNotice, setSpeechNotice] = useState<string | null>(null);
   const speechNoticeTimerRef = useRef<number | null>(null);
-  const [clipboardNotice, setClipboardNotice] = useState<string | null>(null);
+  const [shareActionNotice, setShareActionNotice] = useState<string | null>(null);
   /** Same snapshot on server + first client paint; real data applied in hydrate effect */
   const [stats, setStats] = useState(() => defaultStats());
   const [showStats, setShowStats] = useState(false);
@@ -446,24 +446,6 @@ export function Game() {
     }
   }, [endModal.open]);
 
-  useEffect(() => {
-    if (!endModal.open || (status !== "won" && status !== "lost")) return;
-    try {
-      const key = "hangleSeenPhraseIds";
-      const raw = window.localStorage.getItem(key);
-      const parsed: unknown = raw ? JSON.parse(raw) : [];
-      const list = Array.isArray(parsed)
-        ? parsed.filter((x): x is number => typeof x === "number")
-        : [];
-      if (!list.includes(todayPhrase.id)) {
-        list.push(todayPhrase.id);
-        window.localStorage.setItem(key, JSON.stringify(list.slice(-300)));
-      }
-    } catch {
-      /* ignore corrupt LS */
-    }
-  }, [endModal.open, status, todayPhrase.id]);
-
   /** Keep latest scrollable hint in view (Normal/Hard). Easy uses per-tier scrollIntoView. */
   useEffect(() => {
     if (!hydrated || status !== "playing") return;
@@ -515,6 +497,7 @@ export function Game() {
       setStatus("playing");
       setStatsRecorded(false);
       setBuffer([]);
+      setBonusPhrase(null);
       setEndModal({ open: false, kind: "won" });
       setHydrated(true);
       return;
@@ -536,6 +519,20 @@ export function Game() {
     } else {
       setEndModal({ open: false, kind: "won" });
     }
+
+    if (loaded.status === "won" || loaded.status === "lost") {
+      let entry: PhraseEntry;
+      if (typeof loaded.bonusPhraseId === "number") {
+        entry = PHRASES.find((p) => p.id === loaded.bonusPhraseId) ?? PHRASES[0]!;
+      } else {
+        entry = getNextPhrase(PHRASES);
+        saveGame({ ...loaded, bonusPhraseId: entry.id });
+      }
+      setBonusPhrase(entry);
+    } else {
+      setBonusPhrase(null);
+    }
+
     setHydrated(true);
   }, [today, dailyAnswer]);
 
@@ -584,6 +581,7 @@ export function Game() {
     const persist = (
       nextStatus: PersistedGame["status"],
       recorded: boolean,
+      bonusPhraseId?: number,
     ) => {
       saveGame({
         puzzleDate: today,
@@ -593,6 +591,7 @@ export function Game() {
         evaluations: nextEval,
         status: nextStatus,
         statsRecorded: recorded,
+        ...(typeof bonusPhraseId === "number" ? { bonusPhraseId } : {}),
       });
     };
 
@@ -601,19 +600,23 @@ export function Game() {
     setBuffer([]);
 
     if (wonImmediate) {
+      const picked = getNextPhrase(PHRASES);
+      setBonusPhrase(picked);
       setStatus("won");
       if (!statsRecorded) applyStatsOnce(true, nextGuesses.length, statsKind);
       setStatsRecorded(true);
-      persist("won", true);
+      persist("won", true, picked.id);
       setEndModal({ open: true, kind: "won" });
       return;
     }
 
     if (lostImmediate) {
+      const picked = getNextPhrase(PHRASES);
+      setBonusPhrase(picked);
       setStatus("lost");
       if (!statsRecorded) applyStatsOnce(false, nextGuesses.length, statsKind);
       setStatsRecorded(true);
-      persist("lost", true);
+      persist("lost", true, picked.id);
       setEndModal({ open: true, kind: "lost" });
       return;
     }
@@ -685,6 +688,7 @@ export function Game() {
     setStatus("playing");
     setStatsRecorded(false);
     setBuffer([]);
+    setBonusPhrase(null);
     saveGame({
       puzzleDate: today,
       mode: "practice",
@@ -697,59 +701,72 @@ export function Game() {
   }, [status, today, dailyAnswer, clearHintsTimers]);
 
   const shareText = useMemo(() => {
-    const lines = evaluations
-      .filter((row) => row.length === answer.length)
-      .map((row) => row.map(tileToEmoji).join(""));
-    const resultLine =
-      status === "won" ? `${guesses.length}/6` : status === "lost" ? "X/6" : "";
-    const modeTag = sessionMode === "practice" ? " (Practice)" : "";
-    const diffSuffix = shareDifficultySuffix(difficulty ?? "easy");
-    const headParts = [`Hangle #${dayNumber}${modeTag}`];
-    if (resultLine) headParts.push(resultLine);
-    headParts.push(diffSuffix);
-    const firstLine = headParts.join(" ");
-    const syllableNote =
-      answer.length === 1
-        ? "1 syllable"
-        : `${answer.length} syllables`;
-    const body = [firstLine, ...lines, "", `hangle — Korean spelling (${syllableNote}, learning mode · UTC)`];
-    if (shareBaseUrl) {
-      body.push("", shareBaseUrl);
-    }
-    return body.join("\n");
+    if (status !== "won" && status !== "lost") return "";
+    return buildViralShareText({
+      dayNumber,
+      sessionMode,
+      status,
+      guessCount: guesses.length,
+      difficulty: difficulty ?? "easy",
+      evaluations,
+      answerLength: answer.length,
+      shareBaseUrl: shareBaseUrl || "https://hangle-three.vercel.app/",
+    });
   }, [
-    evaluations,
-    guesses.length,
     status,
     dayNumber,
-    shareBaseUrl,
     sessionMode,
-    answer.length,
+    guesses.length,
     difficulty,
+    evaluations,
+    answer.length,
+    shareBaseUrl,
   ]);
 
-  const copyShare = async () => {
-    try {
-      await navigator.clipboard.writeText(shareText);
-      setClipboardNotice("Copied.");
-      window.setTimeout(() => setClipboardNotice(null), 2000);
-    } catch {
-      setClipboardNotice("Could not copy.");
-      window.setTimeout(() => setClipboardNotice(null), 2000);
-    }
-  };
-
-  const nativeShare = async () => {
-    if (!navigator.share) {
-      copyShare();
+  const handleBragCopy = useCallback(async () => {
+    if (!shareText) {
+      setShareActionNotice("Play a round first — then brag here.");
+      window.setTimeout(() => setShareActionNotice(null), 2400);
       return;
     }
-    try {
-      await navigator.share({ title: "Hangle", text: shareText });
-    } catch {
-      /* user cancelled */
+    const ok = await copyTextToClipboard(shareText);
+    setShareActionNotice(
+      ok
+        ? "Copied! Show off your Korean skills 👑"
+        : "Could not copy — check browser permissions and try again.",
+    );
+    window.setTimeout(() => setShareActionNotice(null), ok ? BRAG_TOAST_MS : 3200);
+  }, [shareText]);
+
+  const handleTweetShare = useCallback(() => {
+    if (!shareText) {
+      setShareActionNotice("Nothing to share yet.");
+      window.setTimeout(() => setShareActionNotice(null), 2200);
+      return;
     }
-  };
+    if (process.env.NODE_ENV === "development") {
+      console.log("Share: X clicked");
+    }
+    const url = `https://twitter.com/intent/tweet?text=${encodeURIComponent(shareText)}`;
+    window.open(url, "_blank", "noopener,noreferrer");
+    setShareActionNotice("Opening X / Twitter…");
+    window.setTimeout(() => setShareActionNotice(null), 2000);
+  }, [shareText]);
+
+  const handleWhatsAppShare = useCallback(() => {
+    if (!shareText) {
+      setShareActionNotice("Nothing to share yet.");
+      window.setTimeout(() => setShareActionNotice(null), 2200);
+      return;
+    }
+    if (process.env.NODE_ENV === "development") {
+      console.log("Share: WhatsApp clicked");
+    }
+    const url = `https://wa.me/?text=${encodeURIComponent(shareText)}`;
+    window.open(url, "_blank", "noopener,noreferrer");
+    setShareActionNotice("Opening WhatsApp…");
+    window.setTimeout(() => setShareActionNotice(null), 2000);
+  }, [shareText]);
 
   const winRate =
     stats.gamesPlayed > 0
@@ -835,15 +852,6 @@ export function Game() {
     () => (shouldMaskAnswerInHints ? maskAnswerInText(safeWordDisplay.example, answer) : safeWordDisplay.example),
     [shouldMaskAnswerInHints, safeWordDisplay.example, answer],
   );
-
-  const exampleKoreanForTts = useMemo(() => {
-    const rawExample = safeWordDisplay.example;
-    const forExtract = shouldMaskAnswerInHints ? maskAnswerInText(rawExample, answer) : rawExample;
-    const fromExample = hangulChunksFromText(forExtract).trim();
-    if (fromExample) return fromExample;
-    if (shouldMaskAnswerInHints) return "";
-    return safeAnswerForTts.trim();
-  }, [shouldMaskAnswerInHints, safeWordDisplay.example, answer, safeAnswerForTts]);
 
   const speechUnavailable = ttsMountReady && !isSpeechSynthesisSupported();
 
@@ -1142,21 +1150,9 @@ export function Game() {
                     data-hint-tier="3"
                     className={`hint-fade-in py-2 ${scrollHintRowClass(3)}`}
                   >
-                    <div className="flex items-start justify-between gap-2">
-                      <p className="hint-scroll-row-title text-[8px] font-semibold uppercase tracking-wide text-stone-500">
-                        Example
-                      </p>
-                      {exampleKoreanForTts ? (
-                        <button
-                          type="button"
-                          onClick={() => speakKoreanWord("hint-example", exampleKoreanForTts)}
-                          aria-label="Listen to Korean pronunciation from this example"
-                          className={`flex min-h-11 min-w-11 shrink-0 items-center justify-center rounded-md border border-stone-400/70 bg-white/90 text-[15px] leading-none text-stone-800 shadow-sm transition hover:bg-white active:scale-95 sm:text-[13px] ${ttsPlaying === "hint-example" ? "ring-2 ring-amber-400/75 bg-amber-50/90" : ""}`}
-                        >
-                          🔊
-                        </button>
-                      ) : null}
-                    </div>
+                    <p className="hint-scroll-row-title text-[8px] font-semibold uppercase tracking-wide text-stone-500">
+                      Example
+                    </p>
                     <p
                       className={`mt-1 text-[11px] leading-snug text-stone-900 sm:text-xs ${freshHintTier === 3 ? "hint-new-text-line" : ""}`}
                     >
@@ -1439,20 +1435,52 @@ export function Game() {
 
             <p className="mt-3 text-sm text-stone-600">&ldquo;{safeWordDisplay.meaning}&rdquo;</p>
             <p className="mt-1 text-xs leading-snug text-stone-600">{safeWordDisplay.definition}</p>
-            <div className="mt-3 flex items-center justify-between gap-2">
-              <p className="text-xs uppercase tracking-wide text-stone-500">Example</p>
-              {exampleKoreanForTts ? (
+            <p className="mt-3 text-xs uppercase tracking-wide text-stone-500">Example</p>
+            <p className="mt-1 text-sm leading-relaxed text-stone-800">{safeWordDisplay.example}</p>
+
+            <div className="mt-6 rounded-xl border-2 border-amber-200/80 bg-[#f5f0e8] p-3 shadow-sm sm:p-4">
+              <p className="text-center text-xs font-bold uppercase tracking-wide text-amber-950">
+                Share your result
+              </p>
+              {shareActionNotice && (
+                <p
+                  className="mt-2 rounded-xl border border-amber-300/60 bg-white/95 px-3 py-2.5 text-center text-[13px] font-semibold leading-snug text-stone-900 shadow-sm sm:text-sm"
+                  role="status"
+                  aria-live="polite"
+                >
+                  {shareActionNotice}
+                </p>
+              )}
+              <div className="mt-3 grid grid-cols-3 gap-1.5 sm:gap-2">
                 <button
                   type="button"
-                  onClick={() => speakKoreanWord("result-example", exampleKoreanForTts)}
-                  aria-label="Listen to Korean phrases from this example"
-                  className={`shrink-0 rounded-lg border border-stone-400/80 bg-white px-3 py-2 text-base leading-none text-stone-800 shadow-sm hover:bg-stone-50 active:scale-95 ${ttsPlaying === "result-example" ? "border-amber-500/70 bg-amber-50 ring-2 ring-amber-400/60" : ""}`}
+                  onClick={handleBragCopy}
+                  aria-label="Copy your result to the clipboard to share"
+                  className="flex min-h-[48px] min-w-0 flex-col items-center justify-center gap-0.5 rounded-xl border border-amber-400/70 bg-amber-50/90 px-1 py-2 text-center text-[11px] font-bold leading-tight text-amber-950 shadow-sm transition hover:bg-amber-100/90 active:scale-[0.99] sm:px-2 sm:text-xs"
                 >
-                  🔊
+                  <span className="text-base leading-none sm:text-lg" aria-hidden>
+                    🏆
+                  </span>
+                  <span>Brag</span>
                 </button>
-              ) : null}
+                <button
+                  type="button"
+                  onClick={handleTweetShare}
+                  className="flex min-h-[48px] min-w-0 flex-col items-center justify-center gap-0.5 rounded-xl border border-stone-400/80 bg-white px-1 py-2 text-center text-[11px] font-semibold text-stone-900 shadow-sm transition hover:bg-stone-50 active:scale-[0.99] sm:px-2 sm:text-xs"
+                >
+                  <span aria-hidden>𝕏</span>
+                  X
+                </button>
+                <button
+                  type="button"
+                  onClick={handleWhatsAppShare}
+                  className="flex min-h-[48px] min-w-0 flex-col items-center justify-center gap-0.5 rounded-xl border border-stone-400/80 bg-white px-1 py-2 text-center text-[11px] font-semibold text-stone-900 shadow-sm transition hover:bg-stone-50 active:scale-[0.99] sm:px-2 sm:text-xs"
+                >
+                  <span aria-hidden>💬</span>
+                  WhatsApp
+                </button>
+              </div>
             </div>
-            <p className="mt-1 text-sm leading-relaxed text-stone-800">{safeWordDisplay.example}</p>
 
             <div className="mt-5 rounded-lg border border-stone-200/80 bg-white/60 px-3 py-3 text-sm text-stone-600">
               <p>
@@ -1466,15 +1494,17 @@ export function Game() {
               </p>
             </div>
 
-            <TodayPhraseBonus
-              phrase={todayPhrase}
-              exampleKorean={todayPhraseExampleKo}
-              speechUnavailable={speechUnavailable}
-              ttsPlayingPhrase={ttsPlaying === "bonus-phrase"}
-              ttsPlayingExample={ttsPlaying === "bonus-example"}
-              onSpeakPhrase={() => speakKoreanWord("bonus-phrase", todayPhrase.phrase)}
-              onSpeakExample={() => speakKoreanWord("bonus-example", todayPhraseExampleKo)}
-            />
+            {bonusPhrase ? (
+              <TodayPhraseBonus
+                phrase={bonusPhrase}
+                exampleKorean={bonusPhraseExampleKo}
+                speechUnavailable={speechUnavailable}
+                ttsPlayingPhrase={ttsPlaying === "bonus-phrase"}
+                ttsPlayingExample={ttsPlaying === "bonus-example"}
+                onSpeakPhrase={() => speakKoreanWord("bonus-phrase", bonusPhrase.phrase)}
+                onSpeakExample={() => speakKoreanWord("bonus-example", bonusPhraseExampleKo)}
+              />
+            ) : null}
 
             <button
               type="button"
@@ -1484,36 +1514,13 @@ export function Game() {
               💬 Send Feedback
             </button>
 
-            <div className="mt-5 flex flex-col gap-2">
-              {clipboardNotice && (
-                <p className="text-center text-xs font-medium text-stone-600" role="status">
-                  {clipboardNotice}
-                </p>
-              )}
-              <button
-                type="button"
-                onClick={copyShare}
-                className="w-full rounded-md bg-stone-800 py-2.5 text-sm text-white hover:bg-stone-700 min-h-[44px]"
-              >
-                Copy results + link
-              </button>
-              {typeof navigator !== "undefined" && typeof navigator.share === "function" && (
-                <button
-                  type="button"
-                  onClick={nativeShare}
-                  className="w-full rounded-md border border-stone-300 bg-white py-2.5 text-sm hover:bg-stone-50 min-h-[44px]"
-                >
-                  Share
-                </button>
-              )}
-              <button
-                type="button"
-                className="w-full rounded-md border border-stone-300 bg-white py-2.5 text-sm hover:bg-stone-50 min-h-[44px]"
-                onClick={handleResultClose}
-              >
-                Close
-              </button>
-            </div>
+            <button
+              type="button"
+              className="mt-5 w-full rounded-md border border-stone-300 bg-white py-2.5 text-sm hover:bg-stone-50 min-h-[44px]"
+              onClick={handleResultClose}
+            >
+              Close
+            </button>
           </div>
         </div>
       )}

@@ -24,12 +24,12 @@ export function TodayPhraseBonus({
 }: Props) {
   return (
     <section
-      aria-label="Today's bonus phrase"
+      aria-label="Bonus learning phrase"
       className="today-phrase-bonus mt-5 max-h-[min(52vh,28rem)] overflow-y-auto overscroll-contain rounded-2xl border-2 border-amber-200/90 bg-[#f5f0e8] p-3 shadow-inner sm:p-4"
     >
       <div className="flex items-center justify-between gap-2 border-b border-amber-300/40 pb-2">
         <p className="text-[10px] font-bold uppercase tracking-[0.12em] text-amber-900/90 sm:text-[11px]">
-          💬 Bonus · Today&apos;s Phrase
+          💬 Bonus phrase
         </p>
         <span className="shrink-0 rounded-full bg-white/70 px-2 py-0.5 text-[9px] font-semibold uppercase text-stone-600 ring-1 ring-stone-300/60">
           {phrase.category}

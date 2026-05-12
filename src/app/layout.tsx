@@ -15,10 +15,38 @@ const sans = DM_Sans({
   display: "swap",
 });
 
+const siteUrl =
+  process.env.NEXT_PUBLIC_SITE_URL?.trim().replace(/\/+$/, "") ||
+  "https://hangle-three.vercel.app";
+
 export const metadata: Metadata = {
-  title: "Hangle — Korean spelling practice",
+  metadataBase: new URL(`${siteUrl}/`),
+  title: "Hangle — Korean Wordle",
   description:
-    "Daily Korean word game for K-pop & K-drama fans: spell a 2-syllable word in Hangul in six tries (UTC), with welcome help and standard phrases. English UI.",
+    "Daily Korean word game for K-pop & K-drama fans: spell Hangul in six tries (UTC), with hints and bonus phrases. English UI.",
+  openGraph: {
+    title: "Hangle — Korean Wordle",
+    description:
+      "Daily Korean word game for K-pop & K-drama fans — learn Korean through play.",
+    url: "/",
+    siteName: "Hangle",
+    type: "website",
+    locale: "en_US",
+    images: [
+      {
+        url: "/opengraph-image",
+        width: 1200,
+        height: 630,
+        alt: "Hangle — Korean Wordle",
+      },
+    ],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Hangle — Korean Wordle",
+    description: "Daily Korean word game — learn Korean through play.",
+    images: ["/opengraph-image"],
+  },
 };
 
 export const viewport = {

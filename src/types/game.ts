@@ -31,6 +31,8 @@ export type PersistedGame = {
   mode?: PuzzleMode;
   /** Answer when `mode` is `practice` (daily answer is always derived from date) */
   practiceAnswer?: string;
+  /** Bonus phrase card shown when this round ended (stable across reloads) */
+  bonusPhraseId?: number;
 };
 
 export type PersistedStats = {
