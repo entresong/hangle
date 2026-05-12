@@ -1,110 +1,2602 @@
 [
-  {"word": "사랑", "length": 2, "meaning": "love", "definition": "A strong feeling of affection.", "example": "I love you (사랑해요)", "emoji": "❤️", "category": "EMOTION", "imagePrompt": "two hands forming a heart shape"},
-  {"word": "친구", "length": 2, "meaning": "friend", "definition": "A person you have a close bond with.", "example": "My best friend (제일 친한 친구)", "emoji": "👥", "category": "RELATION", "imagePrompt": "two friends laughing together"},
-  {"word": "가족", "length": 2, "meaning": "family", "definition": "People related to you.", "example": "My family (우리 가족)", "emoji": "👨‍👩‍👧", "category": "RELATION", "imagePrompt": "family sharing a meal"},
-  {"word": "한국", "length": 2, "meaning": "Korea", "definition": "The country in East Asia.", "example": "I live in Korea (한국에 살아요)", "emoji": "🇰🇷", "category": "PLACE", "imagePrompt": "Korean peninsula map silhouette with flag accent"},
-  {"word": "김치", "length": 2, "meaning": "kimchi", "definition": "Korean fermented vegetable side dish.", "example": "I love kimchi (김치 좋아해요)", "emoji": "🥬", "category": "FOOD", "imagePrompt": "kimchi in a Korean bowl"},
-  {"word": "라면", "length": 2, "meaning": "ramyeon", "definition": "Korean instant noodles.", "example": "Let's eat ramyeon (라면 먹자)", "emoji": "🍜", "category": "FOOD", "imagePrompt": "steaming bowl of Korean ramyeon"},
-  {"word": "학교", "length": 2, "meaning": "school", "definition": "A place of education.", "example": "I go to school (학교에 가요)", "emoji": "🏫", "category": "PLACE", "imagePrompt": "small school building with clock tower"},
-  {"word": "선생", "length": 2, "meaning": "teacher", "definition": "A person who teaches; often extended with 님 in speech.", "example": "Our teacher is kind (우리 선생은 친절해요)", "emoji": "🧑‍🏫", "category": "PERSON", "imagePrompt": "teacher at chalkboard"},
-  {"word": "학생", "length": 2, "meaning": "student", "definition": "A person who learns.", "example": "I am a student (저는 학생이에요)", "emoji": "🎓", "category": "PERSON", "imagePrompt": "student with books and graduation cap"},
-  {"word": "시간", "length": 2, "meaning": "time", "definition": "The duration of events.", "example": "I have no time (시간 없어요)", "emoji": "⏰", "category": "CONCEPT", "imagePrompt": "wall clock showing daytime"},
-  {"word": "사람", "length": 2, "meaning": "person", "definition": "A human being.", "example": "Good person (좋은 사람)", "emoji": "👤", "category": "PERSON", "imagePrompt": "simple human silhouette"},
-  {"word": "마음", "length": 2, "meaning": "heart / mind", "definition": "Inner feelings or thoughts.", "example": "Open your heart (마음을 열어요)", "emoji": "💗", "category": "EMOTION", "imagePrompt": "soft heart symbol with gentle light"},
-  {"word": "행복", "length": 2, "meaning": "happiness", "definition": "The feeling of joy.", "example": "Happiness is here (행복이 여기 있어요)", "emoji": "😊", "category": "EMOTION", "imagePrompt": "smiling face with hearts"},
-  {"word": "음식", "length": 2, "meaning": "food", "definition": "Things to eat.", "example": "Korean food (한국 음식)", "emoji": "🍽️", "category": "FOOD", "imagePrompt": "Korean meal tray with rice and sides"},
-  {"word": "음악", "length": 2, "meaning": "music", "definition": "Sounds for listening.", "example": "I love this music (이 음악 좋아해요)", "emoji": "🎵", "category": "ART", "imagePrompt": "musical notes and headphones"},
-  {"word": "영화", "length": 2, "meaning": "movie", "definition": "A film for watching.", "example": "Let's watch a movie (영화 보자)", "emoji": "🎬", "category": "ART", "imagePrompt": "movie clapperboard and popcorn"},
-  {"word": "노래", "length": 2, "meaning": "song", "definition": "Music with lyrics.", "example": "This song is pretty (이 노래 예뻐요)", "emoji": "🎤", "category": "ART", "imagePrompt": "microphone with music notes"},
-  {"word": "바다", "length": 2, "meaning": "sea", "definition": "Large body of saltwater.", "example": "Let's go to the sea (바다에 가자)", "emoji": "🌊", "category": "NATURE", "imagePrompt": "calm ocean waves meeting shore"},
-  {"word": "하늘", "length": 2, "meaning": "sky", "definition": "The space above the earth.", "example": "Blue sky (파란 하늘)", "emoji": "☁️", "category": "NATURE", "imagePrompt": "wide sky with clouds"},
-  {"word": "여름", "length": 2, "meaning": "summer", "definition": "The hottest season.", "example": "Hot summer (더운 여름)", "emoji": "☀️", "category": "TIME", "imagePrompt": "bright sun over beach"},
-  {"word": "가을", "length": 2, "meaning": "autumn", "definition": "The cool season with falling leaves.", "example": "Autumn leaves (가을 단풍)", "emoji": "🍂", "category": "TIME", "imagePrompt": "fall leaves warm colors"},
-  {"word": "겨울", "length": 2, "meaning": "winter", "definition": "The coldest season.", "example": "Cold winter (추운 겨울)", "emoji": "❄️", "category": "TIME", "imagePrompt": "gentle snowfall winter scene"},
-  {"word": "한식", "length": 2, "meaning": "Korean cuisine", "definition": "Traditional or everyday Korean meals.", "example": "I enjoy Korean food (한식 좋아해요)", "emoji": "🍚", "category": "FOOD", "imagePrompt": "Korean meal with rice and banchan side dishes"},
-  {"word": "한글", "length": 2, "meaning": "Hangul", "definition": "The Korean alphabet.", "example": "Let's learn Hangul (한글 배워요)", "emoji": "📜", "category": "CULTURE", "imagePrompt": "Hangul letters on paper educational style"},
-  {"word": "독서", "length": 2, "meaning": "reading", "definition": "The act of reading books.", "example": "I love reading (독서 좋아해요)", "emoji": "📖", "category": "ACTIVITY", "imagePrompt": "open book cozy illustration"},
-  {"word": "산책", "length": 2, "meaning": "walk", "definition": "A leisurely walk.", "example": "Let's take a walk (산책 가자)", "emoji": "🚶", "category": "ACTIVITY", "imagePrompt": "person walking in a park path"},
-  {"word": "선물", "length": 2, "meaning": "gift", "definition": "Something given to others.", "example": "Birthday gift (생일 선물)", "emoji": "🎁", "category": "THING", "imagePrompt": "wrapped gift box with ribbon"},
-  {"word": "이름", "length": 2, "meaning": "name", "definition": "What someone is called.", "example": "My name is… (제 이름은…)", "emoji": "📛", "category": "CONCEPT", "imagePrompt": "name tag badge illustration"},
-  {"word": "친절", "length": 2, "meaning": "kindness", "definition": "Friendly care shown to others.", "example": "Show kindness (친절을 보여요)", "emoji": "🤝", "category": "EMOTION", "imagePrompt": "handshake friendly gesture"},
-  {"word": "여행", "length": 2, "meaning": "travel", "definition": "Going to other places.", "example": "Travel in Korea (한국 여행)", "emoji": "✈️", "category": "ACTIVITY", "imagePrompt": "airplane and suitcase travel theme"},
-
-  {"word": "청춘", "length": 2, "meaning": "youth", "definition": "The time of young adulthood.", "example": "The spring of life (인생의 청춘)", "emoji": "🌸", "category": "CONCEPT", "imagePrompt": "young people in soft sunlight"},
-  {"word": "영원", "length": 2, "meaning": "eternity", "definition": "Something that lasts forever.", "example": "Forever friends (영원한 친구)", "emoji": "♾️", "category": "CONCEPT", "imagePrompt": "infinity symbol gentle gradient"},
-  {"word": "우주", "length": 2, "meaning": "universe", "definition": "Outer space and all that exists.", "example": "I love space (우주 좋아해요)", "emoji": "🌌", "category": "NATURE", "imagePrompt": "stars and galaxy"},
-  {"word": "봄날", "length": 2, "meaning": "spring day", "definition": "A day in spring.", "example": "A warm spring day (따뜻한 봄날)", "emoji": "🌷", "category": "TIME", "imagePrompt": "cherry blossoms sunny day"},
-  {"word": "추억", "length": 2, "meaning": "memory", "definition": "A fond recollection of the past.", "example": "Good memories (좋은 추억)", "emoji": "🖼️", "category": "CONCEPT", "imagePrompt": "old photo album nostalgic tone"},
-  {"word": "미래", "length": 2, "meaning": "future", "definition": "Time that has not yet come.", "example": "Think about the future (미래를 생각해요)", "emoji": "🔮", "category": "TIME", "imagePrompt": "horizon sunrise forward path"},
-  {"word": "약속", "length": 2, "meaning": "promise", "definition": "A commitment to someone.", "example": "I keep my promises (약속을 지켜요)", "emoji": "🤙", "category": "CONCEPT", "imagePrompt": "two people pinky promise"},
-  {"word": "진심", "length": 2, "meaning": "sincerity", "definition": "True feelings, not pretense.", "example": "I mean it (진심이에요)", "emoji": "💎", "category": "EMOTION", "imagePrompt": "heart with sparkle sincere"},
-  {"word": "무대", "length": 2, "meaning": "stage", "definition": "Where performers stand.", "example": "On stage (무대 위에서)", "emoji": "🎭", "category": "PLACE", "imagePrompt": "concert stage lights"},
-
-  {"word": "운명", "length": 2, "meaning": "fate", "definition": "What seems destined to happen.", "example": "Like fate (운명 같아요)", "emoji": "🎭", "category": "CONCEPT", "imagePrompt": "two paths meeting cinematic"},
-  {"word": "진실", "length": 2, "meaning": "truth", "definition": "What is real, not a lie.", "example": "Tell the truth (진실을 말해요)", "emoji": "✨", "category": "CONCEPT", "imagePrompt": "light revealing truth"},
-  {"word": "비밀", "length": 2, "meaning": "secret", "definition": "Something hidden from others.", "example": "It's a secret (비밀이에요)", "emoji": "🤫", "category": "CONCEPT", "imagePrompt": "closed envelope whisper"},
-  {"word": "결혼", "length": 2, "meaning": "marriage", "definition": "The union of two people as spouses.", "example": "They got married (결혼했어요)", "emoji": "💒", "category": "RELATION", "imagePrompt": "wedding rings simple"},
-  {"word": "이별", "length": 2, "meaning": "farewell", "definition": "Parting from someone you care about.", "example": "Sad goodbye (슬픈 이별)", "emoji": "💔", "category": "EMOTION", "imagePrompt": "train station goodbye silhouette"},
-  {"word": "우정", "length": 2, "meaning": "friendship", "definition": "Close bond between friends.", "example": "Our friendship (우리 우정)", "emoji": "🫶", "category": "RELATION", "imagePrompt": "friends arms around shoulders"},
-  {"word": "사연", "length": 2, "meaning": "story / situation", "definition": "A person's background or tale.", "example": "A sad story (슬픈 사연)", "emoji": "📜", "category": "CONCEPT", "imagePrompt": "letter paper emotional"},
-  {"word": "위로", "length": 2, "meaning": "comfort", "definition": "Words or acts that ease sadness.", "example": "Your words were comfort (그 말이 위로가 됐어요)", "emoji": "🫂", "category": "EMOTION", "imagePrompt": "hug comforting illustration"},
-
-  {"word": "안녕", "length": 2, "meaning": "peace / farewell wish", "definition": "Well-being or a parting wish; greetings use longer forms.", "example": "Wish you peace (안녕을 빌어요)", "emoji": "👋", "category": "CONCEPT", "imagePrompt": "waving hand friendly"},
-  {"word": "환영", "length": 2, "meaning": "welcome", "definition": "A greeting that receives someone gladly.", "example": "A warm welcome (따뜻한 환영)", "emoji": "👏", "category": "CONCEPT", "imagePrompt": "applause welcome sign"},
-  {"word": "인사", "length": 2, "meaning": "greeting / bow", "definition": "Words or gestures to greet or say goodbye.", "example": "Give a bow (인사를 드려요)", "emoji": "🙇", "category": "CONCEPT", "imagePrompt": "bow greeting illustration"},
-  {"word": "어제", "length": 2, "meaning": "yesterday", "definition": "The day before today.", "example": "Yesterday was fun (어제 재미있었어요)", "emoji": "📅", "category": "TIME", "imagePrompt": "calendar page previous day"},
-  {"word": "내일", "length": 2, "meaning": "tomorrow", "definition": "The day after today.", "example": "See you tomorrow (내일 봐요)", "emoji": "🌅", "category": "TIME", "imagePrompt": "sunrise next day"},
-  {"word": "오늘", "length": 2, "meaning": "today", "definition": "This present day.", "example": "Today is cold (오늘 추워요)", "emoji": "📆", "category": "TIME", "imagePrompt": "today highlight on calendar"},
-  {"word": "지금", "length": 2, "meaning": "now", "definition": "This very moment.", "example": "Right now (지금 바로)", "emoji": "⏱️", "category": "TIME", "imagePrompt": "clock hand now moment"},
-  {"word": "시작", "length": 2, "meaning": "start", "definition": "The beginning of something.", "example": "A new start (새로운 시작)", "emoji": "🚀", "category": "CONCEPT", "imagePrompt": "starting line flag"},
-  {"word": "미소", "length": 2, "meaning": "smile", "definition": "A happy expression on the face.", "example": "A bright smile (밝은 미소)", "emoji": "🙂", "category": "EMOTION", "imagePrompt": "gentle smile close-up"},
-  {"word": "성공", "length": 2, "meaning": "success", "definition": "Achieving a goal.", "example": "Wish you success (성공을 빌어요)", "emoji": "🏆", "category": "CONCEPT", "imagePrompt": "trophy simple gold"},
-  {"word": "사용", "length": 2, "meaning": "use / usage", "definition": "Employing something for a purpose.", "example": "How to use this (이것 사용법)", "emoji": "🔧", "category": "CONCEPT", "imagePrompt": "tool in hand simple"},
-  {"word": "노력", "length": 2, "meaning": "effort", "definition": "Hard work toward a goal.", "example": "Effort matters (노력이 중요해요)", "emoji": "💪", "category": "ACTIVITY", "imagePrompt": "flex effort motivation"},
-  {"word": "도전", "length": 2, "meaning": "challenge", "definition": "Taking on something difficult.", "example": "A new challenge (새로운 도전)", "emoji": "🎯", "category": "ACTIVITY", "imagePrompt": "target arrow challenge"},
-  {"word": "연습", "length": 2, "meaning": "practice", "definition": "Repeating to improve a skill.", "example": "Practice Korean (한국어 연습)", "emoji": "📝", "category": "ACTIVITY", "imagePrompt": "notebook pencil studying"},
-
-  {"word": "김밥", "length": 2, "meaning": "gimbap", "definition": "Rice and fillings rolled in seaweed.", "example": "Let's buy gimbap (김밥 사요)", "emoji": "🍙", "category": "FOOD", "imagePrompt": "gimbap roll sliced"},
-  {"word": "떡국", "length": 2, "meaning": "tteokguk", "definition": "Soup with sliced rice cakes.", "example": "New Year's soup (설날 떡국)", "emoji": "🥣", "category": "FOOD", "imagePrompt": "white soup bowl rice cake"},
-  {"word": "만두", "length": 2, "meaning": "dumplings", "definition": "Filled dough pockets, steamed or fried.", "example": "Steamed dumplings (찐만두)", "emoji": "🥟", "category": "FOOD", "imagePrompt": "mandu dumplings bamboo steamer"},
-  {"word": "빙수", "length": 2, "meaning": "shaved ice", "definition": "Sweet ice dessert with toppings.", "example": "Patbingsu in summer (여름 빙수)", "emoji": "🍧", "category": "FOOD", "imagePrompt": "shaved ice red beans fruit"},
-  {"word": "라떼", "length": 2, "meaning": "latte", "definition": "Milk coffee drink.", "example": "One latte, please (라떼 하나 주세요)", "emoji": "☕", "category": "FOOD", "imagePrompt": "coffee cup latte art"},
-  {"word": "커피", "length": 2, "meaning": "coffee", "definition": "A brewed drink from beans.", "example": "Coffee smells good (커피 향 좋아요)", "emoji": "☕", "category": "FOOD", "imagePrompt": "coffee beans cup steam"},
-  {"word": "우유", "length": 2, "meaning": "milk", "definition": "White drink from cows or plants.", "example": "A glass of milk (우유 한 잔)", "emoji": "🥛", "category": "FOOD", "imagePrompt": "milk carton glass"},
-  {"word": "과일", "length": 2, "meaning": "fruit", "definition": "Sweet plant foods like apples.", "example": "Eat more fruit (과일 많이 먹어요)", "emoji": "🍎", "category": "FOOD", "imagePrompt": "assorted fruit bowl"},
-  {"word": "채소", "length": 2, "meaning": "vegetables", "definition": "Edible plants like lettuce.", "example": "Fresh vegetables (신선한 채소)", "emoji": "🥬", "category": "FOOD", "imagePrompt": "vegetables basket green"},
-
-  {"word": "한옥", "length": 2, "meaning": "hanok", "definition": "A traditional Korean house.", "example": "Stay in a hanok (한옥에 묵어요)", "emoji": "🏯", "category": "PLACE", "imagePrompt": "traditional Korean house curved roof"},
-  {"word": "부채", "length": 2, "meaning": "fan", "definition": "A folding or round fan for air.", "example": "A paper fan (종이 부채)", "emoji": "🪭", "category": "THING", "imagePrompt": "traditional Korean fan"},
-  {"word": "등불", "length": 2, "meaning": "torch / lamp", "definition": "A portable light in the dark.", "example": "Old lamp light (등불 빛)", "emoji": "🕯️", "category": "THING", "imagePrompt": "lantern warm glow"},
-  {"word": "한지", "length": 2, "meaning": "Korean paper", "definition": "Traditional strong paper from Korea.", "example": "Writing on hanji (한지에 글씨를 써요)", "emoji": "📄", "category": "CULTURE", "imagePrompt": "Korean paper texture brush"},
-  {"word": "추석", "length": 2, "meaning": "Chuseok", "definition": "Korean harvest thanksgiving holiday.", "example": "Happy Chuseok (추석 잘 보내세요)", "emoji": "🌕", "category": "TIME", "imagePrompt": "full moon rice cakes family"},
-  {"word": "설날", "length": 2, "meaning": "Seollal", "definition": "Korean Lunar New Year.", "example": "New Year's bow (설날 세배)", "emoji": "🧧", "category": "TIME", "imagePrompt": "hanbok bow traditional new year"},
-  {"word": "명절", "length": 2, "meaning": "holiday", "definition": "A major traditional holiday.", "example": "During the holidays (명절에)", "emoji": "🎊", "category": "TIME", "imagePrompt": "family gathering holiday table"},
-
-  {"word": "바람", "length": 2, "meaning": "wind", "definition": "Moving air outdoors.", "example": "The wind is strong (바람이 세요)", "emoji": "💨", "category": "NATURE", "imagePrompt": "grass bending wind"},
-  {"word": "햇살", "length": 2, "meaning": "sunshine", "definition": "Warm rays of the sun.", "example": "Warm sunshine (따뜻한 햇살)", "emoji": "☀️", "category": "NATURE", "imagePrompt": "sun rays through window"},
-  {"word": "구름", "length": 2, "meaning": "cloud", "definition": "White or gray masses in the sky.", "example": "Clouds in the sky (하늘의 구름)", "emoji": "☁️", "category": "NATURE", "imagePrompt": "fluffy clouds blue sky"},
-  {"word": "노을", "length": 2, "meaning": "sunset glow", "definition": "Red or orange sky after sunset.", "example": "Beautiful sunset (아름다운 노을)", "emoji": "🌇", "category": "NATURE", "imagePrompt": "orange sunset horizon"},
-  {"word": "안개", "length": 2, "meaning": "fog", "definition": "Thick mist near the ground.", "example": "Morning fog (아침 안개)", "emoji": "🌫️", "category": "NATURE", "imagePrompt": "misty morning soft"},
-  {"word": "단풍", "length": 2, "meaning": "autumn leaves", "definition": "Colorful fall foliage.", "example": "Maple leaves (단풍 물들다)", "emoji": "🍁", "category": "NATURE", "imagePrompt": "red maple leaves"},
-  {"word": "새벽", "length": 2, "meaning": "dawn", "definition": "Early morning before sunrise.", "example": "At dawn (새벽에)", "emoji": "🌄", "category": "TIME", "imagePrompt": "dawn sky pink gradient"},
-
-  {"word": "머리", "length": 2, "meaning": "head / hair", "definition": "The top of the body or hair on it.", "example": "Wash your hair (머리 감아요)", "emoji": "💇", "category": "THING", "imagePrompt": "simple head silhouette"},
-  {"word": "얼굴", "length": 2, "meaning": "face", "definition": "The front of the head.", "example": "A kind face (친절한 얼굴)", "emoji": "😊", "category": "THING", "imagePrompt": "face outline friendly"},
-  {"word": "어깨", "length": 2, "meaning": "shoulder", "definition": "The joint by the upper arm.", "example": "My shoulders hurt (어깨가 아파요)", "emoji": "🧍", "category": "THING", "imagePrompt": "shoulders posture simple"},
-  {"word": "가슴", "length": 2, "meaning": "chest", "definition": "The front of the torso.", "example": "Hand on chest (가슴에 손)", "emoji": "🫀", "category": "THING", "imagePrompt": "chest area neutral medical style"},
-  {"word": "친척", "length": 2, "meaning": "relatives", "definition": "Family members beyond your household.", "example": "Visit relatives (친척 집에 가요)", "emoji": "👪", "category": "RELATION", "imagePrompt": "extended family gathering"},
-  {"word": "손님", "length": 2, "meaning": "guest / customer", "definition": "A visitor or customer.", "example": "Welcome, guest (어서 오세요, 손님)", "emoji": "🚪", "category": "PERSON", "imagePrompt": "guest entering cafe"},
-
-  {"word": "요리", "length": 2, "meaning": "cooking", "definition": "Preparing food to eat.", "example": "I like cooking (요리 좋아해요)", "emoji": "👨‍🍳", "category": "ACTIVITY", "imagePrompt": "cooking pan vegetables"},
-  {"word": "청소", "length": 2, "meaning": "cleaning", "definition": "Making a place tidy.", "example": "Weekend cleaning (주말 청소)", "emoji": "🧹", "category": "ACTIVITY", "imagePrompt": "broom dustpan home"},
-  {"word": "운동", "length": 2, "meaning": "exercise", "definition": "Physical activity for health.", "example": "Exercise every day (매일 운동해요)", "emoji": "🏃", "category": "ACTIVITY", "imagePrompt": "running shoes track"},
-  {"word": "공부", "length": 2, "meaning": "study", "definition": "Learning from books or class.", "example": "Study Korean (한국어 공부)", "emoji": "📚", "category": "ACTIVITY", "imagePrompt": "books desk lamp"},
-  {"word": "휴식", "length": 2, "meaning": "rest", "definition": "Time to relax and recover.", "example": "Need a rest (휴식이 필요해요)", "emoji": "🛋️", "category": "ACTIVITY", "imagePrompt": "cozy chair tea break"},
-  {"word": "등산", "length": 2, "meaning": "hiking", "definition": "Walking up mountains.", "example": "Go hiking (등산 가요)", "emoji": "⛰️", "category": "ACTIVITY", "imagePrompt": "mountain trail hikers"},
-  {"word": "수영", "length": 2, "meaning": "swimming", "definition": "Moving in water as sport.", "example": "Swimming is fun (수영 재미있어요)", "emoji": "🏊", "category": "ACTIVITY", "imagePrompt": "swimming pool blue"},
-  {"word": "그림", "length": 2, "meaning": "picture / drawing", "definition": "Art made with lines and colors.", "example": "Draw a picture (그림 그려요)", "emoji": "🎨", "category": "ART", "imagePrompt": "palette brush canvas"},
-  {"word": "사진", "length": 2, "meaning": "photo", "definition": "An image from a camera.", "example": "Take a photo (사진 찍어요)", "emoji": "📷", "category": "ART", "imagePrompt": "camera lens snapshot"},
-  {"word": "게임", "length": 2, "meaning": "game", "definition": "Play for fun or competition.", "example": "Play a game (게임 해요)", "emoji": "🎮", "category": "ACTIVITY", "imagePrompt": "game controller simple"}
+  {
+    "word": "사랑",
+    "length": 2,
+    "meaning": "love",
+    "definition": "A strong feeling of affection.",
+    "emoji": "❤️",
+    "category": "EMOTION",
+    "imagePrompt": "two hands forming a heart shape",
+    "examples": [
+      {
+        "korean": "사랑해",
+        "english": "I love you (to someone close)",
+        "context": "Casual"
+      },
+      {
+        "korean": "사랑합니다",
+        "english": "I love you (polite)",
+        "context": "Formal"
+      },
+      {
+        "korean": "사랑에 빠졌어",
+        "english": "I've fallen in love",
+        "context": "Daily"
+      }
+    ]
+  },
+  {
+    "word": "친구",
+    "length": 2,
+    "meaning": "friend",
+    "definition": "A person you have a close bond with.",
+    "emoji": "👥",
+    "category": "RELATION",
+    "imagePrompt": "two friends laughing together",
+    "examples": [
+      {
+        "korean": "우린 친구잖아",
+        "english": "We're friends, you know",
+        "context": "K-drama"
+      },
+      {
+        "korean": "주말에 친구 만났어",
+        "english": "I met a friend this weekend",
+        "context": "Daily"
+      },
+      {
+        "korean": "친구야, 고마워",
+        "english": "Thanks, friend",
+        "context": "Casual"
+      }
+    ]
+  },
+  {
+    "word": "가족",
+    "length": 2,
+    "meaning": "family",
+    "definition": "People related to you.",
+    "emoji": "👨‍👩‍👧",
+    "category": "RELATION",
+    "imagePrompt": "family sharing a meal",
+    "examples": [
+      {
+        "korean": "가족이 제일이야",
+        "english": "Family comes first",
+        "context": "K-drama"
+      },
+      {
+        "korean": "가족끼리 여행 갔어요",
+        "english": "We took a trip as a family",
+        "context": "Daily"
+      },
+      {
+        "korean": "가족분들께 안부 전해 주세요",
+        "english": "Please give my regards to your family",
+        "context": "Formal"
+      }
+    ]
+  },
+  {
+    "word": "한국",
+    "length": 2,
+    "meaning": "Korea",
+    "definition": "The country in East Asia.",
+    "emoji": "🇰🇷",
+    "category": "PLACE",
+    "imagePrompt": "Korean peninsula map silhouette with flag accent",
+    "examples": [
+      {
+        "korean": "한국에 살아요",
+        "english": "I live in Korea",
+        "context": "Daily"
+      },
+      {
+        "korean": "한국 가 본 적 있어?",
+        "english": "Have you ever been to Korea?",
+        "context": "Casual"
+      },
+      {
+        "korean": "한국 음식 정말 맛있어요",
+        "english": "Korean food is really delicious",
+        "context": "Daily"
+      }
+    ]
+  },
+  {
+    "word": "김치",
+    "length": 2,
+    "meaning": "kimchi",
+    "definition": "Korean fermented vegetable side dish.",
+    "emoji": "🥬",
+    "category": "FOOD",
+    "imagePrompt": "kimchi in a Korean bowl",
+    "examples": [
+      {
+        "korean": "김치 먹고 싶어",
+        "english": "I want some kimchi",
+        "context": "Daily"
+      },
+      {
+        "korean": "엄마 김치가 제일 맛있어",
+        "english": "Mom's kimchi tastes the best",
+        "context": "Casual"
+      },
+      {
+        "korean": "김치찌개 해 먹을까?",
+        "english": "Shall we make kimchi stew?",
+        "context": "Daily"
+      }
+    ]
+  },
+  {
+    "word": "라면",
+    "length": 2,
+    "meaning": "ramyeon",
+    "definition": "Korean instant noodles.",
+    "emoji": "🍜",
+    "category": "FOOD",
+    "imagePrompt": "steaming bowl of Korean ramyeon",
+    "examples": [
+      {
+        "korean": "라면 끓여 줄까?",
+        "english": "Want me to cook ramyeon?",
+        "context": "Daily"
+      },
+      {
+        "korean": "야식으로 라면 먹자",
+        "english": "Let's have ramyeon for a late-night snack",
+        "context": "Casual"
+      },
+      {
+        "korean": "라면은 물을 조금만 넣어요",
+        "english": "Use just a little water for ramyeon",
+        "context": "Daily"
+      }
+    ]
+  },
+  {
+    "word": "학교",
+    "length": 2,
+    "meaning": "school",
+    "definition": "A place of education.",
+    "emoji": "🏫",
+    "category": "PLACE",
+    "imagePrompt": "small school building with clock tower",
+    "examples": [
+      {
+        "korean": "학교에 가요",
+        "english": "I'm going to school",
+        "context": "Daily"
+      },
+      {
+        "korean": "학교 끝나고 연락해",
+        "english": "Text me after school",
+        "context": "Casual"
+      },
+      {
+        "korean": "학교에서 배운 거야",
+        "english": "I learned it at school",
+        "context": "Daily"
+      }
+    ]
+  },
+  {
+    "word": "선생",
+    "length": 2,
+    "meaning": "teacher",
+    "definition": "A person who teaches; often extended with 님 in speech.",
+    "emoji": "🧑‍🏫",
+    "category": "PERSON",
+    "imagePrompt": "teacher at chalkboard",
+    "examples": [
+      {
+        "korean": "우리 선생님은 친절하세요",
+        "english": "Our teacher is kind",
+        "context": "Formal"
+      },
+      {
+        "korean": "선생님, 질문 있어요",
+        "english": "Teacher, I have a question",
+        "context": "Formal"
+      },
+      {
+        "korean": "담임 선생님께 말씀드렸어요",
+        "english": "I spoke to my homeroom teacher",
+        "context": "Formal"
+      }
+    ]
+  },
+  {
+    "word": "학생",
+    "length": 2,
+    "meaning": "student",
+    "definition": "A person who learns.",
+    "emoji": "🎓",
+    "category": "PERSON",
+    "imagePrompt": "student with books and graduation cap",
+    "examples": [
+      {
+        "korean": "저는 학생이에요",
+        "english": "I'm a student",
+        "context": "Formal"
+      },
+      {
+        "korean": "학생 때가 그리워",
+        "english": "I miss my student days",
+        "context": "Daily"
+      },
+      {
+        "korean": "학생들, 조용히 해",
+        "english": "Students, be quiet",
+        "context": "Daily"
+      }
+    ]
+  },
+  {
+    "word": "시간",
+    "length": 2,
+    "meaning": "time",
+    "definition": "The duration of events.",
+    "emoji": "⏰",
+    "category": "CONCEPT",
+    "imagePrompt": "wall clock showing daytime",
+    "examples": [
+      {
+        "korean": "시간 없어, 빨리 와",
+        "english": "No time—hurry",
+        "context": "Casual"
+      },
+      {
+        "korean": "시간이 좀 걸릴 것 같아요",
+        "english": "It may take some time",
+        "context": "Formal"
+      },
+      {
+        "korean": "시간 날 때 연락해",
+        "english": "Hit me up when you have time",
+        "context": "Daily"
+      }
+    ]
+  },
+  {
+    "word": "사람",
+    "length": 2,
+    "meaning": "person",
+    "definition": "A human being.",
+    "emoji": "👤",
+    "category": "PERSON",
+    "imagePrompt": "simple human silhouette",
+    "examples": [
+      {
+        "korean": "좋은 사람 만났어",
+        "english": "I met a good person",
+        "context": "Daily"
+      },
+      {
+        "korean": "사람이 너무 많아",
+        "english": "There are too many people",
+        "context": "Daily"
+      },
+      {
+        "korean": "그 사람 믿어도 돼?",
+        "english": "Can we trust that person?",
+        "context": "K-drama"
+      }
+    ]
+  },
+  {
+    "word": "마음",
+    "length": 2,
+    "meaning": "heart / mind",
+    "definition": "Inner feelings or thoughts.",
+    "emoji": "💗",
+    "category": "EMOTION",
+    "imagePrompt": "soft heart symbol with gentle light",
+    "examples": [
+      {
+        "korean": "마음 편히 가져",
+        "english": "Relax; don't worry",
+        "context": "Casual"
+      },
+      {
+        "korean": "마음이 복잡해",
+        "english": "My feelings are all mixed up",
+        "context": "Daily"
+      },
+      {
+        "korean": "진심으로 감사한 마음이에요",
+        "english": "I'm truly grateful at heart",
+        "context": "Formal"
+      }
+    ]
+  },
+  {
+    "word": "행복",
+    "length": 2,
+    "meaning": "happiness",
+    "definition": "The feeling of joy.",
+    "emoji": "😊",
+    "category": "EMOTION",
+    "imagePrompt": "smiling face with hearts",
+    "examples": [
+      {
+        "korean": "행복했으면 좋겠어",
+        "english": "I hope you're happy",
+        "context": "K-drama"
+      },
+      {
+        "korean": "소소한 행복이야",
+        "english": "It's the little joys in life",
+        "context": "Daily"
+      },
+      {
+        "korean": "행복해 보여",
+        "english": "You look happy",
+        "context": "Casual"
+      }
+    ]
+  },
+  {
+    "word": "음식",
+    "length": 2,
+    "meaning": "food",
+    "definition": "Things to eat.",
+    "emoji": "🍽️",
+    "category": "FOOD",
+    "imagePrompt": "Korean meal tray with rice and sides",
+    "examples": [
+      {
+        "korean": "음식 나왔어요",
+        "english": "The food is here",
+        "context": "Daily"
+      },
+      {
+        "korean": "음식이 너무 맛있어요",
+        "english": "The food is so good",
+        "context": "Formal"
+      },
+      {
+        "korean": "음식점 예약했어?",
+        "english": "Did you book the restaurant?",
+        "context": "Daily"
+      }
+    ]
+  },
+  {
+    "word": "음악",
+    "length": 2,
+    "meaning": "music",
+    "definition": "Sounds for listening.",
+    "emoji": "🎵",
+    "category": "ART",
+    "imagePrompt": "musical notes and headphones",
+    "examples": [
+      {
+        "korean": "이 음악 좋다",
+        "english": "This song is great",
+        "context": "Casual"
+      },
+      {
+        "korean": "음악 들으면서 산책해",
+        "english": "I take walks while listening to music",
+        "context": "Daily"
+      },
+      {
+        "korean": "음악 취향이 비슷하네",
+        "english": "We have similar taste in music",
+        "context": "K-pop"
+      }
+    ]
+  },
+  {
+    "word": "영화",
+    "length": 2,
+    "meaning": "movie",
+    "definition": "A film for watching.",
+    "emoji": "🎬",
+    "category": "ART",
+    "imagePrompt": "movie clapperboard and popcorn",
+    "examples": [
+      {
+        "korean": "영화 보러 갈래?",
+        "english": "Want to go see a movie?",
+        "context": "Casual"
+      },
+      {
+        "korean": "그 영화 봤어?",
+        "english": "Have you seen that film?",
+        "context": "Daily"
+      },
+      {
+        "korean": "영화가 너무 길었어",
+        "english": "The movie felt too long",
+        "context": "Daily"
+      }
+    ]
+  },
+  {
+    "word": "노래",
+    "length": 2,
+    "meaning": "song",
+    "definition": "Music with lyrics.",
+    "emoji": "🎤",
+    "category": "ART",
+    "imagePrompt": "microphone with music notes",
+    "examples": [
+      {
+        "korean": "이 노래 중독됐어",
+        "english": "I'm hooked on this song",
+        "context": "K-pop"
+      },
+      {
+        "korean": "노래방 갈래?",
+        "english": "Want to hit the karaoke room?",
+        "context": "Casual"
+      },
+      {
+        "korean": "노래 잘하네",
+        "english": "You sing well",
+        "context": "Daily"
+      }
+    ]
+  },
+  {
+    "word": "바다",
+    "length": 2,
+    "meaning": "sea",
+    "definition": "Large body of saltwater.",
+    "emoji": "🌊",
+    "category": "NATURE",
+    "imagePrompt": "calm ocean waves meeting shore",
+    "examples": [
+      {
+        "korean": "바다 보러 가자",
+        "english": "Let's go see the sea",
+        "context": "Daily"
+      },
+      {
+        "korean": "바다 냄새 좋아",
+        "english": "I love the ocean air",
+        "context": "Casual"
+      },
+      {
+        "korean": "바다가 잔잔하네",
+        "english": "The sea is so calm",
+        "context": "Daily"
+      }
+    ]
+  },
+  {
+    "word": "하늘",
+    "length": 2,
+    "meaning": "sky",
+    "definition": "The space above the earth.",
+    "emoji": "☁️",
+    "category": "NATURE",
+    "imagePrompt": "wide sky with clouds",
+    "examples": [
+      {
+        "korean": "하늘이 맑네",
+        "english": "The sky is clear",
+        "context": "Daily"
+      },
+      {
+        "korean": "하늘을 봐",
+        "english": "Look at the sky",
+        "context": "Casual"
+      },
+      {
+        "korean": "하늘색이 예뻐",
+        "english": "The color of the sky is beautiful",
+        "context": "Daily"
+      }
+    ]
+  },
+  {
+    "word": "여름",
+    "length": 2,
+    "meaning": "summer",
+    "definition": "The hottest season.",
+    "emoji": "☀️",
+    "category": "TIME",
+    "imagePrompt": "bright sun over beach",
+    "examples": [
+      {
+        "korean": "여름엔 에어컨이 필수야",
+        "english": "AC is a must in summer",
+        "context": "Daily"
+      },
+      {
+        "korean": "여름 휴가 어디 갈 거야?",
+        "english": "Where are you going for summer break?",
+        "context": "Casual"
+      },
+      {
+        "korean": "여름이었으면 좋겠어",
+        "english": "I wish it were summer",
+        "context": "K-drama"
+      }
+    ]
+  },
+  {
+    "word": "가을",
+    "length": 2,
+    "meaning": "autumn",
+    "definition": "The cool season with falling leaves.",
+    "emoji": "🍂",
+    "category": "TIME",
+    "imagePrompt": "fall leaves warm colors",
+    "examples": [
+      {
+        "korean": "가을 날씨가 좋아",
+        "english": "I love autumn weather",
+        "context": "Daily"
+      },
+      {
+        "korean": "가을 타나 봐",
+        "english": "Guess you're feeling that autumn mood",
+        "context": "Casual"
+      },
+      {
+        "korean": "가을엔 독서하기 좋지",
+        "english": "Fall is great for reading",
+        "context": "Daily"
+      }
+    ]
+  },
+  {
+    "word": "겨울",
+    "length": 2,
+    "meaning": "winter",
+    "definition": "The coldest season.",
+    "emoji": "❄️",
+    "category": "TIME",
+    "imagePrompt": "gentle snowfall winter scene",
+    "examples": [
+      {
+        "korean": "겨울엔 뜨거운 국물이 최고야",
+        "english": "Hot soup is the best in winter",
+        "context": "Daily"
+      },
+      {
+        "korean": "겨울이 너무 추워",
+        "english": "Winter is too cold",
+        "context": "Casual"
+      },
+      {
+        "korean": "겨울 스포츠 좋아해?",
+        "english": "Do you like winter sports?",
+        "context": "Daily"
+      }
+    ]
+  },
+  {
+    "word": "한식",
+    "length": 2,
+    "meaning": "Korean cuisine",
+    "definition": "Traditional or everyday Korean meals.",
+    "emoji": "🍚",
+    "category": "FOOD",
+    "imagePrompt": "Korean meal with rice and banchan side dishes",
+    "examples": [
+      {
+        "korean": "한식 먹고 싶어",
+        "english": "I want Korean food",
+        "context": "Daily"
+      },
+      {
+        "korean": "한식은 반찬이 많아서 좋아",
+        "english": "I like Korean meals for all the side dishes",
+        "context": "Daily"
+      },
+      {
+        "korean": "한식당 추천해 줄래?",
+        "english": "Can you recommend a Korean restaurant?",
+        "context": "Casual"
+      }
+    ]
+  },
+  {
+    "word": "한글",
+    "length": 2,
+    "meaning": "Hangul",
+    "definition": "The Korean alphabet.",
+    "emoji": "📜",
+    "category": "CULTURE",
+    "imagePrompt": "Hangul letters on paper educational style",
+    "examples": [
+      {
+        "korean": "한글 배우는 중이에요",
+        "english": "I'm learning Hangul",
+        "context": "Formal"
+      },
+      {
+        "korean": "한글 읽을 수 있어?",
+        "english": "Can you read Hangul?",
+        "context": "Daily"
+      },
+      {
+        "korean": "한글 쓰는 법 알려 줄게",
+        "english": "I'll teach you how to write Hangul",
+        "context": "Casual"
+      }
+    ]
+  },
+  {
+    "word": "독서",
+    "length": 2,
+    "meaning": "reading",
+    "definition": "The act of reading books.",
+    "emoji": "📖",
+    "category": "ACTIVITY",
+    "imagePrompt": "open book cozy illustration",
+    "examples": [
+      {
+        "korean": "독서는 습관이야",
+        "english": "Reading is a habit",
+        "context": "Daily"
+      },
+      {
+        "korean": "주말엔 독서하고 쉬어",
+        "english": "On weekends I read and rest",
+        "context": "Daily"
+      },
+      {
+        "korean": "독서 모임 나가?",
+        "english": "Do you go to a book club?",
+        "context": "Casual"
+      }
+    ]
+  },
+  {
+    "word": "산책",
+    "length": 2,
+    "meaning": "walk",
+    "definition": "A leisurely walk.",
+    "emoji": "🚶",
+    "category": "ACTIVITY",
+    "imagePrompt": "person walking in a park path",
+    "examples": [
+      {
+        "korean": "잠깐 산책할래",
+        "english": "Want to take a short walk?",
+        "context": "Casual"
+      },
+      {
+        "korean": "저녁 산책하기 좋은 날씨네",
+        "english": "Nice weather for an evening walk",
+        "context": "Daily"
+      },
+      {
+        "korean": "산책로 따라 걸었어",
+        "english": "I walked along the trail",
+        "context": "Daily"
+      }
+    ]
+  },
+  {
+    "word": "선물",
+    "length": 2,
+    "meaning": "gift",
+    "definition": "Something given to others.",
+    "emoji": "🎁",
+    "category": "THING",
+    "imagePrompt": "wrapped gift box with ribbon",
+    "examples": [
+      {
+        "korean": "선물 고민 중이야",
+        "english": "I'm trying to pick a gift",
+        "context": "Daily"
+      },
+      {
+        "korean": "선물 받았어?",
+        "english": "Did you get a present?",
+        "context": "Casual"
+      },
+      {
+        "korean": "작은 선물이에요, 받아 주세요",
+        "english": "A small gift—please accept it",
+        "context": "Formal"
+      }
+    ]
+  },
+  {
+    "word": "이름",
+    "length": 2,
+    "meaning": "name",
+    "definition": "What someone is called.",
+    "emoji": "📛",
+    "category": "CONCEPT",
+    "imagePrompt": "name tag badge illustration",
+    "examples": [
+      {
+        "korean": "이름이 뭐예요?",
+        "english": "What's your name?",
+        "context": "Formal"
+      },
+      {
+        "korean": "이름 예쁘다",
+        "english": "That's a pretty name",
+        "context": "Casual"
+      },
+      {
+        "korean": "이름표 붙여 주세요",
+        "english": "Please wear your name tag",
+        "context": "Formal"
+      }
+    ]
+  },
+  {
+    "word": "친절",
+    "length": 2,
+    "meaning": "kindness",
+    "definition": "Friendly care shown to others.",
+    "emoji": "🤝",
+    "category": "EMOTION",
+    "imagePrompt": "handshake friendly gesture",
+    "examples": [
+      {
+        "korean": "친절히 설명해 주셔서 감사합니다",
+        "english": "Thank you for explaining so kindly",
+        "context": "Formal"
+      },
+      {
+        "korean": "친절한 분이시네요",
+        "english": "You're very kind",
+        "context": "Formal"
+      },
+      {
+        "korean": "친절은 기본이지",
+        "english": "Kindness is basic manners",
+        "context": "Daily"
+      }
+    ]
+  },
+  {
+    "word": "여행",
+    "length": 2,
+    "meaning": "travel",
+    "definition": "Going to other places.",
+    "emoji": "✈️",
+    "category": "ACTIVITY",
+    "imagePrompt": "airplane and suitcase travel theme",
+    "examples": [
+      {
+        "korean": "여행 가고 싶다",
+        "english": "I want to travel",
+        "context": "Daily"
+      },
+      {
+        "korean": "여행 일정 짰어?",
+        "english": "Did you plan the itinerary?",
+        "context": "Casual"
+      },
+      {
+        "korean": "여행 다녀오셨어요?",
+        "english": "Did you have a good trip?",
+        "context": "Formal"
+      }
+    ]
+  },
+  {
+    "word": "청춘",
+    "length": 2,
+    "meaning": "youth",
+    "definition": "The time of young adulthood.",
+    "emoji": "🌸",
+    "category": "CONCEPT",
+    "imagePrompt": "young people in soft sunlight",
+    "examples": [
+      {
+        "korean": "청춘은 바로 지금이야",
+        "english": "Youth is right now",
+        "context": "K-drama"
+      },
+      {
+        "korean": "청춘을 불태우자",
+        "english": "Let's live our youth to the fullest",
+        "context": "Casual"
+      },
+      {
+        "korean": "청춘 시절이 그립네",
+        "english": "I miss my younger days",
+        "context": "Daily"
+      }
+    ]
+  },
+  {
+    "word": "영원",
+    "length": 2,
+    "meaning": "eternity",
+    "definition": "Something that lasts forever.",
+    "emoji": "♾️",
+    "category": "CONCEPT",
+    "imagePrompt": "infinity symbol gentle gradient",
+    "examples": [
+      {
+        "korean": "영원히 잊지 않을게",
+        "english": "I'll never forget you",
+        "context": "K-drama"
+      },
+      {
+        "korean": "영원한 친구",
+        "english": "Friends forever",
+        "context": "Daily"
+      },
+      {
+        "korean": "영원히 함께하자",
+        "english": "Let's be together forever",
+        "context": "Casual"
+      }
+    ]
+  },
+  {
+    "word": "우주",
+    "length": 2,
+    "meaning": "universe",
+    "definition": "Outer space and all that exists.",
+    "emoji": "🌌",
+    "category": "NATURE",
+    "imagePrompt": "stars and galaxy",
+    "examples": [
+      {
+        "korean": "우주가 신기해",
+        "english": "Space is fascinating",
+        "context": "Daily"
+      },
+      {
+        "korean": "우주 영화 봤어?",
+        "english": "Have you seen a space movie?",
+        "context": "Casual"
+      },
+      {
+        "korean": "우주에 대해 배우고 있어요",
+        "english": "I'm learning about the universe",
+        "context": "Formal"
+      }
+    ]
+  },
+  {
+    "word": "봄날",
+    "length": 2,
+    "meaning": "spring day",
+    "definition": "A day in spring.",
+    "emoji": "🌷",
+    "category": "TIME",
+    "imagePrompt": "cherry blossoms sunny day",
+    "examples": [
+      {
+        "korean": "따뜻한 봄날이네",
+        "english": "What a warm spring day",
+        "context": "Daily"
+      },
+      {
+        "korean": "봄날에 산책하자",
+        "english": "Let's walk on a spring day",
+        "context": "Casual"
+      },
+      {
+        "korean": "봄날 햇살이 좋아",
+        "english": "I love the spring sunlight",
+        "context": "Daily"
+      }
+    ]
+  },
+  {
+    "word": "추억",
+    "length": 2,
+    "meaning": "memory",
+    "definition": "A fond recollection of the past.",
+    "emoji": "🖼️",
+    "category": "CONCEPT",
+    "imagePrompt": "old photo album nostalgic tone",
+    "examples": [
+      {
+        "korean": "좋은 추억이야",
+        "english": "It's a good memory",
+        "context": "Daily"
+      },
+      {
+        "korean": "추억으로 남겨 줄게",
+        "english": "I'll keep it as a memory",
+        "context": "K-drama"
+      },
+      {
+        "korean": "그건 좋은 추억이었어",
+        "english": "That was a good memory",
+        "context": "Daily"
+      }
+    ]
+  },
+  {
+    "word": "미래",
+    "length": 2,
+    "meaning": "future",
+    "definition": "Time that has not yet come.",
+    "emoji": "🔮",
+    "category": "TIME",
+    "imagePrompt": "horizon sunrise forward path",
+    "examples": [
+      {
+        "korean": "미래가 기대돼",
+        "english": "I'm excited about the future",
+        "context": "Daily"
+      },
+      {
+        "korean": "미래를 준비해야지",
+        "english": "We have to prepare for the future",
+        "context": "Formal"
+      },
+      {
+        "korean": "미래는 아무도 몰라",
+        "english": "Nobody knows the future",
+        "context": "K-drama"
+      }
+    ]
+  },
+  {
+    "word": "약속",
+    "length": 2,
+    "meaning": "promise",
+    "definition": "A commitment to someone.",
+    "emoji": "🤙",
+    "category": "CONCEPT",
+    "imagePrompt": "two people pinky promise",
+    "examples": [
+      {
+        "korean": "약속 지킬게",
+        "english": "I'll keep my promise",
+        "context": "K-drama"
+      },
+      {
+        "korean": "약속 시간에 늦었어",
+        "english": "I'm late for our appointment",
+        "context": "Daily"
+      },
+      {
+        "korean": "약속 장소 어디야?",
+        "english": "Where are we meeting?",
+        "context": "Casual"
+      }
+    ]
+  },
+  {
+    "word": "진심",
+    "length": 2,
+    "meaning": "sincerity",
+    "definition": "True feelings, not pretense.",
+    "emoji": "💎",
+    "category": "EMOTION",
+    "imagePrompt": "heart with sparkle sincere",
+    "examples": [
+      {
+        "korean": "진심이야",
+        "english": "I mean it",
+        "context": "K-drama"
+      },
+      {
+        "korean": "진심으로 감사드립니다",
+        "english": "Thank you sincerely",
+        "context": "Formal"
+      },
+      {
+        "korean": "진심을 다해 할게",
+        "english": "I'll do it with all my heart",
+        "context": "Daily"
+      }
+    ]
+  },
+  {
+    "word": "무대",
+    "length": 2,
+    "meaning": "stage",
+    "definition": "Where performers stand.",
+    "emoji": "🎭",
+    "category": "PLACE",
+    "imagePrompt": "concert stage lights",
+    "examples": [
+      {
+        "korean": "무대 위에 서는 게 꿈이야",
+        "english": "Standing on stage is my dream",
+        "context": "K-pop"
+      },
+      {
+        "korean": "무대 연습 중이에요",
+        "english": "We're rehearsing on stage",
+        "context": "Formal"
+      },
+      {
+        "korean": "무대가 너무 커서 긴장됐어",
+        "english": "The stage was so big I got nervous",
+        "context": "Daily"
+      }
+    ]
+  },
+  {
+    "word": "운명",
+    "length": 2,
+    "meaning": "fate",
+    "definition": "What seems destined to happen.",
+    "emoji": "🎭",
+    "category": "CONCEPT",
+    "imagePrompt": "two paths meeting cinematic",
+    "examples": [
+      {
+        "korean": "운명이야",
+        "english": "It's destiny",
+        "context": "K-drama"
+      },
+      {
+        "korean": "운명적인 만남이었어",
+        "english": "It felt like a fated meeting",
+        "context": "Daily"
+      },
+      {
+        "korean": "운명을 받아들이자",
+        "english": "Let's accept our fate",
+        "context": "Formal"
+      }
+    ]
+  },
+  {
+    "word": "진실",
+    "length": 2,
+    "meaning": "truth",
+    "definition": "What is real, not a lie.",
+    "emoji": "✨",
+    "category": "CONCEPT",
+    "imagePrompt": "light revealing truth",
+    "examples": [
+      {
+        "korean": "진실만 말해",
+        "english": "Just tell the truth",
+        "context": "K-drama"
+      },
+      {
+        "korean": "진실을 알고 싶어요",
+        "english": "I want to know the truth",
+        "context": "Formal"
+      },
+      {
+        "korean": "진실은 언젠가 드러나",
+        "english": "The truth always comes out",
+        "context": "Daily"
+      }
+    ]
+  },
+  {
+    "word": "비밀",
+    "length": 2,
+    "meaning": "secret",
+    "definition": "Something hidden from others.",
+    "emoji": "🤫",
+    "category": "CONCEPT",
+    "imagePrompt": "closed envelope whisper",
+    "examples": [
+      {
+        "korean": "비밀이야",
+        "english": "It's a secret",
+        "context": "Casual"
+      },
+      {
+        "korean": "비밀 지켜 줄 거지?",
+        "english": "You'll keep the secret, right?",
+        "context": "Daily"
+      },
+      {
+        "korean": "비밀 엄수 부탁드립니다",
+        "english": "Please keep this confidential",
+        "context": "Formal"
+      }
+    ]
+  },
+  {
+    "word": "결혼",
+    "length": 2,
+    "meaning": "marriage",
+    "definition": "The union of two people as spouses.",
+    "emoji": "💒",
+    "category": "RELATION",
+    "imagePrompt": "wedding rings simple",
+    "examples": [
+      {
+        "korean": "결혼 축하해",
+        "english": "Congratulations on your wedding",
+        "context": "Daily"
+      },
+      {
+        "korean": "결혼식 날짜 잡았어?",
+        "english": "Did you set the wedding date?",
+        "context": "Casual"
+      },
+      {
+        "korean": "결혼을 결심했습니다",
+        "english": "I've decided to get married",
+        "context": "Formal"
+      }
+    ]
+  },
+  {
+    "word": "이별",
+    "length": 2,
+    "meaning": "farewell",
+    "definition": "Parting from someone you care about.",
+    "emoji": "💔",
+    "category": "EMOTION",
+    "imagePrompt": "train station goodbye silhouette",
+    "examples": [
+      {
+        "korean": "이별은 아프지",
+        "english": "Goodbyes hurt",
+        "context": "K-drama"
+      },
+      {
+        "korean": "이별 인사는 했어?",
+        "english": "Did you say a proper goodbye?",
+        "context": "Daily"
+      },
+      {
+        "korean": "이별을 받아들일게",
+        "english": "I'll accept the breakup",
+        "context": "Daily"
+      }
+    ]
+  },
+  {
+    "word": "우정",
+    "length": 2,
+    "meaning": "friendship",
+    "definition": "Close bond between friends.",
+    "emoji": "🫶",
+    "category": "RELATION",
+    "imagePrompt": "friends arms around shoulders",
+    "examples": [
+      {
+        "korean": "우정은 변하지 않아",
+        "english": "True friendship doesn't change",
+        "context": "K-drama"
+      },
+      {
+        "korean": "우정 테스트 해볼까?",
+        "english": "Want to do a friendship quiz?",
+        "context": "Casual"
+      },
+      {
+        "korean": "오랜 우정이 부럽다",
+        "english": "I envy your long friendship",
+        "context": "Daily"
+      }
+    ]
+  },
+  {
+    "word": "사연",
+    "length": 2,
+    "meaning": "story / situation",
+    "definition": "A person's background or tale.",
+    "emoji": "📜",
+    "category": "CONCEPT",
+    "imagePrompt": "letter paper emotional",
+    "examples": [
+      {
+        "korean": "사연이 많네",
+        "english": "You've got quite a story",
+        "context": "Daily"
+      },
+      {
+        "korean": "사연 들어 줄게",
+        "english": "I'll hear you out",
+        "context": "Casual"
+      },
+      {
+        "korean": "슬픈 사연이에요",
+        "english": "It's a sad story",
+        "context": "Formal"
+      }
+    ]
+  },
+  {
+    "word": "위로",
+    "length": 2,
+    "meaning": "comfort",
+    "definition": "Words or acts that ease sadness.",
+    "emoji": "🫂",
+    "category": "EMOTION",
+    "imagePrompt": "hug comforting illustration",
+    "examples": [
+      {
+        "korean": "위로가 됐으면 해",
+        "english": "I hope it comforted you",
+        "context": "Daily"
+      },
+      {
+        "korean": "말 한마디가 큰 위로가 됐어요",
+        "english": "Your words were a great comfort",
+        "context": "Formal"
+      },
+      {
+        "korean": "조금이라도 위로가 됐을까",
+        "english": "I hope it helped even a little",
+        "context": "K-drama"
+      }
+    ]
+  },
+  {
+    "word": "안녕",
+    "length": 2,
+    "meaning": "peace / farewell wish",
+    "definition": "Well-being or a parting wish; greetings use longer forms.",
+    "emoji": "👋",
+    "category": "CONCEPT",
+    "imagePrompt": "waving hand friendly",
+    "examples": [
+      {
+        "korean": "안녕, 잘 지냈어?",
+        "english": "Hi—how have you been?",
+        "context": "Casual"
+      },
+      {
+        "korean": "안녕히 가세요",
+        "english": "Goodbye (stay well)",
+        "context": "Formal"
+      },
+      {
+        "korean": "안녕이란 말이 서운해",
+        "english": "Saying goodbye feels bittersweet",
+        "context": "K-drama"
+      }
+    ]
+  },
+  {
+    "word": "환영",
+    "length": 2,
+    "meaning": "welcome",
+    "definition": "A greeting that receives someone gladly.",
+    "emoji": "👏",
+    "category": "CONCEPT",
+    "imagePrompt": "applause welcome sign",
+    "examples": [
+      {
+        "korean": "환영합니다",
+        "english": "Welcome",
+        "context": "Formal"
+      },
+      {
+        "korean": "진심으로 환영해",
+        "english": "You're truly welcome",
+        "context": "Daily"
+      },
+      {
+        "korean": "환영 인사 준비했어",
+        "english": "I prepared a welcome greeting",
+        "context": "Formal"
+      }
+    ]
+  },
+  {
+    "word": "인사",
+    "length": 2,
+    "meaning": "greeting / bow",
+    "definition": "Words or gestures to greet or say goodbye.",
+    "emoji": "🙇",
+    "category": "CONCEPT",
+    "imagePrompt": "bow greeting illustration",
+    "examples": [
+      {
+        "korean": "인사드리겠습니다",
+        "english": "Allow me to greet you",
+        "context": "Formal"
+      },
+      {
+        "korean": "인사부터 하자",
+        "english": "Let's say hello first",
+        "context": "Daily"
+      },
+      {
+        "korean": "인사만 하고 갈게",
+        "english": "I'll just say hi and go",
+        "context": "Casual"
+      }
+    ]
+  },
+  {
+    "word": "어제",
+    "length": 2,
+    "meaning": "yesterday",
+    "definition": "The day before today.",
+    "emoji": "📅",
+    "category": "TIME",
+    "imagePrompt": "calendar page previous day",
+    "examples": [
+      {
+        "korean": "어제 뭐 했어?",
+        "english": "What did you do yesterday?",
+        "context": "Casual"
+      },
+      {
+        "korean": "어제 회의 자료 보냈어요",
+        "english": "I sent yesterday's meeting materials",
+        "context": "Formal"
+      },
+      {
+        "korean": "어제부터 기침이 나요",
+        "english": "I've had a cough since yesterday",
+        "context": "Daily"
+      }
+    ]
+  },
+  {
+    "word": "내일",
+    "length": 2,
+    "meaning": "tomorrow",
+    "definition": "The day after today.",
+    "emoji": "🌅",
+    "category": "TIME",
+    "imagePrompt": "sunrise next day",
+    "examples": [
+      {
+        "korean": "내일 봐",
+        "english": "See you tomorrow",
+        "context": "Casual"
+      },
+      {
+        "korean": "내일 일정 확인해 주세요",
+        "english": "Please check tomorrow's schedule",
+        "context": "Formal"
+      },
+      {
+        "korean": "내일은 쉴 거야",
+        "english": "I'll rest tomorrow",
+        "context": "Daily"
+      }
+    ]
+  },
+  {
+    "word": "오늘",
+    "length": 2,
+    "meaning": "today",
+    "definition": "This present day.",
+    "emoji": "📆",
+    "category": "TIME",
+    "imagePrompt": "today highlight on calendar",
+    "examples": [
+      {
+        "korean": "오늘 날씨 좋다",
+        "english": "Nice weather today",
+        "context": "Daily"
+      },
+      {
+        "korean": "오늘 하루도 고생했어",
+        "english": "You did well today",
+        "context": "Casual"
+      },
+      {
+        "korean": "오늘 중으로 보내 드릴게요",
+        "english": "I'll send it by today",
+        "context": "Formal"
+      }
+    ]
+  },
+  {
+    "word": "지금",
+    "length": 2,
+    "meaning": "now",
+    "definition": "This very moment.",
+    "emoji": "⏱️",
+    "category": "TIME",
+    "imagePrompt": "clock hand now moment",
+    "examples": [
+      {
+        "korean": "지금 바로 갈게",
+        "english": "I'll go right now",
+        "context": "Casual"
+      },
+      {
+        "korean": "지금 출발했습니다",
+        "english": "I've just departed",
+        "context": "Formal"
+      },
+      {
+        "korean": "지금이 기회야",
+        "english": "Now is the chance",
+        "context": "Daily"
+      }
+    ]
+  },
+  {
+    "word": "시작",
+    "length": 2,
+    "meaning": "start",
+    "definition": "The beginning of something.",
+    "emoji": "🚀",
+    "category": "CONCEPT",
+    "imagePrompt": "starting line flag",
+    "examples": [
+      {
+        "korean": "새로운 시작이야",
+        "english": "It's a new beginning",
+        "context": "K-drama"
+      },
+      {
+        "korean": "시작부터 다시 하자",
+        "english": "Let's start over from the beginning",
+        "context": "Daily"
+      },
+      {
+        "korean": "시작하겠습니다",
+        "english": "I'll begin now",
+        "context": "Formal"
+      }
+    ]
+  },
+  {
+    "word": "미소",
+    "length": 2,
+    "meaning": "smile",
+    "definition": "A happy expression on the face.",
+    "emoji": "🙂",
+    "category": "EMOTION",
+    "imagePrompt": "gentle smile close-up",
+    "examples": [
+      {
+        "korean": "미소가 예뻐요",
+        "english": "Your smile is pretty",
+        "context": "Formal"
+      },
+      {
+        "korean": "미소 지어 봐",
+        "english": "Smile for me",
+        "context": "Casual"
+      },
+      {
+        "korean": "미소 하나면 충분해",
+        "english": "One smile is enough",
+        "context": "K-drama"
+      }
+    ]
+  },
+  {
+    "word": "성공",
+    "length": 2,
+    "meaning": "success",
+    "definition": "Achieving a goal.",
+    "emoji": "🏆",
+    "category": "CONCEPT",
+    "imagePrompt": "trophy simple gold",
+    "examples": [
+      {
+        "korean": "성공했어, 축하해",
+        "english": "You succeeded—congrats",
+        "context": "Daily"
+      },
+      {
+        "korean": "성공을 빌어요",
+        "english": "I wish you success",
+        "context": "Formal"
+      },
+      {
+        "korean": "성공은 노력의 결과야",
+        "english": "Success comes from effort",
+        "context": "Daily"
+      }
+    ]
+  },
+  {
+    "word": "사용",
+    "length": 2,
+    "meaning": "use / usage",
+    "definition": "Employing something for a purpose.",
+    "emoji": "🔧",
+    "category": "CONCEPT",
+    "imagePrompt": "tool in hand simple",
+    "examples": [
+      {
+        "korean": "사용법 읽어 봐",
+        "english": "Read the instructions",
+        "context": "Daily"
+      },
+      {
+        "korean": "사용 전에 확인하세요",
+        "english": "Check before use",
+        "context": "Formal"
+      },
+      {
+        "korean": "이 앱 사용하기 쉬워?",
+        "english": "Is this app easy to use?",
+        "context": "Casual"
+      }
+    ]
+  },
+  {
+    "word": "노력",
+    "length": 2,
+    "meaning": "effort",
+    "definition": "Hard work toward a goal.",
+    "emoji": "💪",
+    "category": "ACTIVITY",
+    "imagePrompt": "flex effort motivation",
+    "examples": [
+      {
+        "korean": "노력은 배신하지 않아",
+        "english": "Hard work doesn't betray you",
+        "context": "Daily"
+      },
+      {
+        "korean": "노력해 볼게",
+        "english": "I'll try my best",
+        "context": "Casual"
+      },
+      {
+        "korean": "노력에 감사드립니다",
+        "english": "Thank you for your efforts",
+        "context": "Formal"
+      }
+    ]
+  },
+  {
+    "word": "도전",
+    "length": 2,
+    "meaning": "challenge",
+    "definition": "Taking on something difficult.",
+    "emoji": "🎯",
+    "category": "ACTIVITY",
+    "imagePrompt": "target arrow challenge",
+    "examples": [
+      {
+        "korean": "새로운 도전이야",
+        "english": "It's a new challenge",
+        "context": "Daily"
+      },
+      {
+        "korean": "도전해 볼 가치가 있어",
+        "english": "It's worth a try",
+        "context": "K-drama"
+      },
+      {
+        "korean": "도전 정신이 대단해요",
+        "english": "Your spirit of challenge is amazing",
+        "context": "Formal"
+      }
+    ]
+  },
+  {
+    "word": "연습",
+    "length": 2,
+    "meaning": "practice",
+    "definition": "Repeating to improve a skill.",
+    "emoji": "📝",
+    "category": "ACTIVITY",
+    "imagePrompt": "notebook pencil studying",
+    "examples": [
+      {
+        "korean": "연습 많이 했어",
+        "english": "I practiced a lot",
+        "context": "Daily"
+      },
+      {
+        "korean": "연습부터 하자",
+        "english": "Let's practice first",
+        "context": "Casual"
+      },
+      {
+        "korean": "연습이 실력을 만든다",
+        "english": "Practice makes skill",
+        "context": "Formal"
+      }
+    ]
+  },
+  {
+    "word": "김밥",
+    "length": 2,
+    "meaning": "gimbap",
+    "definition": "Rice and fillings rolled in seaweed.",
+    "emoji": "🍙",
+    "category": "FOOD",
+    "imagePrompt": "gimbap roll sliced",
+    "examples": [
+      {
+        "korean": "김밥 한 줄 사 왔어",
+        "english": "I bought a roll of gimbap",
+        "context": "Daily"
+      },
+      {
+        "korean": "소풍엔 김밥이지",
+        "english": "Gimbap is perfect for a picnic",
+        "context": "Casual"
+      },
+      {
+        "korean": "참치 김밥 주세요",
+        "english": "Tuna gimbap, please",
+        "context": "Daily"
+      }
+    ]
+  },
+  {
+    "word": "떡국",
+    "length": 2,
+    "meaning": "tteokguk",
+    "definition": "Soup with sliced rice cakes.",
+    "emoji": "🥣",
+    "category": "FOOD",
+    "imagePrompt": "white soup bowl rice cake",
+    "examples": [
+      {
+        "korean": "설날엔 떡국 먹자",
+        "english": "Let's have tteokguk on Lunar New Year",
+        "context": "Daily"
+      },
+      {
+        "korean": "떡국 한 그릇 더 줄래?",
+        "english": "Can I have another bowl of tteokguk?",
+        "context": "Casual"
+      },
+      {
+        "korean": "떡국 끓이는 중이에요",
+        "english": "I'm cooking tteokguk",
+        "context": "Formal"
+      }
+    ]
+  },
+  {
+    "word": "만두",
+    "length": 2,
+    "meaning": "dumplings",
+    "definition": "Filled dough pockets, steamed or fried.",
+    "emoji": "🥟",
+    "category": "FOOD",
+    "imagePrompt": "mandu dumplings bamboo steamer",
+    "examples": [
+      {
+        "korean": "만두 찜 시켰어",
+        "english": "I ordered steamed dumplings",
+        "context": "Daily"
+      },
+      {
+        "korean": "만두 속이 꽉 차 있네",
+        "english": "These dumplings are stuffed full",
+        "context": "Casual"
+      },
+      {
+        "korean": "군만두도 같이 주세요",
+        "english": "Fried dumplings too, please",
+        "context": "Daily"
+      }
+    ]
+  },
+  {
+    "word": "빙수",
+    "length": 2,
+    "meaning": "shaved ice",
+    "definition": "Sweet ice dessert with toppings.",
+    "emoji": "🍧",
+    "category": "FOOD",
+    "imagePrompt": "shaved ice red beans fruit",
+    "examples": [
+      {
+        "korean": "여름엔 빙수지",
+        "english": "Shaved ice is the thing in summer",
+        "context": "Casual"
+      },
+      {
+        "korean": "팥빙수 하나 주세요",
+        "english": "One patbingsu, please",
+        "context": "Daily"
+      },
+      {
+        "korean": "빙수 가게 앞에 줄 섰어",
+        "english": "We lined up in front of the bingsu shop",
+        "context": "Daily"
+      }
+    ]
+  },
+  {
+    "word": "라떼",
+    "length": 2,
+    "meaning": "latte",
+    "definition": "Milk coffee drink.",
+    "emoji": "☕",
+    "category": "FOOD",
+    "imagePrompt": "coffee cup latte art",
+    "examples": [
+      {
+        "korean": "바닐라 라떼 주세요",
+        "english": "A vanilla latte, please",
+        "context": "Daily"
+      },
+      {
+        "korean": "라떼는 우유 많이",
+        "english": "Lots of milk in my latte",
+        "context": "Casual"
+      },
+      {
+        "korean": "라떼 한 잔 할래?",
+        "english": "Want a latte?",
+        "context": "Daily"
+      }
+    ]
+  },
+  {
+    "word": "커피",
+    "length": 2,
+    "meaning": "coffee",
+    "definition": "A brewed drink from beans.",
+    "emoji": "☕",
+    "category": "FOOD",
+    "imagePrompt": "coffee beans cup steam",
+    "examples": [
+      {
+        "korean": "커피 한 잔 할래?",
+        "english": "Want a coffee?",
+        "context": "Casual"
+      },
+      {
+        "korean": "커피 향이 좋네",
+        "english": "The coffee smells great",
+        "context": "Daily"
+      },
+      {
+        "korean": "커피는 식후에 드세요",
+        "english": "Please have coffee after your meal",
+        "context": "Formal"
+      }
+    ]
+  },
+  {
+    "word": "우유",
+    "length": 2,
+    "meaning": "milk",
+    "definition": "White drink from cows or plants.",
+    "emoji": "🥛",
+    "category": "FOOD",
+    "imagePrompt": "milk carton glass",
+    "examples": [
+      {
+        "korean": "우유 한 잔 마셔",
+        "english": "Drink a glass of milk",
+        "context": "Casual"
+      },
+      {
+        "korean": "우유 사 왔어?",
+        "english": "Did you buy milk?",
+        "context": "Daily"
+      },
+      {
+        "korean": "우유는 냉장 보관하세요",
+        "english": "Please keep milk refrigerated",
+        "context": "Formal"
+      }
+    ]
+  },
+  {
+    "word": "과일",
+    "length": 2,
+    "meaning": "fruit",
+    "definition": "Sweet plant foods like apples.",
+    "emoji": "🍎",
+    "category": "FOOD",
+    "imagePrompt": "assorted fruit bowl",
+    "examples": [
+      {
+        "korean": "과일 많이 먹어",
+        "english": "Eat plenty of fruit",
+        "context": "Casual"
+      },
+      {
+        "korean": "과일 세일 중이에요",
+        "english": "Fruit is on sale",
+        "context": "Daily"
+      },
+      {
+        "korean": "신선한 과일을 골라 주세요",
+        "english": "Please pick fresh fruit",
+        "context": "Formal"
+      }
+    ]
+  },
+  {
+    "word": "채소",
+    "length": 2,
+    "meaning": "vegetables",
+    "definition": "Edible plants like lettuce.",
+    "emoji": "🥬",
+    "category": "FOOD",
+    "imagePrompt": "vegetables basket green",
+    "examples": [
+      {
+        "korean": "채소 먼저 씻어",
+        "english": "Wash the vegetables first",
+        "context": "Daily"
+      },
+      {
+        "korean": "채소 많이 넣었어",
+        "english": "I added lots of veggies",
+        "context": "Casual"
+      },
+      {
+        "korean": "채소 섭취가 부족해요",
+        "english": "I'm not eating enough vegetables",
+        "context": "Formal"
+      }
+    ]
+  },
+  {
+    "word": "한옥",
+    "length": 2,
+    "meaning": "hanok",
+    "definition": "A traditional Korean house.",
+    "emoji": "🏯",
+    "category": "PLACE",
+    "imagePrompt": "traditional Korean house curved roof",
+    "examples": [
+      {
+        "korean": "한옥 스테이 예약했어",
+        "english": "I booked a hanok stay",
+        "context": "Daily"
+      },
+      {
+        "korean": "한옥 마루에 앉아 있어",
+        "english": "I'm sitting on the hanok floor",
+        "context": "Casual"
+      },
+      {
+        "korean": "한옥에서 하룻밤 묵었어요",
+        "english": "We spent a night in a hanok",
+        "context": "Formal"
+      }
+    ]
+  },
+  {
+    "word": "부채",
+    "length": 2,
+    "meaning": "fan",
+    "definition": "A folding or round fan for air.",
+    "emoji": "🪭",
+    "category": "THING",
+    "imagePrompt": "traditional Korean fan",
+    "examples": [
+      {
+        "korean": "부채로 바람 쐬어",
+        "english": "Fan yourself with the fan",
+        "context": "Daily"
+      },
+      {
+        "korean": "전통 부채 예쁘다",
+        "english": "The traditional fan is pretty",
+        "context": "Casual"
+      },
+      {
+        "korean": "부채질 좀 해 줄래?",
+        "english": "Can you fan me a little?",
+        "context": "Casual"
+      }
+    ]
+  },
+  {
+    "word": "등불",
+    "length": 2,
+    "meaning": "torch / lamp",
+    "definition": "A portable light in the dark.",
+    "emoji": "🕯️",
+    "category": "THING",
+    "imagePrompt": "lantern warm glow",
+    "examples": [
+      {
+        "korean": "등불 켜 둘게",
+        "english": "I'll leave the lamp on",
+        "context": "K-drama"
+      },
+      {
+        "korean": "등불 아래에서 읽었어",
+        "english": "I read by lamplight",
+        "context": "Daily"
+      },
+      {
+        "korean": "등불이 흔들리네",
+        "english": "The lamp flame is flickering",
+        "context": "Daily"
+      }
+    ]
+  },
+  {
+    "word": "한지",
+    "length": 2,
+    "meaning": "Korean paper",
+    "definition": "Traditional strong paper from Korea.",
+    "emoji": "📄",
+    "category": "CULTURE",
+    "imagePrompt": "Korean paper texture brush",
+    "examples": [
+      {
+        "korean": "한지에 캘리그라피 했어",
+        "english": "I did calligraphy on hanji",
+        "context": "Daily"
+      },
+      {
+        "korean": "한지 질이 좋네요",
+        "english": "The hanji quality is excellent",
+        "context": "Formal"
+      },
+      {
+        "korean": "한지로 카드 만들었어",
+        "english": "I made a card with Korean paper",
+        "context": "Casual"
+      }
+    ]
+  },
+  {
+    "word": "추석",
+    "length": 2,
+    "meaning": "Chuseok",
+    "definition": "Korean harvest thanksgiving holiday.",
+    "emoji": "🌕",
+    "category": "TIME",
+    "imagePrompt": "full moon rice cakes family",
+    "examples": [
+      {
+        "korean": "추석 잘 보내세요",
+        "english": "Have a good Chuseok",
+        "context": "Formal"
+      },
+      {
+        "korean": "추석엔 고향 내려가?",
+        "english": "Are you going home for Chuseok?",
+        "context": "Casual"
+      },
+      {
+        "korean": "추석 연휴가 길어서 좋아",
+        "english": "I love the long Chuseok break",
+        "context": "Daily"
+      }
+    ]
+  },
+  {
+    "word": "설날",
+    "length": 2,
+    "meaning": "Seollal",
+    "definition": "Korean Lunar New Year.",
+    "emoji": "🧧",
+    "category": "TIME",
+    "imagePrompt": "hanbok bow traditional new year",
+    "examples": [
+      {
+        "korean": "설날 복 많이 받으세요",
+        "english": "Happy New Year—lots of luck",
+        "context": "Formal"
+      },
+      {
+        "korean": "설날엔 세배하러 가",
+        "english": "We bow to elders on Seollal",
+        "context": "Daily"
+      },
+      {
+        "korean": "설날 음식 준비 바빠",
+        "english": "We're busy prepping New Year's food",
+        "context": "Casual"
+      }
+    ]
+  },
+  {
+    "word": "명절",
+    "length": 2,
+    "meaning": "holiday",
+    "definition": "A major traditional holiday.",
+    "emoji": "🎊",
+    "category": "TIME",
+    "imagePrompt": "family gathering holiday table",
+    "examples": [
+      {
+        "korean": "명절 때만 만나네",
+        "english": "We only meet on holidays",
+        "context": "Daily"
+      },
+      {
+        "korean": "명절 선물 챙겼어?",
+        "english": "Did you get holiday gifts?",
+        "context": "Casual"
+      },
+      {
+        "korean": "명절 인사 드립니다",
+        "english": "Season's greetings",
+        "context": "Formal"
+      }
+    ]
+  },
+  {
+    "word": "바람",
+    "length": 2,
+    "meaning": "wind",
+    "definition": "Moving air outdoors.",
+    "emoji": "💨",
+    "category": "NATURE",
+    "imagePrompt": "grass bending wind",
+    "examples": [
+      {
+        "korean": "바람이 세게 불어",
+        "english": "The wind is blowing hard",
+        "context": "Daily"
+      },
+      {
+        "korean": "바람 쐬러 나가자",
+        "english": "Let's go get some fresh air",
+        "context": "Casual"
+      },
+      {
+        "korean": "찬 바람 맞지 마",
+        "english": "Don't catch a cold in the wind",
+        "context": "Daily"
+      }
+    ]
+  },
+  {
+    "word": "햇살",
+    "length": 2,
+    "meaning": "sunshine",
+    "definition": "Warm rays of the sun.",
+    "emoji": "☀️",
+    "category": "NATURE",
+    "imagePrompt": "sun rays through window",
+    "examples": [
+      {
+        "korean": "햇살이 따가워",
+        "english": "The sun feels hot on my skin",
+        "context": "Daily"
+      },
+      {
+        "korean": "햇살 좋은 날이야",
+        "english": "It's a sunny day",
+        "context": "Casual"
+      },
+      {
+        "korean": "햇살 아래서 산책했어요",
+        "english": "I walked in the sunshine",
+        "context": "Formal"
+      }
+    ]
+  },
+  {
+    "word": "구름",
+    "length": 2,
+    "meaning": "cloud",
+    "definition": "White or gray masses in the sky.",
+    "emoji": "☁️",
+    "category": "NATURE",
+    "imagePrompt": "fluffy clouds blue sky",
+    "examples": [
+      {
+        "korean": "구름 모양이 예뻐",
+        "english": "The clouds look pretty",
+        "context": "Daily"
+      },
+      {
+        "korean": "구름 한 점 없는 하늘",
+        "english": "Not a cloud in the sky",
+        "context": "K-drama"
+      },
+      {
+        "korean": "구름 사진 찍었어",
+        "english": "I took a photo of the clouds",
+        "context": "Casual"
+      }
+    ]
+  },
+  {
+    "word": "노을",
+    "length": 2,
+    "meaning": "sunset glow",
+    "definition": "Red or orange sky after sunset.",
+    "emoji": "🌇",
+    "category": "NATURE",
+    "imagePrompt": "orange sunset horizon",
+    "examples": [
+      {
+        "korean": "노을 진다",
+        "english": "The sun is setting",
+        "context": "Daily"
+      },
+      {
+        "korean": "노을 보러 갈래?",
+        "english": "Want to go watch the sunset?",
+        "context": "Casual"
+      },
+      {
+        "korean": "노을빛이 붉네",
+        "english": "The sunset glow is red",
+        "context": "Daily"
+      }
+    ]
+  },
+  {
+    "word": "안개",
+    "length": 2,
+    "meaning": "fog",
+    "definition": "Thick mist near the ground.",
+    "emoji": "🌫️",
+    "category": "NATURE",
+    "imagePrompt": "misty morning soft",
+    "examples": [
+      {
+        "korean": "안개가 자욱해",
+        "english": "It's really foggy",
+        "context": "Daily"
+      },
+      {
+        "korean": "안개 때문에 시야가 안 좋아",
+        "english": "Visibility is bad because of fog",
+        "context": "Formal"
+      },
+      {
+        "korean": "아침 안개가 싱그럽다",
+        "english": "The morning mist feels fresh",
+        "context": "Daily"
+      }
+    ]
+  },
+  {
+    "word": "단풍",
+    "length": 2,
+    "meaning": "autumn leaves",
+    "definition": "Colorful fall foliage.",
+    "emoji": "🍁",
+    "category": "NATURE",
+    "imagePrompt": "red maple leaves",
+    "examples": [
+      {
+        "korean": "단풍 구경 가자",
+        "english": "Let's go see the fall leaves",
+        "context": "Casual"
+      },
+      {
+        "korean": "단풍이 들기 시작했어",
+        "english": "The leaves are starting to turn",
+        "context": "Daily"
+      },
+      {
+        "korean": "단풍 명소예요",
+        "english": "It's a famous spot for autumn foliage",
+        "context": "Formal"
+      }
+    ]
+  },
+  {
+    "word": "새벽",
+    "length": 2,
+    "meaning": "dawn",
+    "definition": "Early morning before sunrise.",
+    "emoji": "🌄",
+    "category": "TIME",
+    "imagePrompt": "dawn sky pink gradient",
+    "examples": [
+      {
+        "korean": "새벽에 일어났어",
+        "english": "I woke up at dawn",
+        "context": "Daily"
+      },
+      {
+        "korean": "새벽 공기가 차가워",
+        "english": "The dawn air is cold",
+        "context": "Casual"
+      },
+      {
+        "korean": "새벽까지 작업했습니다",
+        "english": "I worked until dawn",
+        "context": "Formal"
+      }
+    ]
+  },
+  {
+    "word": "머리",
+    "length": 2,
+    "meaning": "head / hair",
+    "definition": "The top of the body or hair on it.",
+    "emoji": "💇",
+    "category": "THING",
+    "imagePrompt": "simple head silhouette",
+    "examples": [
+      {
+        "korean": "머리 아파",
+        "english": "My head hurts",
+        "context": "Daily"
+      },
+      {
+        "korean": "머리 감고 올게",
+        "english": "I'll wash my hair and come back",
+        "context": "Casual"
+      },
+      {
+        "korean": "머리를 묶었어요",
+        "english": "I tied my hair back",
+        "context": "Formal"
+      }
+    ]
+  },
+  {
+    "word": "얼굴",
+    "length": 2,
+    "meaning": "face",
+    "definition": "The front of the head.",
+    "emoji": "😊",
+    "category": "THING",
+    "imagePrompt": "face outline friendly",
+    "examples": [
+      {
+        "korean": "얼굴이 환해졌네",
+        "english": "Your face looks brighter",
+        "context": "Daily"
+      },
+      {
+        "korean": "얼굴 좀 씻어",
+        "english": "Go wash your face",
+        "context": "Casual"
+      },
+      {
+        "korean": "얼굴이 익숙해요",
+        "english": "Your face looks familiar",
+        "context": "Formal"
+      }
+    ]
+  },
+  {
+    "word": "어깨",
+    "length": 2,
+    "meaning": "shoulder",
+    "definition": "The joint by the upper arm.",
+    "emoji": "🧍",
+    "category": "THING",
+    "imagePrompt": "shoulders posture simple",
+    "examples": [
+      {
+        "korean": "어깨가 결려",
+        "english": "My shoulders are stiff",
+        "context": "Daily"
+      },
+      {
+        "korean": "어깨 좀 주물러 줄까?",
+        "english": "Want a shoulder rub?",
+        "context": "Casual"
+      },
+      {
+        "korean": "어깨 너머로 봤어요",
+        "english": "I glanced over my shoulder",
+        "context": "Formal"
+      }
+    ]
+  },
+  {
+    "word": "가슴",
+    "length": 2,
+    "meaning": "chest",
+    "definition": "The front of the torso.",
+    "emoji": "🫀",
+    "category": "THING",
+    "imagePrompt": "chest area neutral medical style",
+    "examples": [
+      {
+        "korean": "가슴이 두근거려",
+        "english": "My heart is pounding",
+        "context": "K-drama"
+      },
+      {
+        "korean": "가슴에 손 얹고 맹세해",
+        "english": "Swear with your hand on your heart",
+        "context": "Daily"
+      },
+      {
+        "korean": "가슴이 답답해",
+        "english": "My chest feels tight",
+        "context": "Daily"
+      }
+    ]
+  },
+  {
+    "word": "친척",
+    "length": 2,
+    "meaning": "relatives",
+    "definition": "Family members beyond your household.",
+    "emoji": "👪",
+    "category": "RELATION",
+    "imagePrompt": "extended family gathering",
+    "examples": [
+      {
+        "korean": "친척 집에 다녀왔어",
+        "english": "I visited relatives",
+        "context": "Daily"
+      },
+      {
+        "korean": "친척들이 많아",
+        "english": "I have a big extended family",
+        "context": "Casual"
+      },
+      {
+        "korean": "친척분들께 안부 전해 주세요",
+        "english": "Please give my regards to your relatives",
+        "context": "Formal"
+      }
+    ]
+  },
+  {
+    "word": "손님",
+    "length": 2,
+    "meaning": "guest / customer",
+    "definition": "A visitor or customer.",
+    "emoji": "🚪",
+    "category": "PERSON",
+    "imagePrompt": "guest entering cafe",
+    "examples": [
+      {
+        "korean": "손님, 어서 오세요",
+        "english": "Welcome, customer",
+        "context": "Formal"
+      },
+      {
+        "korean": "손님이 많네",
+        "english": "There are a lot of customers",
+        "context": "Daily"
+      },
+      {
+        "korean": "손님 대기 번호예요",
+        "english": "This is your queue number",
+        "context": "Formal"
+      }
+    ]
+  },
+  {
+    "word": "요리",
+    "length": 2,
+    "meaning": "cooking",
+    "definition": "Preparing food to eat.",
+    "emoji": "👨‍🍳",
+    "category": "ACTIVITY",
+    "imagePrompt": "cooking pan vegetables",
+    "examples": [
+      {
+        "korean": "요리해 줄게",
+        "english": "I'll cook for you",
+        "context": "Casual"
+      },
+      {
+        "korean": "요리 실력이 늘었네",
+        "english": "Your cooking has improved",
+        "context": "Daily"
+      },
+      {
+        "korean": "요리 교실 다녀요",
+        "english": "I take cooking classes",
+        "context": "Formal"
+      }
+    ]
+  },
+  {
+    "word": "청소",
+    "length": 2,
+    "meaning": "cleaning",
+    "definition": "Making a place tidy.",
+    "emoji": "🧹",
+    "category": "ACTIVITY",
+    "imagePrompt": "broom dustpan home",
+    "examples": [
+      {
+        "korean": "청소 도와줄래?",
+        "english": "Help me clean?",
+        "context": "Casual"
+      },
+      {
+        "korean": "주말에 대청소 했어",
+        "english": "I did a big clean on the weekend",
+        "context": "Daily"
+      },
+      {
+        "korean": "청소를 마쳤습니다",
+        "english": "I've finished cleaning",
+        "context": "Formal"
+      }
+    ]
+  },
+  {
+    "word": "운동",
+    "length": 2,
+    "meaning": "exercise",
+    "definition": "Physical activity for health.",
+    "emoji": "🏃",
+    "category": "ACTIVITY",
+    "imagePrompt": "running shoes track",
+    "examples": [
+      {
+        "korean": "운동 갔다 올게",
+        "english": "I'm off to work out",
+        "context": "Casual"
+      },
+      {
+        "korean": "매일 운동하는 습관 들이자",
+        "english": "Let's make daily exercise a habit",
+        "context": "Daily"
+      },
+      {
+        "korean": "운동 전 스트레칭하세요",
+        "english": "Please stretch before exercising",
+        "context": "Formal"
+      }
+    ]
+  },
+  {
+    "word": "공부",
+    "length": 2,
+    "meaning": "study",
+    "definition": "Learning from books or class.",
+    "emoji": "📚",
+    "category": "ACTIVITY",
+    "imagePrompt": "books desk lamp",
+    "examples": [
+      {
+        "korean": "공부하러 갈게",
+        "english": "I'm going to study",
+        "context": "Casual"
+      },
+      {
+        "korean": "한국어 공부 중이에요",
+        "english": "I'm studying Korean",
+        "context": "Formal"
+      },
+      {
+        "korean": "공부 방해하지 마",
+        "english": "Don't distract me from studying",
+        "context": "Daily"
+      }
+    ]
+  },
+  {
+    "word": "휴식",
+    "length": 2,
+    "meaning": "rest",
+    "definition": "Time to relax and recover.",
+    "emoji": "🛋️",
+    "category": "ACTIVITY",
+    "imagePrompt": "cozy chair tea break",
+    "examples": [
+      {
+        "korean": "휴식이 필요해",
+        "english": "I need a break",
+        "context": "Daily"
+      },
+      {
+        "korean": "잠깐 휴식할게",
+        "english": "I'll rest for a bit",
+        "context": "Casual"
+      },
+      {
+        "korean": "휴식 시간입니다",
+        "english": "It's break time",
+        "context": "Formal"
+      }
+    ]
+  },
+  {
+    "word": "등산",
+    "length": 2,
+    "meaning": "hiking",
+    "definition": "Walking up mountains.",
+    "emoji": "⛰️",
+    "category": "ACTIVITY",
+    "imagePrompt": "mountain trail hikers",
+    "examples": [
+      {
+        "korean": "등산 갈래?",
+        "english": "Want to go hiking?",
+        "context": "Casual"
+      },
+      {
+        "korean": "등산화 신고 와",
+        "english": "Wear your hiking boots",
+        "context": "Daily"
+      },
+      {
+        "korean": "등산 코스가 험해요",
+        "english": "The trail is steep",
+        "context": "Formal"
+      }
+    ]
+  },
+  {
+    "word": "수영",
+    "length": 2,
+    "meaning": "swimming",
+    "definition": "Moving in water as sport.",
+    "emoji": "🏊",
+    "category": "ACTIVITY",
+    "imagePrompt": "swimming pool blue",
+    "examples": [
+      {
+        "korean": "수영 배우고 있어",
+        "english": "I'm learning to swim",
+        "context": "Daily"
+      },
+      {
+        "korean": "수영장 갈래?",
+        "english": "Want to go to the pool?",
+        "context": "Casual"
+      },
+      {
+        "korean": "수영 후에는 샤워하세요",
+        "english": "Please shower after swimming",
+        "context": "Formal"
+      }
+    ]
+  },
+  {
+    "word": "그림",
+    "length": 2,
+    "meaning": "picture / drawing",
+    "definition": "Art made with lines and colors.",
+    "emoji": "🎨",
+    "category": "ART",
+    "imagePrompt": "palette brush canvas",
+    "examples": [
+      {
+        "korean": "그림 그리는 거 좋아해",
+        "english": "I like drawing",
+        "context": "Daily"
+      },
+      {
+        "korean": "그림 잘 그린다",
+        "english": "You draw well",
+        "context": "Casual"
+      },
+      {
+        "korean": "그림 전시 보러 갔어요",
+        "english": "I went to see an art exhibition",
+        "context": "Formal"
+      }
+    ]
+  },
+  {
+    "word": "사진",
+    "length": 2,
+    "meaning": "photo",
+    "definition": "An image from a camera.",
+    "emoji": "📷",
+    "category": "ART",
+    "imagePrompt": "camera lens snapshot",
+    "examples": [
+      {
+        "korean": "사진 찍자",
+        "english": "Let's take a photo",
+        "context": "Casual"
+      },
+      {
+        "korean": "사진 한 장만 찍어 주세요",
+        "english": "Please take just one picture",
+        "context": "Formal"
+      },
+      {
+        "korean": "사진 정리 중이야",
+        "english": "I'm organizing my photos",
+        "context": "Daily"
+      }
+    ]
+  },
+  {
+    "word": "게임",
+    "length": 2,
+    "meaning": "game",
+    "definition": "Play for fun or competition.",
+    "emoji": "🎮",
+    "category": "ACTIVITY",
+    "imagePrompt": "game controller simple",
+    "examples": [
+      {
+        "korean": "게임 한 판 할래?",
+        "english": "Want to play a game?",
+        "context": "Casual"
+      },
+      {
+        "korean": "게임 중독이야",
+        "english": "I'm hooked on this game",
+        "context": "Daily"
+      },
+      {
+        "korean": "게임 끄고 자라",
+        "english": "Turn off the game and sleep",
+        "context": "Daily"
+      }
+    ]
+  }
 ]

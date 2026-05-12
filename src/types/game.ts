@@ -2,6 +2,15 @@ export type TileState = "correct" | "present" | "absent";
 
 export type GameStatus = "playing" | "won" | "lost";
 
+/** Label for learner-facing example lines (maps to emoji in UI) */
+export type WordExampleContext = "K-drama" | "K-pop" | "Daily" | "Formal" | "Casual";
+
+export type WordExampleEntry = {
+  korean: string;
+  english: string;
+  context: WordExampleContext;
+};
+
 export type WordEntry = {
   word: string;
   /** Hangul 완성형 음절 개수 (= `word.length` 일반적으로); 명시 시 검증·격자에 사용 */
@@ -11,8 +20,8 @@ export type WordEntry = {
   meaning: string;
   /** Short English gloss for learners */
   definition: string;
-  /** English + Korean in parentheses */
-  example: string;
+  /** 2–3 natural usage examples (standard Korean) */
+  examples: WordExampleEntry[];
   /** When set (e.g. `/images/foo.png`), shown instead of emoji until load error */
   image?: string;
   /** Reserved for future image generation scripts */

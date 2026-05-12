@@ -49,6 +49,7 @@ import { getNextPhrase } from "@/lib/phraseRotation";
 import { validateWordEntries } from "@/lib/validateWords";
 import { getVisibleHints } from "@/lib/visibleHints";
 import { buildViralShareText } from "@/lib/viralShareText";
+import { CONTEXT_EMOJI, formatExampleHintLine, getWordExamples } from "@/lib/wordExamples";
 import type { PhraseEntry } from "@/types/phrase";
 import type { PersistedGame, PuzzleMode, TileState, WordEntry } from "@/types/game";
 
@@ -63,7 +64,7 @@ const ROW_REVEAL_MS = 300;
 /** How long the “Brag” clipboard toast stays visible (read time on mobile). */
 const BRAG_TOAST_MS = 3800;
 
-type TtsPlayingSlot = "result-word" | "bonus-phrase" | "bonus-example";
+type TtsPlayingSlot = "result-word" | "bonus-phrase" | "bonus-example" | "rex-0" | "rex-1" | "rex-2";
 
 function pickLengthFeedbackMessage(requiredSyllables: number): string {
   const pools: Record<number, string[]> = {
@@ -243,11 +244,12 @@ export function Game() {
     const catRaw = answerEntry?.category ?? "WORD";
     const categoryUpper =
       typeof catRaw === "string" ? catRaw.trim().toUpperCase() || "WORD" : "WORD";
+    const examples = getWordExamples(answerEntry ?? undefined);
     return {
       categoryUpper,
       meaning: typeof answerEntry?.meaning === "string" ? answerEntry.meaning : "",
       definition: typeof answerEntry?.definition === "string" ? answerEntry.definition : "",
-      example: typeof answerEntry?.example === "string" ? answerEntry.example : "",
+      examples,
       emoji: typeof answerEntry?.emoji === "string" ? answerEntry.emoji : "📝",
     };
   }, [answerEntry]);
@@ -848,9 +850,13 @@ export function Game() {
       shouldMaskAnswerInHints ? maskAnswerInText(safeWordDisplay.definition, answer) : safeWordDisplay.definition,
     [shouldMaskAnswerInHints, safeWordDisplay.definition, answer],
   );
+  const hintExampleLine = useMemo(
+    () => formatExampleHintLine(safeWordDisplay.examples[0]),
+    [safeWordDisplay.examples],
+  );
   const hintExampleDisplay = useMemo(
-    () => (shouldMaskAnswerInHints ? maskAnswerInText(safeWordDisplay.example, answer) : safeWordDisplay.example),
-    [shouldMaskAnswerInHints, safeWordDisplay.example, answer],
+    () => (shouldMaskAnswerInHints ? maskAnswerInText(hintExampleLine, answer) : hintExampleLine),
+    [shouldMaskAnswerInHints, hintExampleLine, answer],
   );
 
   const speechUnavailable = ttsMountReady && !isSpeechSynthesisSupported();
@@ -1435,8 +1441,41 @@ export function Game() {
 
             <p className="mt-3 text-sm text-stone-600">&ldquo;{safeWordDisplay.meaning}&rdquo;</p>
             <p className="mt-1 text-xs leading-snug text-stone-600">{safeWordDisplay.definition}</p>
-            <p className="mt-3 text-xs uppercase tracking-wide text-stone-500">Example</p>
-            <p className="mt-1 text-sm leading-relaxed text-stone-800">{safeWordDisplay.example}</p>
+            <p className="mt-3 text-[10px] font-bold uppercase tracking-wide text-stone-500">Examples</p>
+            <div className="mt-1.5 space-y-1.5">
+              {safeWordDisplay.examples.map((ex, i) => {
+                const ctx = CONTEXT_EMOJI[ex.context];
+                const ttsText = hangulChunksFromText(ex.korean) || ex.korean.trim();
+                const slot = (["rex-0", "rex-1", "rex-2"] as const)[i]!;
+                const playing = ttsPlaying === slot;
+                return (
+                  <div
+                    key={`${ex.korean}-${i}`}
+                    className="rounded-lg border border-stone-200/80 bg-white/75 px-2 py-1.5 shadow-sm"
+                  >
+                    <div className="flex items-start justify-between gap-1.5">
+                      <p className="min-w-0 flex-1 text-[12px] font-semibold leading-snug text-stone-900 sm:text-[13px]">
+                        <span aria-hidden className="mr-1 select-none">
+                          {ctx}
+                        </span>
+                        {ex.korean}
+                      </p>
+                      {ttsText ? (
+                        <button
+                          type="button"
+                          onClick={() => speakKoreanWord(slot, ttsText)}
+                          aria-label={`Listen: ${ex.korean}`}
+                          className={`flex min-h-9 min-w-9 shrink-0 items-center justify-center rounded-md border border-stone-400/70 bg-white text-[15px] leading-none text-stone-800 shadow-sm transition hover:bg-stone-50 active:scale-95 ${playing ? "border-amber-500/70 bg-amber-50 ring-2 ring-amber-400/55" : ""}`}
+                        >
+                          <span aria-hidden>🔊</span>
+                        </button>
+                      ) : null}
+                    </div>
+                    <p className="mt-0.5 pl-0.5 text-[10px] leading-snug text-stone-600 sm:text-[11px]">{ex.english}</p>
+                  </div>
+                );
+              })}
+            </div>
 
             <div className="mt-6 rounded-xl border-2 border-amber-200/80 bg-[#f5f0e8] p-3 shadow-sm sm:p-4">
               <p className="text-center text-xs font-bold uppercase tracking-wide text-amber-950">
