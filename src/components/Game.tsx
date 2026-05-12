@@ -7,6 +7,7 @@ import wordsJson from "@/data/words.json";
 import { FeedbackModal } from "@/components/FeedbackModal";
 import { Grid } from "@/components/Grid";
 import { HangulKeyboard } from "@/components/HangulKeyboard";
+import { MaskedPlaceholderText } from "@/components/MaskedPlaceholderText";
 import {
   entrySyllableCount,
   getUtcDateString,
@@ -34,6 +35,7 @@ import {
   type Difficulty,
 } from "@/lib/difficulty";
 import { assembleBuffer } from "@/lib/hangulBuffer";
+import { maskAnswerInText } from "@/lib/maskAnswerInText";
 import {
   cancelSpeech,
   hangulChunksFromText,
@@ -818,11 +820,30 @@ export function Game() {
     return answer.trim();
   }, [answer]);
 
+  const shouldMaskAnswerInHints = status === "playing";
+
+  const hintMeaningDisplay = useMemo(
+    () => (shouldMaskAnswerInHints ? maskAnswerInText(safeWordDisplay.meaning, answer) : safeWordDisplay.meaning),
+    [shouldMaskAnswerInHints, safeWordDisplay.meaning, answer],
+  );
+  const hintDefinitionDisplay = useMemo(
+    () =>
+      shouldMaskAnswerInHints ? maskAnswerInText(safeWordDisplay.definition, answer) : safeWordDisplay.definition,
+    [shouldMaskAnswerInHints, safeWordDisplay.definition, answer],
+  );
+  const hintExampleDisplay = useMemo(
+    () => (shouldMaskAnswerInHints ? maskAnswerInText(safeWordDisplay.example, answer) : safeWordDisplay.example),
+    [shouldMaskAnswerInHints, safeWordDisplay.example, answer],
+  );
+
   const exampleKoreanForTts = useMemo(() => {
-    const fromExample = hangulChunksFromText(safeWordDisplay.example);
-    const merged = (fromExample || safeAnswerForTts).trim();
-    return merged;
-  }, [safeWordDisplay.example, safeAnswerForTts]);
+    const rawExample = safeWordDisplay.example;
+    const forExtract = shouldMaskAnswerInHints ? maskAnswerInText(rawExample, answer) : rawExample;
+    const fromExample = hangulChunksFromText(forExtract).trim();
+    if (fromExample) return fromExample;
+    if (shouldMaskAnswerInHints) return "";
+    return safeAnswerForTts.trim();
+  }, [shouldMaskAnswerInHints, safeWordDisplay.example, answer, safeAnswerForTts]);
 
   const speechUnavailable = ttsMountReady && !isSpeechSynthesisSupported();
 
@@ -1084,7 +1105,9 @@ export function Game() {
                       Meaning
                     </p>
                     <p className="font-serif text-[12px] leading-snug text-stone-900 sm:text-[13px]">
-                      &ldquo;{safeWordDisplay.meaning}&rdquo;
+                      &ldquo;
+                      <MaskedPlaceholderText text={hintMeaningDisplay} />
+                      &rdquo;
                     </p>
                   </div>
                 ) : visible.tryGuessPlaceholder ? (
@@ -1109,7 +1132,7 @@ export function Game() {
                     <p
                       className={`text-[11px] leading-snug text-stone-800 sm:text-xs ${freshHintTier === 2 ? "hint-new-text-line" : ""}`}
                     >
-                      {safeWordDisplay.definition}
+                      <MaskedPlaceholderText text={hintDefinitionDisplay} />
                     </p>
                   </div>
                 )}
@@ -1137,7 +1160,7 @@ export function Game() {
                     <p
                       className={`mt-1 text-[11px] leading-snug text-stone-900 sm:text-xs ${freshHintTier === 3 ? "hint-new-text-line" : ""}`}
                     >
-                      {safeWordDisplay.example}
+                      <MaskedPlaceholderText text={hintExampleDisplay} />
                     </p>
                   </div>
                 )}
