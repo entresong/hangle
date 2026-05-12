@@ -462,9 +462,10 @@ export function Game() {
     }
   }, [endModal.open, status, todayPhrase.id]);
 
-  /** Keep latest scrollable hint in view inside the card only (no page scroll). */
+  /** Keep latest scrollable hint in view (Normal/Hard). Easy uses per-tier scrollIntoView. */
   useEffect(() => {
     if (!hydrated || status !== "playing") return;
+    if (difficulty === "easy") return;
     const body = hintScrollBodyRef.current;
     if (!body) return;
     if (hintScrollTimerRef.current !== null) {
@@ -565,6 +566,19 @@ export function Game() {
         ? null
         : freshUnlockedHintTier(difficulty!, prevWrong, newWrong);
 
+    if (process.env.NODE_ENV === "development" && difficulty === "easy" && !wonImmediate && !lostImmediate) {
+      const v = getVisibleHints("easy", newWrong);
+      console.log("=== After attempt #", attemptNumber, "===");
+      console.log("Wrong guesses:", newWrong, "(was", prevWrong, ")");
+      console.log("Meaning shown:", true);
+      console.log("Definition shown:", newWrong >= 1, "| visible.showDefinition:", v.showDefinition);
+      console.log("Example shown:", newWrong >= 2, "| visible.showExample:", v.showExample);
+      console.log("Jamo text shown:", newWrong >= 3, "| visible.showJamo:", v.showJamo);
+      console.log("Keyboard highlighted:", newWrong >= 4, "| showKeyboardHelpRow:", v.showKeyboardHelpRow);
+      console.log("Last-chance strip:", newWrong >= 5, "| lastChanceEasy:", v.lastChanceEasy);
+      console.log("Hint tier unlocked this submit:", hintTierUnlocked);
+    }
+
     const persist = (
       nextStatus: PersistedGame["status"],
       recorded: boolean,
@@ -616,7 +630,7 @@ export function Game() {
           window.setTimeout(() => setHintToastVisible(false), 3000),
         );
         hintsTimersRef.current.push(
-          window.setTimeout(() => setHintCardPulse(false), 520),
+          window.setTimeout(() => setHintCardPulse(false), 800),
         );
         hintsTimersRef.current.push(
           window.setTimeout(() => setFreshHintTier(null), 2000),
@@ -755,6 +769,21 @@ export function Game() {
     () => (difficulty ? getVisibleHints(difficulty, wrongGuessCount) : null),
     [difficulty, wrongGuessCount],
   );
+
+  /** Easy: scroll newest hint block into view after a wrong guess unlocks more rows */
+  useEffect(() => {
+    if (difficulty !== "easy" || wrongGuessCount < 1 || status !== "playing") return;
+    const tier = Math.min(wrongGuessCount + 1, 6);
+    const body = hintScrollBodyRef.current;
+    if (!body) return;
+    const id = window.setTimeout(() => {
+      const el = body.querySelector(`[data-hint-tier="${tier}"]`);
+      if (el instanceof HTMLElement) {
+        el.scrollIntoView({ behavior: "smooth", block: "nearest", inline: "nearest" });
+      }
+    }, 420);
+    return () => window.clearTimeout(id);
+  }, [difficulty, wrongGuessCount, status, answer]);
 
   const newestScrollTier = useMemo(() => {
     if (!difficulty) return null;
@@ -944,6 +973,18 @@ export function Game() {
         </div>
       )}
 
+      {hintToastVisible && (
+        <div
+          role="status"
+          aria-live="polite"
+          className="pointer-events-none fixed left-1/2 top-[max(3.25rem,env(safe-area-inset-top)+2.75rem)] z-[56] flex w-full max-w-md -translate-x-1/2 justify-center px-3"
+        >
+          <p className="animate-hint-toast rounded-full border border-amber-400/90 bg-amber-50/98 px-4 py-2 text-center text-[12px] font-bold text-amber-950 shadow-lg backdrop-blur-[2px] sm:text-sm">
+            💡 New hint unlocked!
+          </p>
+        </div>
+      )}
+
       <div className="shrink-0 px-0.5 text-center max-[480px]:py-0 sm:py-0.5">
         <p className="truncate text-[12px] font-medium leading-snug text-stone-700 max-[480px]:text-[11px] sm:hidden">
           {mobileTagline}
@@ -973,24 +1014,16 @@ export function Game() {
       {hydrated && status === "playing" && difficulty !== null && visible && (
         <div
           key={`hints-${difficulty}`}
-          className="relative z-[1] w-full shrink-0 transition-opacity duration-300 ease-out"
+          className="relative z-20 w-full shrink-0 transition-opacity duration-300 ease-out"
         >
-          {hintToastVisible && (
-            <div className="pointer-events-none absolute bottom-full left-1/2 z-30 mb-1 flex -translate-x-1/2 justify-center">
-              <div
-                role="status"
-                aria-live="polite"
-                className="animate-hint-toast whitespace-nowrap rounded-full border border-amber-400/80 bg-amber-50/95 px-3 py-1 font-sans text-[10px] font-semibold text-amber-950 shadow-md backdrop-blur-[2px] sm:text-[11px]"
-              >
-                💡 New hint!
-              </div>
-            </div>
-          )}
-
           {visible.showFullHintCard && (
             <section
               aria-label="Hints"
-              className={`game-hint-card flex max-h-[min(150px,22dvh)] shrink-0 flex-col overflow-hidden rounded-xl border border-stone-300/55 bg-[var(--hint-card-bg)] shadow-sm transition-shadow max-[480px]:max-h-[min(140px,20dvh)] sm:max-h-[200px] ${hintCardPulse ? "hint-card-pulse-once" : ""}`}
+              className={`game-hint-card flex shrink-0 flex-col overflow-hidden rounded-xl border border-stone-300/55 bg-[var(--hint-card-bg)] shadow-sm transition-shadow ${
+                visible.variant === "easy"
+                  ? "game-hint-card--easy max-h-[min(380px,46dvh)] max-[480px]:max-h-[min(340px,42dvh)] sm:max-h-[min(400px,40dvh)]"
+                  : "max-h-[min(150px,22dvh)] max-[480px]:max-h-[min(140px,20dvh)] sm:max-h-[200px]"
+              } ${hintCardPulse ? "hint-card-pulse-once" : ""}`}
             >
               <div className="shrink-0 border-b border-stone-400/25 px-2 pb-1.5 pt-2 text-left max-[480px]:px-2 max-[480px]:pb-1 max-[480px]:pt-2 sm:px-5 sm:pb-3 sm:pt-4">
                 {visible.showHintDotsRow && visible.hintDotsTotal > 0 && (
@@ -1066,16 +1099,26 @@ export function Game() {
                 className="hint-card-inner-scroll flex min-h-0 flex-1 flex-col divide-y divide-stone-400/25 overflow-y-auto overscroll-contain px-4 pb-4 pt-2 sm:px-5"
               >
                 {difficulty === "easy" && visible.showDefinition && (
-                  <div className={`hint-fade-in py-2 ${scrollHintRowClass(2)}`}>
+                  <div
+                    data-hint-tier="2"
+                    className={`hint-fade-in py-2 ${scrollHintRowClass(2)}`}
+                  >
                     <p className="hint-scroll-row-title text-[8px] font-semibold uppercase tracking-wide text-stone-500">
                       Definition
                     </p>
-                    <p className="text-[11px] leading-snug text-stone-800 sm:text-xs">{safeWordDisplay.definition}</p>
+                    <p
+                      className={`text-[11px] leading-snug text-stone-800 sm:text-xs ${freshHintTier === 2 ? "hint-new-text-line" : ""}`}
+                    >
+                      {safeWordDisplay.definition}
+                    </p>
                   </div>
                 )}
 
                 {difficulty === "easy" && visible.showExample && (
-                  <div className={`hint-fade-in py-2 ${scrollHintRowClass(3)}`}>
+                  <div
+                    data-hint-tier="3"
+                    className={`hint-fade-in py-2 ${scrollHintRowClass(3)}`}
+                  >
                     <div className="flex items-start justify-between gap-2">
                       <p className="hint-scroll-row-title text-[8px] font-semibold uppercase tracking-wide text-stone-500">
                         Example
@@ -1091,13 +1134,22 @@ export function Game() {
                         </button>
                       ) : null}
                     </div>
-                    <p className="mt-1 text-[11px] leading-snug text-stone-900 sm:text-xs">{safeWordDisplay.example}</p>
+                    <p
+                      className={`mt-1 text-[11px] leading-snug text-stone-900 sm:text-xs ${freshHintTier === 3 ? "hint-new-text-line" : ""}`}
+                    >
+                      {safeWordDisplay.example}
+                    </p>
                   </div>
                 )}
 
                 {difficulty === "easy" && visible.showJamo && firstWordJamo && (
-                  <div className={`hint-fade-in py-2 ${scrollHintRowClass(4)}`}>
-                    <p className="text-[11px] font-semibold leading-snug text-stone-900 sm:text-xs">
+                  <div
+                    data-hint-tier="4"
+                    className={`hint-fade-in py-2 ${scrollHintRowClass(4)}`}
+                  >
+                    <p
+                      className={`text-[11px] font-semibold leading-snug text-stone-900 sm:text-xs ${freshHintTier === 4 ? "hint-new-text-line" : ""}`}
+                    >
                       Starts with{" "}
                       <span className="font-mono text-sm tracking-wide text-stone-950">{firstWordJamo}</span>
                     </p>
@@ -1105,22 +1157,32 @@ export function Game() {
                 )}
 
                 {visible.showKeyboardHelpRow && (
-                  <div className={`hint-fade-in py-2 ${scrollHintRowClass(5)}`}>
+                  <div
+                    data-hint-tier="5"
+                    className={`hint-fade-in py-2 ${scrollHintRowClass(5)}`}
+                  >
                     <p className="hint-scroll-row-title text-[8px] font-semibold uppercase tracking-wide text-stone-500">
                       Keyboard
                     </p>
-                    <p className="text-[11px] leading-snug text-stone-800 sm:text-xs">
+                    <p
+                      className={`text-[11px] leading-snug text-stone-800 sm:text-xs ${freshHintTier === 5 ? "hint-new-text-line" : ""}`}
+                    >
                       Jamo used in the answer are highlighted on the keyboard below.
                     </p>
                   </div>
                 )}
 
                 {difficulty === "easy" && visible.lastChanceEasy && (
-                  <div className={`hint-fade-in py-2 ${scrollHintRowClass(6)}`}>
+                  <div
+                    data-hint-tier="6"
+                    className={`hint-fade-in py-2 ${scrollHintRowClass(6)}`}
+                  >
                     <p className="mb-1 text-center text-[9px] font-bold uppercase tracking-wide text-red-700">
                       Last chance · 거의 정답
                     </p>
-                    <p className="text-center font-serif text-sm font-semibold text-stone-900 sm:text-base">
+                    <p
+                      className={`text-center font-serif text-sm font-semibold text-stone-900 sm:text-base ${freshHintTier === 6 ? "hint-new-text-line" : ""}`}
+                    >
                       {almostAnswerLine(answer)}
                     </p>
                   </div>

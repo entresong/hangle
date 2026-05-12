@@ -15,8 +15,11 @@ body {
 
 /* Short landscape phones: keep grid visible; shrink hint + keyboard caps */
 @media (orientation: landscape) and (max-height: 520px) {
-  .game-hint-card {
+  .game-hint-card:not(.game-hint-card--easy) {
     max-height: min(22dvh, 100px) !important;
+  }
+  .game-hint-card--easy {
+    max-height: min(48dvh, 280px) !important;
   }
   .game-keyboard-zone {
     max-height: min(32dvh, 180px) !important;

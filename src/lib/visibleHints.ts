@@ -33,7 +33,9 @@ export type VisibleHints = {
 /**
  * Pure hint visibility for the current difficulty and wrong-guess count.
  * `wrongGuessCount` = number of submitted guesses that were not the answer.
- * (Call with `wordEntry` later if per-word rules are needed.)
+ *
+ * Easy (sequential): 0 → emoji + category + meaning; ≥1 definition; ≥2 example;
+ * ≥3 first-syllable jamo; ≥4 keyboard jamo highlight; ≥5 last-chance strip.
  */
 export function getVisibleHints(difficulty: Difficulty, wrongGuessCount: number): VisibleHints {
   if (difficulty === "easy") {
