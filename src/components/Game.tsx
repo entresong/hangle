@@ -40,16 +40,26 @@ import {
   isSpeechSynthesisSupported,
   playPronunciation,
 } from "@/lib/pronunciation";
+import phrasesJson from "@/data/phrases.json";
+import { TodayPhraseBonus } from "@/components/TodayPhraseBonus";
+import { pickTodayPhrase } from "@/lib/todayPhrase";
 import { validateWordEntries } from "@/lib/validateWords";
 import { getVisibleHints } from "@/lib/visibleHints";
+import type { PhraseEntry } from "@/types/phrase";
 import type { PersistedGame, PuzzleMode, TileState, WordEntry } from "@/types/game";
 
 const WORDS = wordsJson as WordEntry[];
+const PHRASES = phrasesJson as PhraseEntry[];
 
 /** Delay after color feedback before next-row draft + hint cues */
 const ROW_REVEAL_MS = 300;
 
-type TtsPlayingSlot = "result-word" | "result-example" | "hint-example";
+type TtsPlayingSlot =
+  | "result-word"
+  | "result-example"
+  | "hint-example"
+  | "bonus-phrase"
+  | "bonus-example";
 
 function pickLengthFeedbackMessage(requiredSyllables: number): string {
   const pools: Record<number, string[]> = {
@@ -162,6 +172,11 @@ export function Game() {
   const dayNumber = useMemo(() => getUtcDayNumber(), []);
   const dailyEntry = useMemo(() => pickDailyWord(WORDS), []);
   const dailyAnswer = dailyEntry.word;
+  const todayPhrase = useMemo(() => pickTodayPhrase(PHRASES), []);
+  const todayPhraseExampleKo = useMemo(
+    () => hangulChunksFromText(todayPhrase.example),
+    [todayPhrase],
+  );
 
   const [sessionMode, setSessionMode] = useState<PuzzleMode>("daily");
   const [answer, setAnswer] = useState(dailyAnswer);
@@ -391,6 +406,24 @@ export function Game() {
       speechNoticeTimerRef.current = null;
     }
   }, [endModal.open]);
+
+  useEffect(() => {
+    if (!endModal.open || (status !== "won" && status !== "lost")) return;
+    try {
+      const key = "hangleSeenPhraseIds";
+      const raw = window.localStorage.getItem(key);
+      const parsed: unknown = raw ? JSON.parse(raw) : [];
+      const list = Array.isArray(parsed)
+        ? parsed.filter((x): x is number => typeof x === "number")
+        : [];
+      if (!list.includes(todayPhrase.id)) {
+        list.push(todayPhrase.id);
+        window.localStorage.setItem(key, JSON.stringify(list.slice(-300)));
+      }
+    } catch {
+      /* ignore corrupt LS */
+    }
+  }, [endModal.open, status, todayPhrase.id]);
 
   /** Keep latest scrollable hint in view inside the card only (no page scroll). */
   useEffect(() => {
@@ -747,7 +780,7 @@ export function Game() {
     if (!difficulty) return "Pick a mode to start";
     if (sessionMode === "practice") return "Guess the practice word";
     const syl = answerLen === 1 ? "1-syllable" : `${answerLen}-syllable`;
-    return `Guess today's ${syl} Korean word`;
+    return `Daily Korean word + phrase · ${syl}`;
   }, [difficulty, sessionMode, answerLen]);
 
   return (
@@ -857,6 +890,9 @@ export function Game() {
         <div className="hidden space-y-0.5 sm:block">
           <p className="line-clamp-2 text-balance text-[10px] leading-snug text-stone-600 md:text-[11px]">
             {sessionMode === "daily" ? dailyHowToLine : practiceHowToLine}
+          </p>
+          <p className="text-[10px] leading-snug text-stone-500 md:text-[11px]">
+            Daily Korean word + phrase. Learn through play.
           </p>
           <p className="text-[10px] leading-snug text-stone-500 md:text-[11px]">
             For Korean learners (Easy) and Wordle veterans (Hard)
@@ -1274,6 +1310,16 @@ export function Game() {
                   : `Practice round · next official word in ${formatDurationShort(msToNextUtc)} (UTC)`}
               </p>
             </div>
+
+            <TodayPhraseBonus
+              phrase={todayPhrase}
+              exampleKorean={todayPhraseExampleKo}
+              speechUnavailable={speechUnavailable}
+              ttsPlayingPhrase={ttsPlaying === "bonus-phrase"}
+              ttsPlayingExample={ttsPlaying === "bonus-example"}
+              onSpeakPhrase={() => speakKoreanWord("bonus-phrase", todayPhrase.phrase)}
+              onSpeakExample={() => speakKoreanWord("bonus-example", todayPhraseExampleKo)}
+            />
 
             <button
               type="button"

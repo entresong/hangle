@@ -18,7 +18,7 @@ const sans = DM_Sans({
 export const metadata: Metadata = {
   title: "Hangle — Korean spelling practice",
   description:
-    "Learning mode for beginners: read English meaning and examples, then spell the Korean word in Hangul in six tries (UTC). English UI.",
+    "Daily Korean word + phrase. Learn through play: spell a 2-syllable word in Hangul in six tries (UTC), then study a standard greeting or phrase. English UI.",
 };
 
 export const viewport = {
