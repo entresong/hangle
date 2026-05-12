@@ -42,6 +42,7 @@ import {
 } from "@/lib/pronunciation";
 import phrasesJson from "@/data/phrases.json";
 import { TodayPhraseBonus } from "@/components/TodayPhraseBonus";
+import { WelcomeHelpModal } from "@/components/WelcomeHelpModal";
 import { pickTodayPhrase } from "@/lib/todayPhrase";
 import { validateWordEntries } from "@/lib/validateWords";
 import { getVisibleHints } from "@/lib/visibleHints";
@@ -50,6 +51,8 @@ import type { PersistedGame, PuzzleMode, TileState, WordEntry } from "@/types/ga
 
 const WORDS = wordsJson as WordEntry[];
 const PHRASES = phrasesJson as PhraseEntry[];
+
+const HANGLE_VISITED_KEY = "hangle_visited";
 
 /** Delay after color feedback before next-row draft + hint cues */
 const ROW_REVEAL_MS = 300;
@@ -230,6 +233,8 @@ export function Game() {
   const [feedbackOpen, setFeedbackOpen] = useState(false);
   const [modeToast, setModeToast] = useState<string | null>(null);
   const modeToastTimerRef = useRef<number | null>(null);
+  const [welcomeHelpOpen, setWelcomeHelpOpen] = useState(false);
+  const [tapHintConsumed, setTapHintConsumed] = useState(false);
 
   /** Safe strings for UI — words.json or merged entries must never crash on missing fields */
   const safeWordDisplay = useMemo(() => {
@@ -288,6 +293,38 @@ export function Game() {
 
   useEffect(() => {
     setTtsMountReady(true);
+  }, []);
+
+  useEffect(() => {
+    if (!hydrated) return;
+    try {
+      if (window.localStorage.getItem(HANGLE_VISITED_KEY) !== "true") {
+        setWelcomeHelpOpen(true);
+      }
+    } catch {
+      /* ignore */
+    }
+  }, [hydrated]);
+
+  useEffect(() => {
+    setTapHintConsumed(false);
+  }, [answer]);
+
+  useEffect(() => {
+    if (buffer.length > 0) setTapHintConsumed(true);
+  }, [buffer.length]);
+
+  const closeWelcomeHelp = useCallback(() => {
+    setWelcomeHelpOpen(false);
+  }, []);
+
+  const markVisitedAndCloseWelcome = useCallback(() => {
+    try {
+      window.localStorage.setItem(HANGLE_VISITED_KEY, "true");
+    } catch {
+      /* ignore */
+    }
+    setWelcomeHelpOpen(false);
   }, []);
 
   useEffect(() => {
@@ -779,9 +816,17 @@ export function Game() {
   const mobileTagline = useMemo(() => {
     if (!difficulty) return "Pick a mode to start";
     if (sessionMode === "practice") return "Guess the practice word";
-    const syl = answerLen === 1 ? "1-syllable" : `${answerLen}-syllable`;
-    return `Daily Korean word + phrase · ${syl}`;
-  }, [difficulty, sessionMode, answerLen]);
+    return "Daily Korean word game · For K-pop & K-drama fans";
+  }, [difficulty, sessionMode]);
+
+  const showTapKeyboardHint =
+    hydrated &&
+    !welcomeHelpOpen &&
+    !pickDifficultyOpen &&
+    difficulty !== null &&
+    status === "playing" &&
+    guesses.length === 0 &&
+    !tapHintConsumed;
 
   return (
     <div
@@ -796,10 +841,26 @@ export function Game() {
           >
             Stats
           </button>
-          <h1 className="min-w-0 flex-1 truncate text-center font-serif text-[clamp(1.2rem,5.2vw,1.55rem)] leading-none tracking-tight text-stone-900 sm:text-2xl">
-            Hangle
-          </h1>
+          <div className="min-w-0 flex-1 text-center leading-tight">
+            <h1 className="truncate font-serif text-[clamp(1.05rem,4.8vw,1.45rem)] tracking-tight text-stone-900 sm:text-xl">
+              🇰🇷 Hangle
+            </h1>
+            <p className="truncate text-[10px] font-medium text-stone-600 max-[360px]:text-[9px] sm:text-[11px]">
+              Korean Wordle
+            </p>
+          </div>
           <div className="flex shrink-0 items-center gap-0.5">
+            <button
+              type="button"
+              aria-label="How to play and Korean typing help"
+              onClick={() => setWelcomeHelpOpen(true)}
+              className="flex min-h-10 min-w-10 items-center justify-center rounded-md text-stone-700 hover:bg-stone-200/70 hover:text-stone-900 sm:min-h-11 sm:min-w-11 sm:gap-1 sm:px-2"
+            >
+              <span className="text-base leading-none" aria-hidden>
+                ❓
+              </span>
+              <span className="hidden text-xs sm:inline">Help</span>
+            </button>
             <button
               type="button"
               aria-label="Send feedback"
@@ -892,13 +953,22 @@ export function Game() {
             {sessionMode === "daily" ? dailyHowToLine : practiceHowToLine}
           </p>
           <p className="text-[10px] leading-snug text-stone-500 md:text-[11px]">
-            Daily Korean word + phrase. Learn through play.
+            Learn Korean through a daily puzzle · For K-pop &amp; K-drama fans
           </p>
           <p className="text-[10px] leading-snug text-stone-500 md:text-[11px]">
             For Korean learners (Easy) and Wordle veterans (Hard)
           </p>
         </div>
       </div>
+
+      {showTapKeyboardHint && (
+        <p
+          className="hint-fade-in shrink-0 px-2 pb-1 text-center text-[13px] font-medium leading-snug text-amber-900/95 max-[480px]:text-[12px] sm:text-[14px]"
+          role="status"
+        >
+          Tap a letter on the keyboard below to start
+        </p>
+      )}
 
       {hydrated && status === "playing" && difficulty !== null && visible && (
         <div
@@ -1369,6 +1439,12 @@ export function Game() {
         gameDifficulty={difficulty}
         sessionMode={sessionMode}
         gamesPlayed={stats.gamesPlayed}
+      />
+
+      <WelcomeHelpModal
+        open={welcomeHelpOpen}
+        onClose={closeWelcomeHelp}
+        onMarkVisited={markVisitedAndCloseWelcome}
       />
 
       {pickDifficultyOpen && (
