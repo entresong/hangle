@@ -74,8 +74,8 @@
     "length": 2,
     "meaning": "teacher",
     "definition": "A person who teaches.",
-    "example": "Korean teacher (한국어 선생)",
-    "emoji": "👨‍🏫",
+    "example": "My teacher is kind (선생님은 친절해요)",
+    "emoji": "🧑‍🏫",
     "category": "PERSON",
     "imagePrompt": "teacher at chalkboard"
   },
@@ -220,22 +220,22 @@
     "imagePrompt": "gentle snowfall winter scene"
   },
   {
-    "word": "한복",
+    "word": "한식",
     "length": 2,
-    "meaning": "hanbok",
-    "definition": "Traditional Korean clothing.",
-    "example": "Beautiful hanbok (예쁜 한복)",
-    "emoji": "👘",
-    "category": "CULTURE",
-    "imagePrompt": "elegant Korean hanbok dress"
+    "meaning": "Korean cuisine",
+    "definition": "Traditional or everyday Korean meals, often rice with side dishes.",
+    "example": "I enjoy Korean food (한식 좋아해요)",
+    "emoji": "🍚",
+    "category": "FOOD",
+    "imagePrompt": "Korean meal with rice and banchan side dishes"
   },
   {
     "word": "한글",
     "length": 2,
     "meaning": "Hangul",
     "definition": "The Korean alphabet.",
-    "example": "Learn Hangul (한글 배우기)",
-    "emoji": "🔤",
+    "example": "Let's learn Hangul (한글 배워요)",
+    "emoji": "📜",
     "category": "CULTURE",
     "imagePrompt": "Hangul letters on paper educational style"
   },
