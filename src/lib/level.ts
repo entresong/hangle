@@ -86,17 +86,19 @@ export function getLevelInfo(wordCount: number): LevelInfo {
 }
 
 /**
- * Welcome message keyed on visit count *before* the current bump.
- * - 0  → first ever launch
- * - 1  → second launch
- * - <5 → returning early
- * - <10 → regular
- * - 10+ → power user
+ * Welcome message keyed on the *post-bump* visit count.
+ * Copy is written for native English readers — no Korean-styled phrasing.
+ *
+ *   1      → first launch ever
+ *   2–3    → recently back
+ *   4–6    → returning regularly
+ *   7–14   → getting hooked
+ *   15+    → power user
  */
-export function welcomeMessage(visitsBeforeBump: number): string {
-  if (visitsBeforeBump <= 0) return "Welcome to Hangle! 🇰🇷";
-  if (visitsBeforeBump === 1) return "Welcome back! 🎉";
-  if (visitsBeforeBump < 5) return "Glad you're back! 🌱";
-  if (visitsBeforeBump < 10) return "Hangle regular! 🔥";
-  return "Hangle master in training! 👑";
+export function welcomeMessage(visitCount: number): string {
+  if (visitCount <= 1) return "Welcome to Hangle! 🇰🇷";
+  if (visitCount <= 3) return "Welcome back! 👋";
+  if (visitCount <= 6) return "Great to have you back! 🌱";
+  if (visitCount <= 14) return "You're on a roll! 🔥";
+  return "Korean learner pro! 👑";
 }

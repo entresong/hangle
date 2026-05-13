@@ -6,6 +6,7 @@ import Hangul from "hangul-js";
 import wordsJson from "@/data/words.json";
 import { FeedbackModal } from "@/components/FeedbackModal";
 import { Grid } from "@/components/Grid";
+import { AppToast } from "@/components/AppToast";
 import { HangulKeyboard } from "@/components/HangulKeyboard";
 import { MaskedPlaceholderText } from "@/components/MaskedPlaceholderText";
 import {
@@ -254,9 +255,14 @@ export function Game() {
   /** Generic guidance toast for taps on non-interactive areas (grid cells, category pill) */
   const [infoToast, setInfoToast] = useState<string | null>(null);
   const infoToastTimerRef = useRef<number | null>(null);
-  /** Visit-count keyed welcome banner shown once per session */
+  /**
+   * Visit-count keyed welcome banner shown once per session.
+   * Auto-dismissed by two dedicated `useEffect`s below (state-driven) so the
+   * dismiss logic is independent from the hydrate effect that *sets* it.
+   */
   const [welcomeBanner, setWelcomeBanner] = useState<string | null>(null);
-  const welcomeBannerTimerRef = useRef<number | null>(null);
+  /** True while the welcome toast is in its exit (fade-out) phase */
+  const [welcomeBannerExiting, setWelcomeBannerExiting] = useState(false);
   const [welcomeHelpOpen, setWelcomeHelpOpen] = useState(false);
   const [tapHintConsumed, setTapHintConsumed] = useState(false);
   const [wordsLearnedBump, setWordsLearnedBump] = useState(false);
@@ -332,7 +338,6 @@ export function Game() {
     return () => {
       if (modeToastTimerRef.current !== null) window.clearTimeout(modeToastTimerRef.current);
       if (infoToastTimerRef.current !== null) window.clearTimeout(infoToastTimerRef.current);
-      if (welcomeBannerTimerRef.current !== null) window.clearTimeout(welcomeBannerTimerRef.current);
     };
   }, []);
 
@@ -612,6 +617,47 @@ export function Game() {
     return () => clearInterval(id);
   }, [endModal.open]);
 
+  // ─────────────────────────────────────────────────────────────────────
+  // Welcome toast auto-dismiss (state-driven, independent from hydrate effect).
+  // Phase 1: 2.7s visible → trigger fade-out class
+  // Phase 2: 0.3s fade animation → fully unmount the toast
+  // Cleanup clears stale timers if banner content changes mid-animation.
+  // ─────────────────────────────────────────────────────────────────────
+  useEffect(() => {
+    if (!welcomeBanner) return;
+    if (welcomeBannerExiting) return;
+    if (process.env.NODE_ENV === "development") {
+      console.log("[Welcome] dismiss timer scheduled", { welcomeBanner });
+    }
+    const fadeTimer = window.setTimeout(() => {
+      if (process.env.NODE_ENV === "development") {
+        console.log("[Welcome] fade phase fired → setWelcomeBannerExiting(true)");
+      }
+      setWelcomeBannerExiting(true);
+    }, 2700);
+    return () => {
+      if (process.env.NODE_ENV === "development") {
+        console.log("[Welcome] dismiss timer CLEARED (cleanup)");
+      }
+      window.clearTimeout(fadeTimer);
+    };
+  }, [welcomeBanner, welcomeBannerExiting]);
+
+  useEffect(() => {
+    if (!welcomeBannerExiting) return;
+    if (process.env.NODE_ENV === "development") {
+      console.log("[Welcome] unmount timer scheduled (300ms)");
+    }
+    const unmountTimer = window.setTimeout(() => {
+      if (process.env.NODE_ENV === "development") {
+        console.log("[Welcome] unmount fired → setWelcomeBanner(null)");
+      }
+      setWelcomeBanner(null);
+      setWelcomeBannerExiting(false);
+    }, 300);
+    return () => window.clearTimeout(unmountTimer);
+  }, [welcomeBannerExiting]);
+
   useEffect(() => {
     const loaded = loadGame();
     let st = loadStats();
@@ -633,15 +679,13 @@ export function Game() {
       } catch {
         /* ignore */
       }
-      const msg = welcomeMessage(visitsBefore);
-      setWelcomeBanner(msg);
-      if (welcomeBannerTimerRef.current !== null) {
-        window.clearTimeout(welcomeBannerTimerRef.current);
+      const visitCount = st.visits ?? visitsBefore + 1;
+      const msg = welcomeMessage(visitCount);
+      if (process.env.NODE_ENV === "development") {
+        console.log("[Welcome] hydrate effect set banner", { visitCount, msg });
       }
-      welcomeBannerTimerRef.current = window.setTimeout(() => {
-        welcomeBannerTimerRef.current = null;
-        setWelcomeBanner(null);
-      }, 4500);
+      setWelcomeBanner(msg);
+      setWelcomeBannerExiting(false);
     }
 
     setStats(st);
@@ -1244,54 +1288,37 @@ export function Game() {
         </p>
       </header>
 
-      {modeToast && (
-        <div
-          role="status"
-          aria-live="polite"
-          className="pointer-events-none fixed left-1/2 top-[max(0.35rem,env(safe-area-inset-top))] z-[60] flex -translate-x-1/2 justify-center px-3 sm:top-[max(0.5rem,env(safe-area-inset-top))]"
-        >
-          <p className="hint-fade-in rounded-full border border-stone-400/80 bg-[#faf7f0]/98 px-4 py-2 text-center text-[11px] font-semibold text-stone-900 shadow-lg backdrop-blur-[2px] sm:text-xs">
-            {modeToast}
-          </p>
-        </div>
-      )}
-
-      {infoToast && (
-        <div
-          key={infoToast}
-          role="status"
-          aria-live="polite"
-          className="pointer-events-none fixed left-1/2 top-[max(0.35rem,env(safe-area-inset-top))] z-[58] flex -translate-x-1/2 justify-center px-3 sm:top-[max(0.5rem,env(safe-area-inset-top))]"
-        >
-          <p className="hint-fade-in rounded-full border border-amber-400/80 bg-amber-50/97 px-4 py-2 text-center text-[12px] font-semibold text-amber-950 shadow-lg backdrop-blur-[2px] sm:text-sm">
-            {infoToast}
-          </p>
-        </div>
-      )}
-
+      {/* Welcome banner — highest priority + boldest styling. Auto-dismisses in 3s. */}
       {welcomeBanner && (
-        <div
-          key={welcomeBanner}
-          role="status"
-          aria-live="polite"
-          className="pointer-events-none fixed left-1/2 top-[max(0.35rem,env(safe-area-inset-top))] z-[59] flex -translate-x-1/2 justify-center px-3 sm:top-[max(0.5rem,env(safe-area-inset-top))]"
+        <AppToast
+          variant="welcome"
+          toastKey={welcomeBanner}
+          z={73}
+          exiting={welcomeBannerExiting}
         >
-          <p className="hint-fade-in rounded-full border border-amber-500/85 bg-[#faf7f0]/98 px-4 py-2 text-center text-[12px] font-bold text-stone-900 shadow-lg backdrop-blur-[2px] sm:text-sm">
-            {welcomeBanner}
-          </p>
-        </div>
+          {welcomeBanner}
+        </AppToast>
       )}
 
+      {/* Generic info (dead-click guidance, category clue, etc.) */}
+      {infoToast && (
+        <AppToast variant="info" toastKey={infoToast} z={72}>
+          {infoToast}
+        </AppToast>
+      )}
+
+      {/* Hint unlock celebration */}
       {hintToastVisible && (
-        <div
-          role="status"
-          aria-live="polite"
-          className="pointer-events-none fixed left-1/2 top-[max(3.25rem,env(safe-area-inset-top)+2.75rem)] z-[56] flex w-full max-w-md -translate-x-1/2 justify-center px-3"
-        >
-          <p className="animate-hint-toast rounded-full border border-amber-400/90 bg-amber-50/98 px-4 py-2 text-center text-[12px] font-bold text-amber-950 shadow-lg backdrop-blur-[2px] sm:text-sm">
-            💡 New hint unlocked!
-          </p>
-        </div>
+        <AppToast variant="info" toastKey="hint-unlocked" z={71}>
+          💡 New hint unlocked!
+        </AppToast>
+      )}
+
+      {/* Difficulty mode change confirmation */}
+      {modeToast && (
+        <AppToast variant="neutral" toastKey={modeToast} z={70}>
+          {modeToast}
+        </AppToast>
       )}
 
       <div className="shrink-0 px-0.5 text-center max-[480px]:py-0 sm:py-0.5">
