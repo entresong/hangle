@@ -103,21 +103,61 @@ export function HangulKeyboard({
     if (disabled) return;
     const shifted = SHIFT_MAP[baseKey];
     const jamo = shiftActive && shifted !== undefined ? shifted : baseKey;
-    if (!canAcceptJamo(buffer, jamo, targetSyllables)) return;
+    if (!canAcceptJamo(buffer, jamo, targetSyllables)) {
+      if (process.env.NODE_ENV === "development") {
+        console.log("[Keyboard] input REJECTED (would exceed syllable count):", {
+          baseKey,
+          jamo,
+          shiftActive,
+          buffer,
+        });
+      }
+      return;
+    }
     flashPress(`${rowId}-${index}`);
-    onBufferChange([...buffer, jamo]);
+    const next = [...buffer, jamo];
+    onBufferChange(next);
+
+    if (process.env.NODE_ENV === "development") {
+      console.log("[Keyboard] input", {
+        baseKey,
+        emittedJamo: jamo,
+        shiftWasActive: shiftActive,
+        bufferAfter: next,
+        assembledAfter: assembleBuffer(next),
+      });
+    }
+
+    // Standard Korean IME: Shift is momentary — auto-release after one keypress.
+    // Fixes "어꺠" bug where Shift stayed active and turned ㅐ into ㅒ.
+    if (shiftActive) {
+      setShiftActive(false);
+    }
   };
 
   const onBack = () => {
     if (disabled) return;
     flashPress("del");
-    onBufferChange(backspaceJamo(buffer));
+    const next = backspaceJamo(buffer);
+    onBufferChange(next);
+    if (process.env.NODE_ENV === "development") {
+      console.log("[Keyboard] backspace", {
+        bufferAfter: next,
+        assembledAfter: assembleBuffer(next),
+      });
+    }
   };
 
   const toggleShift = () => {
     if (disabled) return;
     flashPress("shift");
-    setShiftActive((v) => !v);
+    setShiftActive((v) => {
+      const nextActive = !v;
+      if (process.env.NODE_ENV === "development") {
+        console.log("[Keyboard] shift toggled →", nextActive);
+      }
+      return nextActive;
+    });
   };
 
   const assembled = assembleBuffer(buffer);
@@ -148,7 +188,11 @@ export function HangulKeyboard({
   return (
     <div className="mx-auto w-full max-w-[500px] shrink-0 select-none px-0 font-sans">
       <p className="mb-0.5 truncate px-1 text-center text-[11px] leading-tight text-stone-600 max-[480px]:mb-0 sm:mb-1 sm:min-h-[1rem] sm:text-[12px]">
-        {preview ? (
+        {shiftActive ? (
+          <span className="font-semibold text-amber-800">
+            ⇧ Shift active · next jamo only
+          </span>
+        ) : preview ? (
           <span className="font-semibold tracking-wide text-stone-900">{preview}</span>
         ) : (
           <span className="text-stone-400 max-[480px]:text-[10px]">Shift · double jamo</span>
