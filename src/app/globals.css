@@ -16,10 +16,10 @@ body {
 /* Short landscape phones: keep grid visible; shrink hint + keyboard caps */
 @media (orientation: landscape) and (max-height: 520px) {
   .game-hint-card:not(.game-hint-card--easy) {
-    max-height: min(22dvh, 100px) !important;
+    max-height: min(22dvh, 90px) !important;
   }
   .game-hint-card--easy {
-    max-height: min(48dvh, 280px) !important;
+    max-height: min(40dvh, 200px) !important;
   }
   .game-keyboard-zone {
     max-height: min(32dvh, 180px) !important;
@@ -263,17 +263,33 @@ body {
   .hint-card-inner-scroll {
     scrollbar-width: thin;
     scrollbar-color: rgb(168 162 158) rgb(245 245 244);
+    /* Scroll-shadow hint (Lea Verou): top/bottom soft shadows only when content overflows */
+    background:
+      linear-gradient(var(--hint-card-bg) 30%, rgba(245, 240, 232, 0)) top center,
+      linear-gradient(rgba(245, 240, 232, 0), var(--hint-card-bg) 70%) bottom center,
+      radial-gradient(farthest-side at 50% 0, rgba(28, 25, 23, 0.18), rgba(28, 25, 23, 0)) top center,
+      radial-gradient(farthest-side at 50% 100%, rgba(28, 25, 23, 0.18), rgba(28, 25, 23, 0)) bottom center;
+    background-repeat: no-repeat;
+    background-size:
+      100% 14px,
+      100% 14px,
+      100% 6px,
+      100% 6px;
+    background-attachment: local, local, scroll, scroll;
   }
   .hint-card-inner-scroll::-webkit-scrollbar {
-    width: 6px;
+    width: 5px;
   }
   .hint-card-inner-scroll::-webkit-scrollbar-thumb {
     border-radius: 9999px;
-    background-color: rgb(168 162 158);
+    background-color: rgb(168 162 158 / 0.75);
+  }
+  .hint-card-inner-scroll::-webkit-scrollbar-thumb:hover {
+    background-color: rgb(120 113 108);
   }
   .hint-card-inner-scroll::-webkit-scrollbar-track {
     border-radius: 9999px;
-    background-color: rgb(245 245 244);
+    background-color: rgb(245 245 244 / 0.6);
   }
   .text-balance {
     text-wrap: balance;

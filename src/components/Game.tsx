@@ -70,21 +70,22 @@ function pickLengthFeedbackMessage(requiredSyllables: number): string {
   const pools: Record<number, string[]> = {
     1: [
       "Need 1 syllable!",
-      "한 글자면 돼!",
-      "Spell it out!",
-      "짧아/길어! One syllable!",
+      "Just 1 syllable — short and sweet!",
+      "Spell it out — one block!",
+      "One syllable, you got this!",
     ],
     2: [
       "Need 2 syllables!",
-      "두 글자 필요해!",
-      "그것은 너무 짧아!",
       "Type 2 Korean syllables!",
-      "거의 다 왔어 — 글자 수만!",
+      "Two blocks, please!",
+      "Almost — just 2 syllables!",
+      "Fix the length — 2 syllables!",
     ],
     3: [
       "Need 3 syllables!",
-      "세 글자!",
-      "3 syllables — 오! Try again after fixing length!",
+      "Three syllables!",
+      "3 syllables — fix length and try again!",
+      "Three blocks — you got this!",
     ],
   };
   const list =
@@ -1056,21 +1057,24 @@ export function Game() {
               aria-label="Hints"
               className={`game-hint-card flex shrink-0 flex-col overflow-hidden rounded-xl border border-stone-300/55 bg-[var(--hint-card-bg)] shadow-sm transition-shadow ${
                 visible.variant === "easy"
-                  ? "game-hint-card--easy max-h-[min(380px,46dvh)] max-[480px]:max-h-[min(340px,42dvh)] sm:max-h-[min(400px,40dvh)]"
-                  : "max-h-[min(150px,22dvh)] max-[480px]:max-h-[min(140px,20dvh)] sm:max-h-[200px]"
+                  ? "game-hint-card--easy max-h-[min(210px,28dvh)] max-[480px]:max-h-[min(185px,26dvh)] sm:max-h-[min(250px,30dvh)]"
+                  : "max-h-[min(140px,20dvh)] max-[480px]:max-h-[min(130px,18dvh)] sm:max-h-[min(180px,24dvh)]"
               } ${hintCardPulse ? "hint-card-pulse-once" : ""}`}
             >
-              <div className="shrink-0 border-b border-stone-400/25 px-2 pb-1.5 pt-2 text-left max-[480px]:px-2 max-[480px]:pb-1 max-[480px]:pt-2 sm:px-5 sm:pb-3 sm:pt-4">
+              <div className="shrink-0 border-b border-stone-400/25 px-2.5 pb-1 pt-1.5 text-left max-[480px]:px-2 max-[480px]:pb-1 max-[480px]:pt-1.5 sm:px-3.5 sm:pb-1.5 sm:pt-2">
                 {visible.showHintDotsRow && visible.hintDotsTotal > 0 && (
                   <div className="flex items-center justify-between gap-2">
-                    <span className="font-serif text-[11px] font-semibold tabular-nums text-stone-800 sm:text-xs">
-                      {visible.dotsTitle} · {visible.hintProgressLabel}
+                    <span className="font-serif text-[10px] font-semibold tabular-nums text-stone-800 sm:text-[11px]">
+                      Hint {visible.hintProgressLabel}
+                      <span className="ml-1 font-sans text-[9px] font-medium text-stone-500 sm:text-[10px]">
+                        · {visible.dotsTitle}
+                      </span>
                     </span>
                     <div className="flex shrink-0 gap-1" aria-hidden>
                       {Array.from({ length: visible.hintDotsTotal }, (_, i) => (
                         <span
                           key={i}
-                          className={`h-1.5 w-1.5 rounded-full ${
+                          className={`h-1.5 w-1.5 rounded-full transition-colors ${
                             i < visible.hintDotsFilled ? "bg-amber-600" : "bg-stone-300/90"
                           }`}
                         />
@@ -1078,23 +1082,23 @@ export function Game() {
                     </div>
                   </div>
                 )}
-                <p className="mt-1 text-[9px] leading-snug text-stone-500 sm:text-[10px]">{visible.nextHintSubtitle}</p>
+                <p className="mt-0.5 text-[9px] leading-snug text-stone-500 sm:text-[10px]">{visible.nextHintSubtitle}</p>
 
-                <div className="mt-2 flex flex-wrap items-center gap-2.5">
+                <div className="mt-1.5 flex flex-wrap items-center gap-2">
                   {visible.showWordImage && showImage && imageSrc ? (
-                    <div className="relative h-8 w-8 shrink-0 overflow-hidden rounded-lg border border-stone-300/50 bg-white/80 sm:h-10 sm:w-10">
+                    <div className="relative h-7 w-7 shrink-0 overflow-hidden rounded-lg border border-stone-300/50 bg-white/80 sm:h-9 sm:w-9">
                       <Image
                         src={imageSrc}
                         alt=""
                         fill
-                        sizes="32px"
+                        sizes="28px"
                         className="object-cover"
                         onError={() => setImgBroken(true)}
                       />
                     </div>
                   ) : visible.showEmoji ? (
                     <span
-                      className="flex h-8 w-8 shrink-0 select-none items-center justify-center text-[1.35rem] leading-none sm:h-10 sm:w-10 sm:text-[1.75rem]"
+                      className="flex h-7 w-7 shrink-0 select-none items-center justify-center text-[1.15rem] leading-none sm:h-9 sm:w-9 sm:text-[1.45rem]"
                       style={{
                         fontFamily:
                           "system-ui, 'Segoe UI Emoji', 'Apple Color Emoji', sans-serif",
@@ -1105,7 +1109,7 @@ export function Game() {
                     </span>
                   ) : null}
                   {visible.showCategoryPill && (
-                    <span className="max-w-[min(100%,14rem)] truncate rounded-full border border-stone-400/55 bg-white/40 px-2.5 py-1 text-[9px] font-semibold uppercase tracking-[0.14em] text-stone-800">
+                    <span className="max-w-[min(100%,14rem)] truncate rounded-full border border-stone-400/55 bg-white/40 px-2 py-0.5 text-[9px] font-semibold uppercase tracking-[0.12em] text-stone-800">
                       {safeWordDisplay.categoryUpper}
                     </span>
                   )}
@@ -1113,7 +1117,7 @@ export function Game() {
 
                 {visible.showMeaning ? (
                   <div
-                    className={`mt-2 rounded-md px-1 py-1 ${freshHintTier === 1 && difficulty === "normal" ? "hint-row-bg-fresh" : ""}`}
+                    className={`mt-1.5 rounded-md px-0.5 py-0.5 ${freshHintTier === 1 && difficulty === "normal" ? "hint-row-bg-fresh" : ""}`}
                   >
                     <p className="hint-scroll-row-title text-[8px] font-semibold uppercase tracking-wide text-stone-500">
                       Meaning
@@ -1125,7 +1129,7 @@ export function Game() {
                     </p>
                   </div>
                 ) : visible.tryGuessPlaceholder ? (
-                  <p className="mt-2 text-[11px] font-medium leading-snug text-stone-600">
+                  <p className="mt-1.5 text-[11px] font-medium leading-snug text-stone-600">
                     Try to guess the Korean word!
                   </p>
                 ) : null}
@@ -1133,12 +1137,12 @@ export function Game() {
 
               <div
                 ref={hintScrollBodyRef}
-                className="hint-card-inner-scroll flex min-h-0 flex-1 flex-col divide-y divide-stone-400/25 overflow-y-auto overscroll-contain px-4 pb-4 pt-2 sm:px-5"
+                className="hint-card-inner-scroll flex min-h-0 flex-1 flex-col divide-y divide-stone-400/25 overflow-y-auto overscroll-contain px-3 pb-2 pt-1 sm:px-4 sm:pb-2.5"
               >
                 {difficulty === "easy" && visible.showDefinition && (
                   <div
                     data-hint-tier="2"
-                    className={`hint-fade-in py-2 ${scrollHintRowClass(2)}`}
+                    className={`hint-fade-in py-1.5 ${scrollHintRowClass(2)}`}
                   >
                     <p className="hint-scroll-row-title text-[8px] font-semibold uppercase tracking-wide text-stone-500">
                       Definition
@@ -1154,13 +1158,13 @@ export function Game() {
                 {difficulty === "easy" && visible.showExample && (
                   <div
                     data-hint-tier="3"
-                    className={`hint-fade-in py-2 ${scrollHintRowClass(3)}`}
+                    className={`hint-fade-in py-1.5 ${scrollHintRowClass(3)}`}
                   >
                     <p className="hint-scroll-row-title text-[8px] font-semibold uppercase tracking-wide text-stone-500">
                       Example
                     </p>
                     <p
-                      className={`mt-1 text-[11px] leading-snug text-stone-900 sm:text-xs ${freshHintTier === 3 ? "hint-new-text-line" : ""}`}
+                      className={`mt-0.5 text-[11px] leading-snug text-stone-900 sm:text-xs ${freshHintTier === 3 ? "hint-new-text-line" : ""}`}
                     >
                       <MaskedPlaceholderText text={hintExampleDisplay} />
                     </p>
@@ -1170,7 +1174,7 @@ export function Game() {
                 {difficulty === "easy" && visible.showJamo && firstWordJamo && (
                   <div
                     data-hint-tier="4"
-                    className={`hint-fade-in py-2 ${scrollHintRowClass(4)}`}
+                    className={`hint-fade-in py-1.5 ${scrollHintRowClass(4)}`}
                   >
                     <p
                       className={`text-[11px] font-semibold leading-snug text-stone-900 sm:text-xs ${freshHintTier === 4 ? "hint-new-text-line" : ""}`}
@@ -1184,7 +1188,7 @@ export function Game() {
                 {visible.showKeyboardHelpRow && (
                   <div
                     data-hint-tier="5"
-                    className={`hint-fade-in py-2 ${scrollHintRowClass(5)}`}
+                    className={`hint-fade-in py-1.5 ${scrollHintRowClass(5)}`}
                   >
                     <p className="hint-scroll-row-title text-[8px] font-semibold uppercase tracking-wide text-stone-500">
                       Keyboard
@@ -1200,10 +1204,10 @@ export function Game() {
                 {difficulty === "easy" && visible.lastChanceEasy && (
                   <div
                     data-hint-tier="6"
-                    className={`hint-fade-in py-2 ${scrollHintRowClass(6)}`}
+                    className={`hint-fade-in py-1.5 ${scrollHintRowClass(6)}`}
                   >
-                    <p className="mb-1 text-center text-[9px] font-bold uppercase tracking-wide text-red-700">
-                      Last chance · 거의 정답
+                    <p className="mb-0.5 text-center text-[9px] font-bold uppercase tracking-wide text-red-700">
+                      Last chance · You got this!
                     </p>
                     <p
                       className={`text-center font-serif text-sm font-semibold text-stone-900 sm:text-base ${freshHintTier === 6 ? "hint-new-text-line" : ""}`}
@@ -1219,19 +1223,22 @@ export function Game() {
           {visible.showHardCategoryStrip && (
             <section
               aria-label="Hard mode clues"
-              className={`game-hint-card flex max-h-[min(120px,18dvh)] shrink-0 flex-col overflow-hidden rounded-xl border border-stone-300/55 bg-[var(--hint-card-bg)] shadow-sm transition-shadow max-[480px]:max-h-[min(110px,16dvh)] sm:max-h-[150px] ${hintCardPulse ? "hint-card-pulse-once" : ""}`}
+              className={`game-hint-card flex max-h-[min(110px,16dvh)] shrink-0 flex-col overflow-hidden rounded-xl border border-stone-300/55 bg-[var(--hint-card-bg)] shadow-sm transition-shadow max-[480px]:max-h-[min(100px,14dvh)] sm:max-h-[140px] ${hintCardPulse ? "hint-card-pulse-once" : ""}`}
             >
-              <div className="px-3 py-3 text-left sm:px-5 sm:py-4">
+              <div className="px-2.5 py-2 text-left sm:px-3.5 sm:py-2.5">
                 {visible.showHintDotsRow && (
                   <div className="flex items-center justify-between gap-2">
-                    <span className="font-serif text-[11px] font-semibold tabular-nums text-stone-800 sm:text-xs">
-                      {visible.dotsTitle} · {visible.hintProgressLabel}
+                    <span className="font-serif text-[10px] font-semibold tabular-nums text-stone-800 sm:text-[11px]">
+                      Hint {visible.hintProgressLabel}
+                      <span className="ml-1 font-sans text-[9px] font-medium text-stone-500 sm:text-[10px]">
+                        · {visible.dotsTitle}
+                      </span>
                     </span>
                     <div className="flex shrink-0 gap-1" aria-hidden>
                       {Array.from({ length: visible.hintDotsTotal }, (_, i) => (
                         <span
                           key={i}
-                          className={`h-1.5 w-1.5 rounded-full ${
+                          className={`h-1.5 w-1.5 rounded-full transition-colors ${
                             i < visible.hintDotsFilled ? "bg-amber-600" : "bg-stone-300/90"
                           }`}
                         />
@@ -1239,20 +1246,20 @@ export function Game() {
                     </div>
                   </div>
                 )}
-                <p className="mt-1 text-[9px] leading-snug text-stone-500 sm:text-[10px]">{visible.nextHintSubtitle}</p>
-                <div className="mt-3 flex items-center gap-2">
-                  <span className="max-w-full truncate rounded-full border border-stone-400/55 bg-white/40 px-3 py-1.5 text-[10px] font-semibold uppercase tracking-[0.14em] text-stone-800 sm:text-[11px]">
+                <p className="mt-0.5 text-[9px] leading-snug text-stone-500 sm:text-[10px]">{visible.nextHintSubtitle}</p>
+                <div className="mt-1.5 flex items-center gap-2">
+                  <span className="max-w-full truncate rounded-full border border-stone-400/55 bg-white/40 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.12em] text-stone-800 sm:text-[11px]">
                     {safeWordDisplay.categoryUpper}
                   </span>
                 </div>
                 {visible.showHardSafetyBanner && (
                   <div
-                    className={`mt-3 rounded-lg border border-amber-400/75 bg-amber-50/95 px-3 py-2.5 ${freshHintTier === 7 ? "hint-row-bg-fresh" : ""}`}
+                    className={`mt-1.5 rounded-lg border border-amber-400/75 bg-amber-50/95 px-2.5 py-1.5 ${freshHintTier === 7 ? "hint-row-bg-fresh" : ""}`}
                   >
-                    <p className="text-center text-[11px] font-bold uppercase tracking-wide text-amber-950 sm:text-xs">
+                    <p className="text-center text-[10px] font-bold uppercase tracking-wide text-amber-950 sm:text-[11px]">
                       {visible.hardSafetyTitle}
                     </p>
-                    <p className="mt-1 text-center text-[10px] leading-snug text-amber-950/90 sm:text-[11px]">
+                    <p className="mt-0.5 text-center text-[10px] leading-snug text-amber-950/90 sm:text-[11px]">
                       First consonant/vowel of the answer is highlighted on the keyboard.
                     </p>
                   </div>
@@ -1395,7 +1402,7 @@ export function Game() {
             onClick={(e) => e.stopPropagation()}
           >
             <h2 id="result-title" className="font-serif text-[clamp(1.125rem,4vw,1.375rem)] text-stone-900 sm:text-2xl">
-              {endModal.kind === "won" ? "🎉 정답!" : "Better luck next time!"}
+              {endModal.kind === "won" ? "🎉 Correct!" : "Better luck next time!"}
             </h2>
             <p className="mt-1 text-sm text-stone-600">
               {endModal.kind === "won"
@@ -1404,7 +1411,7 @@ export function Game() {
             </p>
 
             <p className="mt-3 text-xs font-semibold uppercase tracking-wide text-stone-500">
-              {endModal.kind === "lost" ? "The word was" : "정답"}
+              {endModal.kind === "lost" ? "The word was" : "Answer"}
             </p>
             {safeAnswerForTts ? (
               <p className="mt-1 font-serif text-3xl font-semibold text-stone-900">{answer}</p>
