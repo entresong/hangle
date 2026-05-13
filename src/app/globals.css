@@ -139,6 +139,20 @@ body {
   }
 }
 
+@keyframes first-key-pulse {
+  0%,
+  100% {
+    transform: scale(1);
+    box-shadow: 0 1px 2px rgb(28 25 23 / 0.05);
+  }
+  50% {
+    transform: scale(1.06);
+    box-shadow:
+      0 4px 14px rgb(217 119 6 / 0.32),
+      0 0 0 3px rgb(251 191 36 / 0.55);
+  }
+}
+
 @keyframes hint-card-pulse-once {
   0% {
     box-shadow:
@@ -246,6 +260,10 @@ body {
   }
   .hint-card-pulse-once {
     animation: hint-card-pulse-once 0.5s ease-out;
+  }
+  /* First-session keyboard nudge — runs 2 iterations only. */
+  .first-key-pulse {
+    animation: first-key-pulse 1.5s ease-in-out 2;
   }
   .hint-new-text-line {
     animation: hint-new-text-fade 2s ease forwards;

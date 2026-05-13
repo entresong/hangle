@@ -1688,6 +1688,13 @@ export function Game() {
             highlightFirstJamo={
               visible?.highlightFirstJamoOnly && firstWordJamo ? firstWordJamo : ""
             }
+            showFirstKeyHint={
+              hydrated &&
+              status === "playing" &&
+              guesses.length === 0 &&
+              (stats.visits ?? 0) <= 1 &&
+              (stats.wordsLearned?.length ?? 0) === 0
+            }
           />
         </div>
       </div>

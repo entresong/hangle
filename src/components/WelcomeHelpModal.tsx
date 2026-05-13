@@ -226,6 +226,66 @@ export function WelcomeHelpModal({ open, onClose, onMarkVisited }: Props) {
 
             <div className="my-4 border-t border-stone-400/35" />
 
+            <p className="text-center text-xs font-bold uppercase tracking-wide text-stone-600">
+              Example 3 · 어깨 (shoulder) — using Shift
+            </p>
+            <p className="mt-2 text-center text-[13px] text-stone-600 sm:text-sm">
+              Shift turns a consonant into its <strong>tense</strong> form (ㄱ → ㄲ).
+            </p>
+
+            <div className="mt-3 flex flex-col items-center gap-4">
+              <div>
+                <p className="mb-2 text-center text-[11px] font-semibold uppercase text-stone-500">
+                  First syllable · 어
+                </p>
+                <div className="flex flex-wrap items-end justify-center gap-y-2">
+                  <JamoBox jamo="ㅇ" rom="silent" />
+                  <Plus />
+                  <JamoBox jamo="ㅓ" rom="eo" />
+                  <ArrowEq />
+                  <SyllableResult label="어">어</SyllableResult>
+                </div>
+              </div>
+              <div>
+                <p className="mb-2 text-center text-[11px] font-semibold uppercase text-stone-500">
+                  Second syllable · 깨
+                </p>
+                <div className="flex flex-wrap items-end justify-center gap-y-2">
+                  <div className="flex flex-col items-center gap-0.5">
+                    <span
+                      className="flex min-h-[2.75rem] min-w-[2.75rem] items-center justify-center rounded-lg border-2 border-amber-500/70 bg-amber-100 px-2 text-[11px] font-bold uppercase tracking-wide text-amber-900 shadow-sm sm:min-h-[2.85rem] sm:min-w-[2.85rem]"
+                      aria-label="Tap Shift first"
+                    >
+                      ⇧ Shift
+                    </span>
+                    <span className="text-[11px] text-stone-500 sm:text-xs">tap once</span>
+                  </div>
+                  <Plus />
+                  <JamoBox jamo="ㄱ" rom="g → ㄲ kk" />
+                  <Plus />
+                  <JamoBox jamo="ㅐ" rom="ae" />
+                  <ArrowEq />
+                  <SyllableResult label="깨">깨</SyllableResult>
+                </div>
+              </div>
+            </div>
+
+            <div className="mt-4 rounded-xl border border-amber-400/55 bg-amber-50/85 p-3 text-[12px] leading-snug text-stone-800 sm:text-[13px]">
+              <p className="cursor-default font-bold uppercase tracking-wide text-amber-900">
+                ⚠ One thing you&apos;ll notice
+              </p>
+              <p className="mt-1.5">
+                Right after you tap <strong>ㄲ</strong>, the grid briefly shows{" "}
+                <strong className="font-serif">얶</strong> — Korean keyboards always pretend a new
+                consonant might be a final consonant (받침). The instant you tap the next vowel{" "}
+                <strong>ㅐ</strong>, ㄲ jumps to the next block and you see{" "}
+                <strong className="font-serif">어깨</strong>. This is how Korean typing works
+                everywhere — phones, laptops, IMEs.
+              </p>
+            </div>
+
+            <div className="my-4 border-t border-stone-400/35" />
+
             <p className="text-center text-xs font-bold uppercase tracking-wide text-stone-600">Tips</p>
             <ul className="mt-2 space-y-2 text-[13px] leading-snug text-stone-800 sm:text-[14px]">
               <li className="flex gap-2">

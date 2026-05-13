@@ -67,6 +67,11 @@ type HangulKeyboardProps = {
   targetSyllables: number;
   highlightAnswer?: string;
   highlightFirstJamo?: string;
+  /**
+   * Show a gentle "start here" pulse on the top-left consonant for first-session
+   * players when the buffer is still empty. Auto-stops on first jamo press.
+   */
+  showFirstKeyHint?: boolean;
 };
 
 const JAMO_ROWS: readonly { keys: readonly string[]; id: string }[] = [
@@ -84,6 +89,7 @@ export function HangulKeyboard({
   targetSyllables,
   highlightAnswer = "",
   highlightFirstJamo = "",
+  showFirstKeyHint = false,
 }: HangulKeyboardProps) {
   const [shiftActive, setShiftActive] = useState(false);
   const [pressedKey, setPressedKey] = useState<string | null>(null);
@@ -163,6 +169,8 @@ export function HangulKeyboard({
   const assembled = assembleBuffer(buffer);
   const { syllables, trailing } = parseAssembled(assembled);
   const preview = assembled;
+  /** Only pulse when explicitly enabled AND nothing has been typed yet AND keyboard is interactive */
+  const firstKeyPulseActive = showFirstKeyHint && buffer.length === 0 && !disabled;
 
   const baseBtn =
     "rounded-md border border-stone-300/90 bg-white font-medium text-stone-900 shadow-sm transition hover:bg-stone-50 disabled:pointer-events-none disabled:opacity-40 active:scale-[0.96]";
@@ -194,6 +202,10 @@ export function HangulKeyboard({
           </span>
         ) : preview ? (
           <span className="font-semibold tracking-wide text-stone-900">{preview}</span>
+        ) : firstKeyPulseActive ? (
+          <span className="font-semibold text-amber-800 max-[480px]:text-[10px]">
+            👇 Tap a consonant + vowel to form a syllable
+          </span>
         ) : (
           <span className="text-stone-400 max-[480px]:text-[10px]">Shift · double jamo</span>
         )}
@@ -211,13 +223,14 @@ export function HangulKeyboard({
               const label = shiftActive && shifted !== undefined ? shifted : baseKey;
               const hi = keyHighlighted(baseKey, shiftActive, highlightJamos);
               const pressed = pressedKey === `${id}-${index}`;
+              const pulse = firstKeyPulseActive && id === "r1" && index === 0;
               return (
                 <button
                   key={`${id}-${baseKey}`}
                   type="button"
                   disabled={disabled}
                   onClick={() => emitJamo(baseKey, id, index)}
-                  className={`${baseBtn} h-10 min-h-[40px] w-full min-w-0 text-[clamp(12px,3.5vw,16px)] leading-none sm:h-11 sm:min-h-[44px] sm:text-[0.95rem] md:text-base ${hi ? highlightRing : ""} ${pressed ? pressFlash : ""}`}
+                  className={`${baseBtn} h-10 min-h-[40px] w-full min-w-0 text-[clamp(12px,3.5vw,16px)] leading-none sm:h-11 sm:min-h-[44px] sm:text-[0.95rem] md:text-base ${hi ? highlightRing : ""} ${pressed ? pressFlash : ""} ${pulse ? "first-key-pulse" : ""}`}
                 >
                   {label}
                 </button>
