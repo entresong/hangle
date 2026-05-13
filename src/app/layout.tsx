@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Analytics } from "@vercel/analytics/react";
+import { SpeedInsights } from "@vercel/speed-insights/next";
 import { DM_Sans, Source_Serif_4 } from "next/font/google";
 import Script from "next/script";
 import "./globals.css";
@@ -69,6 +70,7 @@ export default function RootLayout({
       >
         {children}
         <Analytics />
+        <SpeedInsights />
         {clarityId && (
           <Script
             id="clarity-script"
