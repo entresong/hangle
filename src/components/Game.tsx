@@ -271,12 +271,15 @@ export function Game() {
     const categoryUpper =
       typeof catRaw === "string" ? catRaw.trim().toUpperCase() || "WORD" : "WORD";
     const examples = getWordExamples(answerEntry ?? undefined);
+    const tags = Array.isArray(answerEntry?.tags) ? answerEntry!.tags! : [];
     return {
       categoryUpper,
       meaning: typeof answerEntry?.meaning === "string" ? answerEntry.meaning : "",
       definition: typeof answerEntry?.definition === "string" ? answerEntry.definition : "",
       examples,
       emoji: typeof answerEntry?.emoji === "string" ? answerEntry.emoji : "📝",
+      tags,
+      isKpop: tags.includes("K-POP"),
     };
   }, [answerEntry]);
 
@@ -988,16 +991,38 @@ export function Game() {
     [stats],
   );
 
+  /** K-POP corpus stats: how many K-POP words exist + how many the user has learned */
+  const kpopProgress = useMemo(() => {
+    const kpopWords = WORDS.filter((w) => Array.isArray(w.tags) && w.tags.includes("K-POP"));
+    const total = kpopWords.length;
+    const learnedSet = new Set(wordsLearnedList);
+    const learned = kpopWords.filter((w) => learnedSet.has(w.word)).length;
+    const percent = total > 0 ? Math.round((learned / total) * 100) : 0;
+    return { total, learned, percent };
+  }, [wordsLearnedList]);
+
   /** First N tiles of the master word list, marked learned/locked for the grid. */
   const wordsGridPreview = useMemo(() => {
     const TOTAL_TILES = 24;
     const learnedSet = new Set(wordsLearnedList);
+    const isKpop = (w: (typeof WORDS)[number]) =>
+      Array.isArray(w.tags) && w.tags.includes("K-POP");
     const learnedFirst = WORDS.filter((w) => learnedSet.has(w.word)).slice(0, TOTAL_TILES);
     const remaining = TOTAL_TILES - learnedFirst.length;
     const lockedFill = WORDS.filter((w) => !learnedSet.has(w.word)).slice(0, remaining);
     return [
-      ...learnedFirst.map((w) => ({ word: w.word, locked: false, emoji: w.emoji })),
-      ...lockedFill.map((w) => ({ word: w.word, locked: true, emoji: w.emoji })),
+      ...learnedFirst.map((w) => ({
+        word: w.word,
+        locked: false,
+        emoji: w.emoji,
+        kpop: isKpop(w),
+      })),
+      ...lockedFill.map((w) => ({
+        word: w.word,
+        locked: true,
+        emoji: w.emoji,
+        kpop: isKpop(w),
+      })),
     ];
   }, [wordsLearnedList]);
 
@@ -1729,6 +1754,34 @@ export function Game() {
                 />
               </div>
 
+              {/* K-POP word collection progress */}
+              <div className="mt-3 cursor-default rounded-lg border border-pink-300/55 bg-pink-50/70 px-2.5 py-1.5">
+                <div className="flex items-baseline justify-between text-[10px] text-pink-900 sm:text-[11px]">
+                  <span className="font-bold uppercase tracking-wide">
+                    🎵 K-pop words
+                  </span>
+                  <span className="font-mono tabular-nums text-pink-700">
+                    {kpopProgress.learned}/{kpopProgress.total} · {kpopProgress.percent}%
+                  </span>
+                </div>
+                <div
+                  className="mt-1 h-1.5 w-full overflow-hidden rounded-full bg-pink-200/70"
+                  role="progressbar"
+                  aria-valuenow={kpopProgress.percent}
+                  aria-valuemin={0}
+                  aria-valuemax={100}
+                  aria-label="K-pop word collection progress"
+                >
+                  <div
+                    className="h-full rounded-full bg-pink-500 transition-all duration-700 ease-out"
+                    style={{ width: `${kpopProgress.percent}%` }}
+                  />
+                </div>
+                <p className="mt-1 cursor-default text-[9px] leading-snug text-pink-800/80">
+                  Words often heard in Korean pop music
+                </p>
+              </div>
+
               {/* Achievement badge grid (15 tiles, unlocked vs locked) */}
               <p className="mt-4 cursor-default text-[9px] font-bold uppercase tracking-wide text-stone-500 sm:text-[10px]">
                 🏆 Achievements · {unlockedAchievementIds.size}/{ACHIEVEMENTS.length}
@@ -1822,14 +1875,32 @@ export function Game() {
                 {wordsGridPreview.map((tile, i) => (
                   <div
                     key={`${tile.word}-${i}`}
-                    title={tile.locked ? "Locked — solve to reveal" : tile.word}
-                    className={`flex aspect-square select-none items-center justify-center rounded-md border text-[10px] font-semibold leading-tight sm:text-[11px] ${
+                    title={
+                      tile.locked
+                        ? "Locked — solve to reveal"
+                        : `${tile.word}${tile.kpop ? " · K-pop" : ""}`
+                    }
+                    className={`relative flex aspect-square select-none items-center justify-center rounded-md border text-[10px] font-semibold leading-tight sm:text-[11px] ${
                       tile.locked
                         ? "border-stone-200/80 bg-stone-100/70 text-stone-300"
-                        : "border-emerald-400/70 bg-emerald-50/80 text-stone-900"
+                        : tile.kpop
+                          ? "border-pink-400/70 bg-pink-50/80 text-stone-900"
+                          : "border-emerald-400/70 bg-emerald-50/80 text-stone-900"
                     }`}
                   >
                     {tile.locked ? "•" : tile.word}
+                    {!tile.locked && tile.kpop && (
+                      <span
+                        aria-hidden
+                        className="pointer-events-none absolute -right-0.5 -top-1 select-none text-[8px] leading-none drop-shadow-sm"
+                        style={{
+                          fontFamily:
+                            "system-ui, 'Segoe UI Emoji', 'Apple Color Emoji', sans-serif",
+                        }}
+                      >
+                        🎵
+                      </span>
+                    )}
                   </div>
                 ))}
               </div>
@@ -1898,9 +1969,19 @@ export function Game() {
               </div>
             )}
 
-            <p className="mt-3 text-xs font-semibold uppercase tracking-wide text-stone-500">
-              {endModal.kind === "lost" ? "The word was" : "Answer"}
-            </p>
+            <div className="mt-3 flex flex-wrap items-center gap-2">
+              <p className="text-xs font-semibold uppercase tracking-wide text-stone-500">
+                {endModal.kind === "lost" ? "The word was" : "Answer"}
+              </p>
+              {safeWordDisplay.isKpop && (
+                <span
+                  className="cursor-default select-none rounded-full border border-pink-300/70 bg-pink-50/90 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-pink-700 shadow-sm"
+                  title="This word is often heard in Korean pop music"
+                >
+                  🎵 K-pop word
+                </span>
+              )}
+            </div>
             {safeAnswerForTts ? (
               <p className="mt-1 font-serif text-3xl font-semibold text-stone-900">{answer}</p>
             ) : (
@@ -2018,6 +2099,30 @@ export function Game() {
                 💬 {phrasesLearnedCount} bonus phrase{phrasesLearnedCount === 1 ? "" : "s"} seen ·{" "}
                 {WORDS.length}+ Korean words to discover
               </p>
+
+              <div className="mt-3 cursor-default rounded-lg border border-pink-300/55 bg-pink-50/70 px-2.5 py-1.5">
+                <div className="flex items-baseline justify-between text-[10px] text-pink-900">
+                  <span className="font-bold uppercase tracking-wide">
+                    🎵 K-pop word collection
+                  </span>
+                  <span className="font-mono tabular-nums text-pink-700">
+                    {kpopProgress.learned}/{kpopProgress.total}
+                  </span>
+                </div>
+                <div
+                  className="mt-1 h-1.5 w-full overflow-hidden rounded-full bg-pink-200/70"
+                  role="progressbar"
+                  aria-valuenow={kpopProgress.percent}
+                  aria-valuemin={0}
+                  aria-valuemax={100}
+                  aria-label="K-pop word collection progress"
+                >
+                  <div
+                    className="h-full rounded-full bg-pink-500 transition-all duration-700 ease-out"
+                    style={{ width: `${kpopProgress.percent}%` }}
+                  />
+                </div>
+              </div>
 
               {topInProgressCategories.length > 0 && (
                 <div className="mt-3 border-t border-amber-300/40 pt-3">

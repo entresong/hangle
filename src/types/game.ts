@@ -26,6 +26,8 @@ export type WordEntry = {
   image?: string;
   /** Reserved for future image generation scripts */
   imagePrompt?: string;
+  /** Free-form thematic tags (e.g. ["K-POP"]). Category stays semantic (FOOD, NATURE, …). */
+  tags?: string[];
 };
 
 export type PuzzleMode = "daily" | "practice";
