@@ -34,8 +34,24 @@ export type VisibleHints = {
  * Pure hint visibility for the current difficulty and wrong-guess count.
  * `wrongGuessCount` = number of submitted guesses that were not the answer.
  *
- * Easy (sequential): 0 → emoji + category + meaning; ≥1 definition; ≥2 example;
- * ≥3 first-syllable jamo; ≥4 keyboard jamo highlight; ≥5 last-chance strip.
+ * Contract per mode (Korean Wordle):
+ *
+ * EASY (sequential reveal — 6 stages):
+ *   0 wrong → emoji + category + meaning
+ *   ≥1     → + definition
+ *   ≥2     → + example
+ *   ≥3     → + first-syllable jamo text
+ *   ≥4     → + full keyboard jamo highlight
+ *   ≥5     → + last-chance partial answer strip
+ *
+ * NORMAL (limited hints — 2 stages):
+ *   0–2 wrong → emoji + category only (meaning hidden, "Try to guess..." placeholder)
+ *   ≥3        → + English meaning
+ *   ≥5        → + keyboard jamo highlight (full)
+ *
+ * HARD (minimal — 1 safety stage):
+ *   0–4 wrong → category pill only (no emoji, no meaning)
+ *   ≥5        → + safety banner ("Almost out of tries!") + first-jamo keyboard ring
  */
 export function getVisibleHints(difficulty: Difficulty, wrongGuessCount: number): VisibleHints {
   if (difficulty === "easy") {

@@ -34,3 +34,7 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# Clarity Data Export API output (contains analytics data — keep local only)
+clarity-data.json
+clarity-data-*.json

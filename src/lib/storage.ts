@@ -16,6 +16,11 @@ export const defaultStats = (): PersistedStats => ({
   gamesFinishedToday: 0,
   practiceSolvedWords: [],
   oneGuessWins: 0,
+  wordsLearned: [],
+  phrasesLearned: [],
+  visits: 0,
+  firstVisitDate: null,
+  lastVisitDate: null,
 });
 
 export function loadGame(): PersistedGame | null {
@@ -78,6 +83,46 @@ export function appendPracticeClearedWord(
 
 export function resetPracticeSolvedPool(stats: PersistedStats): PersistedStats {
   return { ...stats, practiceSolvedWords: [] };
+}
+
+/** Record a word the user solved (won). Distinct set — duplicates ignored. */
+export function recordWordLearned(
+  stats: PersistedStats,
+  word: string,
+): PersistedStats {
+  if (!word) return stats;
+  const arr = [...(stats.wordsLearned ?? [])];
+  if (!arr.includes(word)) arr.push(word);
+  return { ...stats, wordsLearned: arr };
+}
+
+/** Record a bonus phrase the user saw on the result screen. Distinct set. */
+export function recordPhraseSeen(
+  stats: PersistedStats,
+  phraseId: number,
+): PersistedStats {
+  if (typeof phraseId !== "number" || Number.isNaN(phraseId)) return stats;
+  const arr = [...(stats.phrasesLearned ?? [])];
+  if (!arr.includes(phraseId)) arr.push(phraseId);
+  return { ...stats, phrasesLearned: arr };
+}
+
+/**
+ * Bump the visit counter once per session. Should be called exactly once
+ * per page load (caller is responsible for sessionStorage gating).
+ *
+ * - Increments `visits`
+ * - Sets `firstVisitDate` on first ever call
+ * - Updates `lastVisitDate` to today's UTC date
+ */
+export function bumpVisitCount(stats: PersistedStats): PersistedStats {
+  const today = getUtcDateString();
+  return {
+    ...stats,
+    visits: (stats.visits ?? 0) + 1,
+    firstVisitDate: stats.firstVisitDate ?? today,
+    lastVisitDate: today,
+  };
 }
 
 export function mergeStatsAfterGameEnd(

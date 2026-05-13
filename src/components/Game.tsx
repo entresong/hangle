@@ -19,14 +19,27 @@ import {
 import { evaluateGuess } from "@/lib/evaluate";
 import {
   appendPracticeClearedWord,
+  bumpVisitCount,
   defaultStats,
   loadGame,
   loadStats,
   mergeStatsAfterGameEnd,
+  recordPhraseSeen,
+  recordWordLearned,
   resetPracticeSolvedPool,
   saveGame,
   saveStats,
 } from "@/lib/storage";
+import { getLevelInfo, welcomeMessage } from "@/lib/level";
+import {
+  ACHIEVEMENTS,
+  buildAchievementCtx,
+  getAttemptGrade,
+  getCategoryProgress,
+  getNewlyUnlocked,
+  getUnlockedAchievementIds,
+  type AchievementDef,
+} from "@/lib/achievements";
 import {
   difficultyBadgeLabel,
   loadDifficulty,
@@ -57,6 +70,7 @@ const WORDS = wordsJson as WordEntry[];
 const PHRASES = phrasesJson as PhraseEntry[];
 
 const HANGLE_VISITED_KEY = "hangle_visited";
+const HANGLE_SESSION_BUMP_KEY = "hangle_session_visited";
 
 /** Delay after color feedback before next-row draft + hint cues */
 const ROW_REVEAL_MS = 300;
@@ -237,8 +251,19 @@ export function Game() {
   const [feedbackOpen, setFeedbackOpen] = useState(false);
   const [modeToast, setModeToast] = useState<string | null>(null);
   const modeToastTimerRef = useRef<number | null>(null);
+  /** Generic guidance toast for taps on non-interactive areas (grid cells, category pill) */
+  const [infoToast, setInfoToast] = useState<string | null>(null);
+  const infoToastTimerRef = useRef<number | null>(null);
+  /** Visit-count keyed welcome banner shown once per session */
+  const [welcomeBanner, setWelcomeBanner] = useState<string | null>(null);
+  const welcomeBannerTimerRef = useRef<number | null>(null);
   const [welcomeHelpOpen, setWelcomeHelpOpen] = useState(false);
   const [tapHintConsumed, setTapHintConsumed] = useState(false);
+  const [wordsLearnedBump, setWordsLearnedBump] = useState(false);
+  /** Achievements unlocked during the just-finished round — drives result-modal celebration */
+  const [newlyUnlockedAchievements, setNewlyUnlockedAchievements] = useState<AchievementDef[]>(
+    [],
+  );
 
   /** Safe strings for UI — words.json or merged entries must never crash on missing fields */
   const safeWordDisplay = useMemo(() => {
@@ -290,9 +315,21 @@ export function Game() {
     }, 2800);
   }, []);
 
+  /** Short guidance toast for taps on non-interactive areas (dead-click prevention) */
+  const flashInfoToast = useCallback((msg: string) => {
+    setInfoToast(msg);
+    if (infoToastTimerRef.current !== null) window.clearTimeout(infoToastTimerRef.current);
+    infoToastTimerRef.current = window.setTimeout(() => {
+      infoToastTimerRef.current = null;
+      setInfoToast(null);
+    }, 2400);
+  }, []);
+
   useEffect(() => {
     return () => {
       if (modeToastTimerRef.current !== null) window.clearTimeout(modeToastTimerRef.current);
+      if (infoToastTimerRef.current !== null) window.clearTimeout(infoToastTimerRef.current);
+      if (welcomeBannerTimerRef.current !== null) window.clearTimeout(welcomeBannerTimerRef.current);
     };
   }, []);
 
@@ -346,6 +383,64 @@ export function Game() {
     if (process.env.NODE_ENV !== "development") return;
     console.log("[Game] Current word entry:", answerEntry);
   }, [answerEntry]);
+
+  /** One-time contract matrix: lets you eyeball all (mode × wrong) combos in F12 */
+  useEffect(() => {
+    if (process.env.NODE_ENV !== "development") return;
+    const rows: Record<string, unknown>[] = [];
+    (["easy", "normal", "hard"] as const).forEach((d) => {
+      for (let w = 0; w <= 6; w++) {
+        const v = getVisibleHints(d, w);
+        rows.push({
+          mode: d,
+          wrong: w,
+          emoji: v.showEmoji,
+          cat: v.showCategoryPill,
+          meaning: v.showMeaning,
+          def: v.showDefinition,
+          ex: v.showExample,
+          jamo: v.showJamo,
+          kbRow: v.showKeyboardHelpRow,
+          kbHi: v.highlightFullKeyboard,
+          firstJamoHi: v.highlightFirstJamoOnly,
+          lastCh: v.lastChanceEasy,
+          safety: v.showHardSafetyBanner,
+          dots: `${v.hintDotsFilled}/${v.hintDotsTotal}`,
+        });
+      }
+    });
+    console.groupCollapsed("[Hangle] Hint visibility contract · all modes × wrongs 0–6");
+    console.table(rows);
+    console.groupEnd();
+  }, []);
+
+  /** Log whenever the selected difficulty changes — useful for verifying mode-switch effects */
+  useEffect(() => {
+    if (process.env.NODE_ENV !== "development") return;
+    if (!difficulty) return;
+    const v = getVisibleHints(difficulty, wrongGuessCount);
+    console.groupCollapsed(
+      `[Hangle] Difficulty is now ${difficulty.toUpperCase()} · current wrong=${wrongGuessCount}`,
+    );
+    console.log("Progress dots:", `${v.hintDotsFilled}/${v.hintDotsTotal}`, "·", v.dotsTitle);
+    console.log("Next hint message:", v.nextHintSubtitle);
+    console.table({
+      showEmoji: v.showEmoji,
+      showCategoryPill: v.showCategoryPill,
+      showMeaning: v.showMeaning,
+      tryGuessPlaceholder: v.tryGuessPlaceholder,
+      showDefinition: v.showDefinition,
+      showExample: v.showExample,
+      showJamo: v.showJamo,
+      showKeyboardHelpRow: v.showKeyboardHelpRow,
+      lastChanceEasy: v.lastChanceEasy,
+      showHardSafetyBanner: v.showHardSafetyBanner,
+      highlightFullKeyboard: v.highlightFullKeyboard,
+      highlightFirstJamoOnly: v.highlightFirstJamoOnly,
+    });
+    console.groupEnd();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [difficulty]);
 
   const currentRow = guesses.length;
   const wrongGuessCount = guesses.filter((g) => g !== answer).length;
@@ -403,13 +498,41 @@ export function Game() {
   };
 
   const applyStatsOnce = useCallback(
-    (won: boolean, guessCount: number, kind: "daily" | "practice") => {
-      let st = mergeStatsAfterGameEnd(loadStats(), won, guessCount, kind);
+    (
+      won: boolean,
+      guessCount: number,
+      kind: "daily" | "practice",
+      bonusPhraseId?: number,
+    ) => {
+      const prevStats = loadStats();
+      const prevLearnedCount = (prevStats.wordsLearned ?? []).length;
+      let st = mergeStatsAfterGameEnd(prevStats, won, guessCount, kind);
       if (kind === "practice") {
         st = appendPracticeClearedWord(st, answer);
       }
+      if (won) {
+        st = recordWordLearned(st, answer);
+      }
+      if (typeof bonusPhraseId === "number") {
+        st = recordPhraseSeen(st, bonusPhraseId);
+      }
       saveStats(st);
       setStats(st);
+
+      const justUnlocked = getNewlyUnlocked(prevStats, st, WORDS);
+      setNewlyUnlockedAchievements(justUnlocked);
+      if (process.env.NODE_ENV === "development" && justUnlocked.length > 0) {
+        console.log(
+          "[Hangle] Achievements unlocked this round:",
+          justUnlocked.map((a) => `${a.emoji} ${a.title}`).join(", "),
+        );
+      }
+
+      const nowLearnedCount = (st.wordsLearned ?? []).length;
+      if (won && nowLearnedCount > prevLearnedCount) {
+        setWordsLearnedBump(true);
+        window.setTimeout(() => setWordsLearnedBump(false), 1200);
+      }
     },
     [answer],
   );
@@ -488,7 +611,36 @@ export function Game() {
 
   useEffect(() => {
     const loaded = loadGame();
-    const st = loadStats();
+    let st = loadStats();
+
+    // Bump visit count once per browser session (sessionStorage gate).
+    let sessionAlreadyBumped = false;
+    try {
+      sessionAlreadyBumped =
+        window.sessionStorage.getItem(HANGLE_SESSION_BUMP_KEY) === "true";
+    } catch {
+      sessionAlreadyBumped = false;
+    }
+    if (!sessionAlreadyBumped) {
+      const visitsBefore = st.visits ?? 0;
+      st = bumpVisitCount(st);
+      saveStats(st);
+      try {
+        window.sessionStorage.setItem(HANGLE_SESSION_BUMP_KEY, "true");
+      } catch {
+        /* ignore */
+      }
+      const msg = welcomeMessage(visitsBefore);
+      setWelcomeBanner(msg);
+      if (welcomeBannerTimerRef.current !== null) {
+        window.clearTimeout(welcomeBannerTimerRef.current);
+      }
+      welcomeBannerTimerRef.current = window.setTimeout(() => {
+        welcomeBannerTimerRef.current = null;
+        setWelcomeBanner(null);
+      }, 4500);
+    }
+
     setStats(st);
 
     if (!loaded || loaded.puzzleDate !== today) {
@@ -568,17 +720,29 @@ export function Game() {
         ? null
         : freshUnlockedHintTier(difficulty!, prevWrong, newWrong);
 
-    if (process.env.NODE_ENV === "development" && difficulty === "easy" && !wonImmediate && !lostImmediate) {
-      const v = getVisibleHints("easy", newWrong);
-      console.log("=== After attempt #", attemptNumber, "===");
-      console.log("Wrong guesses:", newWrong, "(was", prevWrong, ")");
-      console.log("Meaning shown:", true);
-      console.log("Definition shown:", newWrong >= 1, "| visible.showDefinition:", v.showDefinition);
-      console.log("Example shown:", newWrong >= 2, "| visible.showExample:", v.showExample);
-      console.log("Jamo text shown:", newWrong >= 3, "| visible.showJamo:", v.showJamo);
-      console.log("Keyboard highlighted:", newWrong >= 4, "| showKeyboardHelpRow:", v.showKeyboardHelpRow);
-      console.log("Last-chance strip:", newWrong >= 5, "| lastChanceEasy:", v.lastChanceEasy);
-      console.log("Hint tier unlocked this submit:", hintTierUnlocked);
+    if (process.env.NODE_ENV === "development" && !wonImmediate && !lostImmediate && difficulty) {
+      const v = getVisibleHints(difficulty, newWrong);
+      const label = `[Hangle] After attempt #${attemptNumber} · ${difficulty.toUpperCase()} · wrong=${newWrong}`;
+      console.groupCollapsed(label);
+      console.log("Wrong guesses:", newWrong, "(prev:", prevWrong, ")");
+      console.log("Tier unlocked this submit:", hintTierUnlocked);
+      console.log("Progress dots:", `${v.hintDotsFilled}/${v.hintDotsTotal}`, "·", v.dotsTitle);
+      console.log("Next hint message:", v.nextHintSubtitle);
+      console.table({
+        showEmoji: v.showEmoji,
+        showCategoryPill: v.showCategoryPill,
+        showMeaning: v.showMeaning,
+        tryGuessPlaceholder: v.tryGuessPlaceholder,
+        showDefinition: v.showDefinition,
+        showExample: v.showExample,
+        showJamo: v.showJamo,
+        showKeyboardHelpRow: v.showKeyboardHelpRow,
+        lastChanceEasy: v.lastChanceEasy,
+        showHardSafetyBanner: v.showHardSafetyBanner,
+        highlightFullKeyboard: v.highlightFullKeyboard,
+        highlightFirstJamoOnly: v.highlightFirstJamoOnly,
+      });
+      console.groupEnd();
     }
 
     const persist = (
@@ -606,7 +770,7 @@ export function Game() {
       const picked = getNextPhrase(PHRASES);
       setBonusPhrase(picked);
       setStatus("won");
-      if (!statsRecorded) applyStatsOnce(true, nextGuesses.length, statsKind);
+      if (!statsRecorded) applyStatsOnce(true, nextGuesses.length, statsKind, picked.id);
       setStatsRecorded(true);
       persist("won", true, picked.id);
       setEndModal({ open: true, kind: "won" });
@@ -617,7 +781,7 @@ export function Game() {
       const picked = getNextPhrase(PHRASES);
       setBonusPhrase(picked);
       setStatus("lost");
-      if (!statsRecorded) applyStatsOnce(false, nextGuesses.length, statsKind);
+      if (!statsRecorded) applyStatsOnce(false, nextGuesses.length, statsKind, picked.id);
       setStatsRecorded(true);
       persist("lost", true, picked.id);
       setEndModal({ open: true, kind: "lost" });
@@ -667,6 +831,7 @@ export function Game() {
     setFreshHintTier(null);
     setRowRevealBlock(false);
     setInputNotice(null);
+    setNewlyUnlockedAchievements([]);
     if (status !== "won" && status !== "lost") return;
 
     // TODO: Premium 도입 시 여기서 게임 횟수 제한
@@ -779,6 +944,62 @@ export function Game() {
     stats.gamesWon > 0
       ? (stats.totalGuessesOnWins / stats.gamesWon).toFixed(1)
       : "—";
+
+  const wordsLearnedList = useMemo(
+    () => stats.wordsLearned ?? [],
+    [stats.wordsLearned],
+  );
+  const phrasesLearnedCount = (stats.phrasesLearned ?? []).length;
+  const levelInfo = useMemo(
+    () => getLevelInfo(wordsLearnedList.length),
+    [wordsLearnedList.length],
+  );
+
+  /** Attempt grade for the *just-finished* round (used in result modal title) */
+  const attemptGrade = useMemo(
+    () => getAttemptGrade(guesses.length, status === "won"),
+    [guesses.length, status],
+  );
+
+  /** All currently-unlocked achievement IDs (for Stats panel tile state) */
+  const unlockedAchievementIds = useMemo(
+    () => getUnlockedAchievementIds(stats, WORDS),
+    [stats],
+  );
+
+  /** Per-category progress rows sorted: in-progress > complete > untouched */
+  const categoryProgress = useMemo(
+    () => getCategoryProgress(stats, WORDS),
+    [stats],
+  );
+
+  /** Top 3 in-progress categories (for the compact result-modal preview) */
+  const topInProgressCategories = useMemo(
+    () =>
+      categoryProgress
+        .filter((c) => c.learned > 0 && c.learned < c.total)
+        .slice(0, 3),
+    [categoryProgress],
+  );
+
+  /** Build context used to draw progress bars on locked achievement tiles */
+  const achievementCtx = useMemo(
+    () => buildAchievementCtx(stats, WORDS),
+    [stats],
+  );
+
+  /** First N tiles of the master word list, marked learned/locked for the grid. */
+  const wordsGridPreview = useMemo(() => {
+    const TOTAL_TILES = 24;
+    const learnedSet = new Set(wordsLearnedList);
+    const learnedFirst = WORDS.filter((w) => learnedSet.has(w.word)).slice(0, TOTAL_TILES);
+    const remaining = TOTAL_TILES - learnedFirst.length;
+    const lockedFill = WORDS.filter((w) => !learnedSet.has(w.word)).slice(0, remaining);
+    return [
+      ...learnedFirst.map((w) => ({ word: w.word, locked: false, emoji: w.emoji })),
+      ...lockedFill.map((w) => ({ word: w.word, locked: true, emoji: w.emoji })),
+    ];
+  }, [wordsLearnedList]);
 
   const showImage = Boolean(imageSrc && !imgBroken);
   void countdownTick;
@@ -972,7 +1193,8 @@ export function Game() {
 
         <div className="flex flex-wrap items-center justify-center gap-x-1 gap-y-0.5 px-1">
           <span
-            className={`shrink-0 rounded-full border px-1.5 py-0.5 text-[9px] font-medium uppercase leading-tight tracking-wide sm:px-2 sm:py-0.5 sm:text-[10px] ${
+            aria-hidden="false"
+            className={`shrink-0 cursor-default select-none rounded-full border px-1.5 py-0.5 text-[9px] font-medium uppercase leading-tight tracking-wide sm:px-2 sm:py-0.5 sm:text-[10px] ${
               sessionMode === "daily"
                 ? "border-amber-400/80 bg-amber-50 text-amber-900"
                 : "border-stone-400/60 bg-stone-100 text-stone-700"
@@ -1005,6 +1227,32 @@ export function Game() {
         >
           <p className="hint-fade-in rounded-full border border-stone-400/80 bg-[#faf7f0]/98 px-4 py-2 text-center text-[11px] font-semibold text-stone-900 shadow-lg backdrop-blur-[2px] sm:text-xs">
             {modeToast}
+          </p>
+        </div>
+      )}
+
+      {infoToast && (
+        <div
+          key={infoToast}
+          role="status"
+          aria-live="polite"
+          className="pointer-events-none fixed left-1/2 top-[max(0.35rem,env(safe-area-inset-top))] z-[58] flex -translate-x-1/2 justify-center px-3 sm:top-[max(0.5rem,env(safe-area-inset-top))]"
+        >
+          <p className="hint-fade-in rounded-full border border-amber-400/80 bg-amber-50/97 px-4 py-2 text-center text-[12px] font-semibold text-amber-950 shadow-lg backdrop-blur-[2px] sm:text-sm">
+            {infoToast}
+          </p>
+        </div>
+      )}
+
+      {welcomeBanner && (
+        <div
+          key={welcomeBanner}
+          role="status"
+          aria-live="polite"
+          className="pointer-events-none fixed left-1/2 top-[max(0.35rem,env(safe-area-inset-top))] z-[59] flex -translate-x-1/2 justify-center px-3 sm:top-[max(0.5rem,env(safe-area-inset-top))]"
+        >
+          <p className="hint-fade-in rounded-full border border-amber-500/85 bg-[#faf7f0]/98 px-4 py-2 text-center text-[12px] font-bold text-stone-900 shadow-lg backdrop-blur-[2px] sm:text-sm">
+            {welcomeBanner}
           </p>
         </div>
       )}
@@ -1061,16 +1309,16 @@ export function Game() {
                   : "max-h-[min(140px,20dvh)] max-[480px]:max-h-[min(130px,18dvh)] sm:max-h-[min(180px,24dvh)]"
               } ${hintCardPulse ? "hint-card-pulse-once" : ""}`}
             >
-              <div className="shrink-0 border-b border-stone-400/25 px-2.5 pb-1 pt-1.5 text-left max-[480px]:px-2 max-[480px]:pb-1 max-[480px]:pt-1.5 sm:px-3.5 sm:pb-1.5 sm:pt-2">
+              <div className="shrink-0 cursor-default px-2.5 pb-1 pt-1.5 text-left max-[480px]:px-2 max-[480px]:pb-1 max-[480px]:pt-1.5 sm:px-3.5 sm:pb-1.5 sm:pt-2">
                 {visible.showHintDotsRow && visible.hintDotsTotal > 0 && (
-                  <div className="flex items-center justify-between gap-2">
-                    <span className="font-serif text-[10px] font-semibold tabular-nums text-stone-800 sm:text-[11px]">
+                  <div className="flex select-none items-center justify-between gap-2">
+                    <span className="cursor-default font-serif text-[10px] font-semibold tabular-nums text-stone-800 sm:text-[11px]">
                       Hint {visible.hintProgressLabel}
                       <span className="ml-1 font-sans text-[9px] font-medium text-stone-500 sm:text-[10px]">
                         · {visible.dotsTitle}
                       </span>
                     </span>
-                    <div className="flex shrink-0 gap-1" aria-hidden>
+                    <div className="flex shrink-0 cursor-default gap-1" aria-hidden>
                       {Array.from({ length: visible.hintDotsTotal }, (_, i) => (
                         <span
                           key={i}
@@ -1082,11 +1330,11 @@ export function Game() {
                     </div>
                   </div>
                 )}
-                <p className="mt-0.5 text-[9px] leading-snug text-stone-500 sm:text-[10px]">{visible.nextHintSubtitle}</p>
+                <p className="mt-0.5 cursor-default text-[9px] leading-snug text-stone-500 sm:text-[10px]">{visible.nextHintSubtitle}</p>
 
                 <div className="mt-1.5 flex flex-wrap items-center gap-2">
                   {visible.showWordImage && showImage && imageSrc ? (
-                    <div className="relative h-7 w-7 shrink-0 overflow-hidden rounded-lg border border-stone-300/50 bg-white/80 sm:h-9 sm:w-9">
+                    <div className="relative h-7 w-7 shrink-0 cursor-default select-none overflow-hidden rounded-lg border border-stone-300/50 bg-white/80 sm:h-9 sm:w-9">
                       <Image
                         src={imageSrc}
                         alt=""
@@ -1098,7 +1346,7 @@ export function Game() {
                     </div>
                   ) : visible.showEmoji ? (
                     <span
-                      className="flex h-7 w-7 shrink-0 select-none items-center justify-center text-[1.15rem] leading-none sm:h-9 sm:w-9 sm:text-[1.45rem]"
+                      className="flex h-7 w-7 shrink-0 cursor-default select-none items-center justify-center text-[1.15rem] leading-none sm:h-9 sm:w-9 sm:text-[1.45rem]"
                       style={{
                         fontFamily:
                           "system-ui, 'Segoe UI Emoji', 'Apple Color Emoji', sans-serif",
@@ -1109,9 +1357,24 @@ export function Game() {
                     </span>
                   ) : null}
                   {visible.showCategoryPill && (
-                    <span className="max-w-[min(100%,14rem)] truncate rounded-full border border-stone-400/55 bg-white/40 px-2 py-0.5 text-[9px] font-semibold uppercase tracking-[0.12em] text-stone-800">
+                    <button
+                      type="button"
+                      aria-label={`Category hint: ${safeWordDisplay.categoryUpper}. Type the Korean word that fits this category.`}
+                      onClick={() => {
+                        flashInfoToast(
+                          `Category clue · type the Korean word for this kind of ${safeWordDisplay.categoryUpper.toLowerCase()}!`,
+                        );
+                        if (process.env.NODE_ENV === "development") {
+                          console.log(
+                            "[Game] dead-click guard · category pill tapped:",
+                            safeWordDisplay.categoryUpper,
+                          );
+                        }
+                      }}
+                      className="max-w-[min(100%,14rem)] shrink-0 truncate rounded-full border border-stone-400/55 bg-white/40 px-2 py-0.5 text-[9px] font-semibold uppercase tracking-[0.12em] text-stone-800 transition hover:bg-white/70 active:scale-[0.98]"
+                    >
                       {safeWordDisplay.categoryUpper}
-                    </span>
+                    </button>
                   )}
                 </div>
 
@@ -1225,16 +1488,16 @@ export function Game() {
               aria-label="Hard mode clues"
               className={`game-hint-card flex max-h-[min(110px,16dvh)] shrink-0 flex-col overflow-hidden rounded-xl border border-stone-300/55 bg-[var(--hint-card-bg)] shadow-sm transition-shadow max-[480px]:max-h-[min(100px,14dvh)] sm:max-h-[140px] ${hintCardPulse ? "hint-card-pulse-once" : ""}`}
             >
-              <div className="px-2.5 py-2 text-left sm:px-3.5 sm:py-2.5">
+              <div className="cursor-default px-2.5 py-2 text-left sm:px-3.5 sm:py-2.5">
                 {visible.showHintDotsRow && (
-                  <div className="flex items-center justify-between gap-2">
-                    <span className="font-serif text-[10px] font-semibold tabular-nums text-stone-800 sm:text-[11px]">
+                  <div className="flex select-none items-center justify-between gap-2">
+                    <span className="cursor-default font-serif text-[10px] font-semibold tabular-nums text-stone-800 sm:text-[11px]">
                       Hint {visible.hintProgressLabel}
                       <span className="ml-1 font-sans text-[9px] font-medium text-stone-500 sm:text-[10px]">
                         · {visible.dotsTitle}
                       </span>
                     </span>
-                    <div className="flex shrink-0 gap-1" aria-hidden>
+                    <div className="flex shrink-0 cursor-default gap-1" aria-hidden>
                       {Array.from({ length: visible.hintDotsTotal }, (_, i) => (
                         <span
                           key={i}
@@ -1246,11 +1509,26 @@ export function Game() {
                     </div>
                   </div>
                 )}
-                <p className="mt-0.5 text-[9px] leading-snug text-stone-500 sm:text-[10px]">{visible.nextHintSubtitle}</p>
+                <p className="mt-0.5 cursor-default text-[9px] leading-snug text-stone-500 sm:text-[10px]">{visible.nextHintSubtitle}</p>
                 <div className="mt-1.5 flex items-center gap-2">
-                  <span className="max-w-full truncate rounded-full border border-stone-400/55 bg-white/40 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.12em] text-stone-800 sm:text-[11px]">
+                  <button
+                    type="button"
+                    aria-label={`Category hint: ${safeWordDisplay.categoryUpper}. Type the Korean word that fits this category.`}
+                    onClick={() => {
+                      flashInfoToast(
+                        `Category clue · type the Korean word for this kind of ${safeWordDisplay.categoryUpper.toLowerCase()}!`,
+                      );
+                      if (process.env.NODE_ENV === "development") {
+                        console.log(
+                          "[Game] dead-click guard · hard category pill tapped:",
+                          safeWordDisplay.categoryUpper,
+                        );
+                      }
+                    }}
+                    className="max-w-full shrink-0 truncate rounded-full border border-stone-400/55 bg-white/40 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.12em] text-stone-800 transition hover:bg-white/70 active:scale-[0.98] sm:text-[11px]"
+                  >
                     {safeWordDisplay.categoryUpper}
-                  </span>
+                  </button>
                 </div>
                 {visible.showHardSafetyBanner && (
                   <div
@@ -1282,7 +1560,23 @@ export function Game() {
                 {inputNotice}
               </p>
             )}
-            <div className="flex w-full shrink-0 justify-center py-0">
+            <div
+              className="flex w-full shrink-0 justify-center py-0"
+              onClick={() => {
+                if (
+                  status !== "playing" ||
+                  !hydrated ||
+                  difficulty === null ||
+                  rowRevealBlock
+                ) {
+                  return;
+                }
+                flashInfoToast("Tap a letter on the keyboard below ↓");
+                if (process.env.NODE_ENV === "development") {
+                  console.log("[Game] dead-click guard · grid tapped → keyboard hint shown");
+                }
+              }}
+            >
               <Grid
                 guesses={guesses}
                 evaluations={evaluations}
@@ -1378,6 +1672,177 @@ export function Game() {
                 ));
               })()}
             </div>
+            <div className="mb-5 rounded-xl border border-amber-300/60 bg-amber-50/50 p-3 shadow-sm sm:p-4">
+              <p className="cursor-default text-center text-[10px] font-bold uppercase tracking-[0.14em] text-amber-900/85 sm:text-[11px]">
+                🎓 Your Korean Journey
+              </p>
+              <div className="mt-3 grid grid-cols-3 gap-2 text-center sm:gap-3">
+                <div className="cursor-default">
+                  <p className="font-serif text-xl font-semibold text-stone-900 tabular-nums sm:text-2xl">
+                    {wordsLearnedList.length}
+                  </p>
+                  <p className="text-[9px] uppercase tracking-wide text-stone-500 sm:text-[10px]">
+                    Words
+                  </p>
+                </div>
+                <div className="cursor-default">
+                  <p className="font-serif text-xl font-semibold text-stone-900 tabular-nums sm:text-2xl">
+                    {phrasesLearnedCount}
+                  </p>
+                  <p className="text-[9px] uppercase tracking-wide text-stone-500 sm:text-[10px]">
+                    Phrases
+                  </p>
+                </div>
+                <div className="cursor-default">
+                  <p className="font-serif text-xl font-semibold text-stone-900 tabular-nums sm:text-2xl">
+                    {stats.visits ?? 0}
+                  </p>
+                  <p className="text-[9px] uppercase tracking-wide text-stone-500 sm:text-[10px]">
+                    Visits
+                  </p>
+                </div>
+              </div>
+              <div className="mt-4 flex items-center justify-between gap-3">
+                <p className="cursor-default text-[13px] font-semibold text-stone-900 sm:text-sm">
+                  <span aria-hidden className="mr-1">
+                    {levelInfo.emoji}
+                  </span>
+                  Level: {levelInfo.current}
+                </p>
+                <p className="cursor-default text-[10px] text-stone-600 sm:text-[11px]">
+                  {levelInfo.nextLevel
+                    ? `${levelInfo.wordsToNext} more to ${levelInfo.nextLevel}`
+                    : "Max level — 잘했어!"}
+                </p>
+              </div>
+              <div
+                className="mt-1.5 h-2 w-full overflow-hidden rounded-full bg-stone-200/80"
+                role="progressbar"
+                aria-valuenow={levelInfo.progressPercent}
+                aria-valuemin={0}
+                aria-valuemax={100}
+                aria-label={`Progress to ${levelInfo.nextLevel ?? "max level"}`}
+              >
+                <div
+                  className="h-full rounded-full bg-amber-500 transition-all duration-700 ease-out"
+                  style={{ width: `${levelInfo.progressPercent}%` }}
+                />
+              </div>
+
+              {/* Achievement badge grid (15 tiles, unlocked vs locked) */}
+              <p className="mt-4 cursor-default text-[9px] font-bold uppercase tracking-wide text-stone-500 sm:text-[10px]">
+                🏆 Achievements · {unlockedAchievementIds.size}/{ACHIEVEMENTS.length}
+              </p>
+              <div className="mt-1.5 grid grid-cols-3 gap-1.5 sm:grid-cols-5">
+                {ACHIEVEMENTS.map((a) => {
+                  const unlocked = unlockedAchievementIds.has(a.id);
+                  const prog = a.progress ? a.progress(achievementCtx) : null;
+                  const pct = prog
+                    ? Math.min(100, Math.round((prog.value / Math.max(1, prog.target)) * 100))
+                    : 0;
+                  return (
+                    <div
+                      key={a.id}
+                      title={`${a.title} — ${a.description}`}
+                      className={`flex cursor-default select-none flex-col items-center justify-center rounded-lg border p-1.5 text-center transition ${
+                        unlocked
+                          ? "border-amber-400/70 bg-amber-50/80 shadow-sm"
+                          : "border-stone-200/80 bg-stone-100/60 opacity-65"
+                      }`}
+                    >
+                      <span
+                        aria-hidden
+                        className={`text-xl leading-none ${unlocked ? "" : "grayscale"}`}
+                        style={{
+                          fontFamily:
+                            "system-ui, 'Segoe UI Emoji', 'Apple Color Emoji', sans-serif",
+                        }}
+                      >
+                        {a.emoji}
+                      </span>
+                      <span
+                        className={`mt-0.5 text-[9px] font-bold uppercase leading-tight tracking-wide ${unlocked ? "text-stone-900" : "text-stone-500"}`}
+                      >
+                        {a.title}
+                      </span>
+                      {!unlocked && prog && (
+                        <span className="mt-0.5 font-mono text-[8px] tabular-nums text-stone-500">
+                          {prog.value}/{prog.target}
+                        </span>
+                      )}
+                      {!unlocked && prog && (
+                        <div className="mt-0.5 h-0.5 w-full overflow-hidden rounded-full bg-stone-200">
+                          <div
+                            className="h-full rounded-full bg-amber-400 transition-all"
+                            style={{ width: `${pct}%` }}
+                          />
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+
+              {/* Full per-category progress with bars */}
+              <p className="mt-4 cursor-default text-[9px] font-bold uppercase tracking-wide text-stone-500 sm:text-[10px]">
+                📚 By category
+              </p>
+              <div className="mt-1.5 space-y-1.5">
+                {categoryProgress.map((c) => (
+                  <div key={c.category} className="cursor-default">
+                    <div className="flex items-baseline justify-between text-[10px] text-stone-700 sm:text-[11px]">
+                      <span className="font-semibold uppercase tracking-wide">
+                        {c.category}
+                      </span>
+                      <span className="font-mono tabular-nums text-stone-500">
+                        {c.learned}/{c.total} · {c.percent}%
+                      </span>
+                    </div>
+                    <div
+                      className="mt-0.5 h-1.5 w-full overflow-hidden rounded-full bg-stone-200/80"
+                      role="progressbar"
+                      aria-valuenow={c.percent}
+                      aria-valuemin={0}
+                      aria-valuemax={100}
+                      aria-label={`${c.category} progress`}
+                    >
+                      <div
+                        className={`h-full rounded-full transition-all duration-700 ease-out ${c.percent >= 100 ? "bg-emerald-500" : "bg-amber-500"}`}
+                        style={{ width: `${c.percent}%` }}
+                      />
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              <p className="mt-4 cursor-default text-[9px] font-bold uppercase tracking-wide text-stone-500 sm:text-[10px]">
+                Word collection · {wordsLearnedList.length}/{WORDS.length}
+              </p>
+              <div className="mt-1.5 grid grid-cols-6 gap-1 sm:gap-1.5">
+                {wordsGridPreview.map((tile, i) => (
+                  <div
+                    key={`${tile.word}-${i}`}
+                    title={tile.locked ? "Locked — solve to reveal" : tile.word}
+                    className={`flex aspect-square select-none items-center justify-center rounded-md border text-[10px] font-semibold leading-tight sm:text-[11px] ${
+                      tile.locked
+                        ? "border-stone-200/80 bg-stone-100/70 text-stone-300"
+                        : "border-emerald-400/70 bg-emerald-50/80 text-stone-900"
+                    }`}
+                  >
+                    {tile.locked ? "•" : tile.word}
+                  </div>
+                ))}
+              </div>
+              {wordsLearnedList.length < WORDS.length && (
+                <p className="mt-2 cursor-default text-center text-[10px] text-stone-500">
+                  {WORDS.length - wordsLearnedList.length} more words to discover
+                </p>
+              )}
+              <p className="mt-3 cursor-default text-center text-[10px] leading-snug text-amber-900/85 sm:text-[11px]">
+                💎 {WORDS.length}+ Korean words · 💬 Bonus phrases every round
+              </p>
+            </div>
+
             <button
               type="button"
               className="w-full rounded-md bg-stone-800 py-2.5 text-sm text-white hover:bg-stone-700 min-h-[44px]"
@@ -1406,9 +1871,32 @@ export function Game() {
             </h2>
             <p className="mt-1 text-sm text-stone-600">
               {endModal.kind === "won"
-                ? `You got it! · ${guesses.length}/6`
+                ? `You got it · ${guesses.length}/6 ${guesses.length === 1 ? "try" : "tries"}`
                 : `${guesses.length}/6 tries`}
             </p>
+
+            {endModal.kind === "won" && attemptGrade.stars > 0 && (
+              <div className="mt-2 flex items-center gap-2">
+                <div
+                  className="flex select-none gap-0.5"
+                  aria-label={`Rating: ${attemptGrade.stars} of 6 stars`}
+                >
+                  {Array.from({ length: 6 }, (_, i) => (
+                    <span
+                      key={i}
+                      className={`text-base sm:text-lg ${i < attemptGrade.stars ? "text-amber-500" : "text-stone-200"}`}
+                      aria-hidden
+                    >
+                      ★
+                    </span>
+                  ))}
+                </div>
+                <p className="cursor-default text-sm font-semibold text-stone-800">
+                  {attemptGrade.emoji ? `${attemptGrade.emoji} ` : ""}
+                  {attemptGrade.title}
+                </p>
+              </div>
+            )}
 
             <p className="mt-3 text-xs font-semibold uppercase tracking-wide text-stone-500">
               {endModal.kind === "lost" ? "The word was" : "Answer"}
@@ -1484,6 +1972,121 @@ export function Game() {
               })}
             </div>
 
+            <div className="mt-5 rounded-xl border border-amber-300/60 bg-amber-50/55 p-3 shadow-sm">
+              <p className="cursor-default text-center text-[10px] font-bold uppercase tracking-[0.14em] text-amber-900/80">
+                🎓 Your Korean Journey
+              </p>
+              <div className="mt-2 flex items-center justify-between gap-3">
+                <div className="cursor-default text-left">
+                  <p
+                    className={`font-serif text-2xl font-semibold text-stone-900 tabular-nums ${wordsLearnedBump ? "hint-card-pulse-once" : ""}`}
+                  >
+                    {wordsLearnedList.length}
+                  </p>
+                  <p className="text-[9px] uppercase tracking-wide text-stone-500">
+                    Words learned
+                  </p>
+                </div>
+                <div className="cursor-default text-right">
+                  <p className="text-[13px] font-semibold text-stone-900">
+                    <span aria-hidden className="mr-1">
+                      {levelInfo.emoji}
+                    </span>
+                    {levelInfo.current}
+                  </p>
+                  <p className="text-[9px] text-stone-500">
+                    {levelInfo.nextLevel
+                      ? `${levelInfo.wordsToNext} more to ${levelInfo.nextLevel}`
+                      : "Max level — 잘했어!"}
+                  </p>
+                </div>
+              </div>
+              <div
+                className="mt-2 h-2 w-full overflow-hidden rounded-full bg-stone-200/80"
+                role="progressbar"
+                aria-valuenow={levelInfo.progressPercent}
+                aria-valuemin={0}
+                aria-valuemax={100}
+                aria-label={`Progress to ${levelInfo.nextLevel ?? "max level"}`}
+              >
+                <div
+                  className="h-full rounded-full bg-amber-500 transition-all duration-700 ease-out"
+                  style={{ width: `${levelInfo.progressPercent}%` }}
+                />
+              </div>
+              <p className="mt-2 cursor-default text-center text-[10px] leading-snug text-stone-600">
+                💬 {phrasesLearnedCount} bonus phrase{phrasesLearnedCount === 1 ? "" : "s"} seen ·{" "}
+                {WORDS.length}+ Korean words to discover
+              </p>
+
+              {topInProgressCategories.length > 0 && (
+                <div className="mt-3 border-t border-amber-300/40 pt-3">
+                  <p className="cursor-default text-[9px] font-bold uppercase tracking-wide text-stone-500">
+                    🏆 Category progress
+                  </p>
+                  <div className="mt-1.5 space-y-1.5">
+                    {topInProgressCategories.map((c) => (
+                      <div key={c.category} className="cursor-default">
+                        <div className="flex items-baseline justify-between text-[10px] text-stone-700">
+                          <span className="font-semibold uppercase tracking-wide">
+                            {c.category}
+                          </span>
+                          <span className="font-mono tabular-nums text-stone-500">
+                            {c.learned}/{c.total}
+                          </span>
+                        </div>
+                        <div
+                          className="mt-0.5 h-1.5 w-full overflow-hidden rounded-full bg-stone-200/80"
+                          role="progressbar"
+                          aria-valuenow={c.percent}
+                          aria-valuemin={0}
+                          aria-valuemax={100}
+                        >
+                          <div
+                            className="h-full rounded-full bg-amber-500 transition-all duration-700 ease-out"
+                            style={{ width: `${c.percent}%` }}
+                          />
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {newlyUnlockedAchievements.length > 0 && (
+              <div className="hint-card-pulse-once mt-4 rounded-xl border-2 border-amber-400/80 bg-amber-50/90 p-3 shadow-sm sm:p-4">
+                <p className="cursor-default text-center text-[11px] font-bold uppercase tracking-[0.14em] text-amber-900 sm:text-xs">
+                  🎉 Achievement{newlyUnlockedAchievements.length > 1 ? "s" : ""} unlocked!
+                </p>
+                <div className="mt-2 flex flex-wrap justify-center gap-2">
+                  {newlyUnlockedAchievements.map((a) => (
+                    <div
+                      key={a.id}
+                      className="hint-fade-in flex flex-col items-center rounded-lg border border-amber-300/70 bg-white/90 px-3 py-2 shadow-sm"
+                    >
+                      <span
+                        aria-hidden
+                        className="select-none text-2xl leading-none"
+                        style={{
+                          fontFamily:
+                            "system-ui, 'Segoe UI Emoji', 'Apple Color Emoji', sans-serif",
+                        }}
+                      >
+                        {a.emoji}
+                      </span>
+                      <span className="mt-1 cursor-default text-[10px] font-bold uppercase tracking-wide text-stone-900 sm:text-[11px]">
+                        {a.title}
+                      </span>
+                      <span className="cursor-default text-[8px] leading-snug text-stone-500 sm:text-[9px]">
+                        {a.description}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
             <div className="mt-6 rounded-xl border-2 border-amber-200/80 bg-[#f5f0e8] p-3 shadow-sm sm:p-4">
               <p className="text-center text-xs font-bold uppercase tracking-wide text-amber-950">
                 Share your result
@@ -1554,15 +2157,29 @@ export function Game() {
 
             <button
               type="button"
+              onClick={handleResultClose}
+              className="mt-5 flex w-full items-center justify-center gap-2 rounded-xl bg-amber-500 px-4 py-3 text-base font-bold text-white shadow-md transition hover:bg-amber-600 active:scale-[0.99] min-h-[52px]"
+            >
+              <span aria-hidden className="text-xl leading-none">
+                🇰🇷
+              </span>
+              <span>Play Another Word</span>
+              <span aria-hidden className="text-lg leading-none">
+                →
+              </span>
+            </button>
+
+            <button
+              type="button"
               onClick={() => setFeedbackOpen(true)}
-              className="mt-4 w-full rounded-xl border border-stone-400/70 bg-[#f5f0e8] py-2.5 text-sm font-medium text-stone-800 shadow-sm transition hover:bg-[#efe8dc] min-h-[44px]"
+              className="mt-3 w-full rounded-xl border border-stone-400/70 bg-[#f5f0e8] py-2.5 text-sm font-medium text-stone-800 shadow-sm transition hover:bg-[#efe8dc] min-h-[44px]"
             >
               💬 Send Feedback
             </button>
 
             <button
               type="button"
-              className="mt-5 w-full rounded-md border border-stone-300 bg-white py-2.5 text-sm hover:bg-stone-50 min-h-[44px]"
+              className="mt-3 w-full rounded-md border border-stone-300 bg-white py-2 text-xs text-stone-500 hover:bg-stone-50 min-h-[40px]"
               onClick={handleResultClose}
             >
               Close

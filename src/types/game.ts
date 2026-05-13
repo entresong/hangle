@@ -60,4 +60,14 @@ export type PersistedStats = {
   practiceSolvedWords?: string[];
   /** Wins solved in exactly one guess (daily + practice) */
   oneGuessWins?: number;
+  /** Distinct Korean words the user has actually WON (daily + practice) — drives level */
+  wordsLearned?: string[];
+  /** Distinct bonus phrase IDs the user has seen on a result screen */
+  phrasesLearned?: number[];
+  /** Total distinct sessions the user has launched the game */
+  visits?: number;
+  /** UTC YYYY-MM-DD of first ever launch (set once) */
+  firstVisitDate?: string | null;
+  /** UTC YYYY-MM-DD of most recent launch */
+  lastVisitDate?: string | null;
 };

@@ -8,7 +8,8 @@
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
-    "generate-images": "tsx scripts/generate-images.ts"
+    "generate-images": "tsx scripts/generate-images.ts",
+    "clarity": "node scripts/fetchClarityData.js"
   },
   "dependencies": {
     "@vercel/analytics": "^2.0.1",
