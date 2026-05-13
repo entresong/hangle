@@ -1,5 +1,17 @@
 import type { Difficulty } from "@/lib/difficulty";
 
+/**
+ * Compact next-hint preview rendered at the bottom of the hint card.
+ *
+ * - "tries": Next reveal is `tries` wrong-guesses away. `label` describes WHAT.
+ * - "finalGuess": Player is on their last (6th) attempt — no more reveals.
+ * - "allUnlocked": Everything possible for this mode is shown, with guesses left.
+ */
+export type NextHintPreview =
+  | { kind: "tries"; tries: number; label: string }
+  | { kind: "finalGuess" }
+  | { kind: "allUnlocked" };
+
 export type VisibleHints = {
   variant: Difficulty;
   /** Large card (Easy + Normal) */
@@ -12,7 +24,10 @@ export type VisibleHints = {
   hintProgressLabel: string;
   /** Short label next to dot row */
   dotsTitle: string;
+  /** Long-form subtitle (legacy; kept for dev logs). UI uses `nextHintPreview` instead. */
   nextHintSubtitle: string;
+  /** Compact next-hint preview shown at the bottom of the hint card. */
+  nextHintPreview: NextHintPreview;
   showEmoji: boolean;
   showWordImage: boolean;
   showCategoryPill: boolean;
@@ -53,6 +68,15 @@ export type VisibleHints = {
  *   0–4 wrong → category pill only (no emoji, no meaning)
  *   ≥5        → + safety banner ("Almost out of tries!") + first-jamo keyboard ring
  */
+/** EASY hint labels in unlock order (1 → 5). */
+const EASY_NEXT_LABELS: readonly string[] = [
+  "Definition",
+  "Example",
+  "First-syllable jamo",
+  "Keyboard jamo highlight",
+  "Last-chance clue",
+];
+
 export function getVisibleHints(difficulty: Difficulty, wrongGuessCount: number): VisibleHints {
   if (difficulty === "easy") {
     const showDefinition = wrongGuessCount >= 1;
@@ -60,6 +84,18 @@ export function getVisibleHints(difficulty: Difficulty, wrongGuessCount: number)
     const showJamo = wrongGuessCount >= 3;
     const highlightFullKeyboard = wrongGuessCount >= 4;
     const lastChanceEasy = wrongGuessCount >= 5;
+
+    let nextHintPreview: NextHintPreview;
+    if (wrongGuessCount >= 5) {
+      nextHintPreview = { kind: "finalGuess" };
+    } else {
+      nextHintPreview = {
+        kind: "tries",
+        tries: 1,
+        label: EASY_NEXT_LABELS[wrongGuessCount] ?? "Next hint",
+      };
+    }
+
     return {
       variant: "easy",
       showFullHintCard: true,
@@ -81,6 +117,7 @@ export function getVisibleHints(difficulty: Difficulty, wrongGuessCount: number)
                 : wrongGuessCount === 3
                   ? "Keyboard jamo highlight unlocks after one more wrong guess."
                   : "Last-chance clue unlocks after one more wrong guess.",
+      nextHintPreview,
       showEmoji: true,
       showWordImage: true,
       showCategoryPill: true,
@@ -102,6 +139,24 @@ export function getVisibleHints(difficulty: Difficulty, wrongGuessCount: number)
     const showMeaning = wrongGuessCount >= 3;
     const highlightFullKeyboard = wrongGuessCount >= 5;
     const filled = (showMeaning ? 1 : 0) + (highlightFullKeyboard ? 1 : 0);
+
+    let nextHintPreview: NextHintPreview;
+    if (wrongGuessCount < 3) {
+      nextHintPreview = {
+        kind: "tries",
+        tries: 3 - wrongGuessCount,
+        label: "English meaning",
+      };
+    } else if (wrongGuessCount < 5) {
+      nextHintPreview = {
+        kind: "tries",
+        tries: 5 - wrongGuessCount,
+        label: "Keyboard jamo highlight",
+      };
+    } else {
+      nextHintPreview = { kind: "finalGuess" };
+    }
+
     return {
       variant: "normal",
       showFullHintCard: true,
@@ -117,6 +172,7 @@ export function getVisibleHints(difficulty: Difficulty, wrongGuessCount: number)
           : wrongGuessCount < 5
             ? "Keyboard jamo highlight unlocks after 5 wrong guesses."
             : "All Normal hints unlocked.",
+      nextHintPreview,
       showEmoji: true,
       showWordImage: true,
       showCategoryPill: true,
@@ -135,6 +191,18 @@ export function getVisibleHints(difficulty: Difficulty, wrongGuessCount: number)
   }
 
   const safety = wrongGuessCount >= 5;
+
+  let nextHintPreview: NextHintPreview;
+  if (wrongGuessCount < 5) {
+    nextHintPreview = {
+      kind: "tries",
+      tries: 5 - wrongGuessCount,
+      label: "Safety hint · first-jamo keyboard ring",
+    };
+  } else {
+    nextHintPreview = { kind: "finalGuess" };
+  }
+
   return {
     variant: "hard",
     showFullHintCard: false,
@@ -147,6 +215,7 @@ export function getVisibleHints(difficulty: Difficulty, wrongGuessCount: number)
     nextHintSubtitle: safety
       ? "First jamo of the answer is ringed on the keyboard."
       : "Category + tile colors only. Safety hint after 5 wrong guesses.",
+    nextHintPreview,
     showEmoji: false,
     showWordImage: false,
     showCategoryPill: true,

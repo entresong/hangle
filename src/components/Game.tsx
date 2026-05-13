@@ -1355,9 +1355,8 @@ export function Game() {
                     </div>
                   </div>
                 )}
-                <p className="mt-0.5 cursor-default text-[9px] leading-snug text-stone-500 sm:text-[10px]">{visible.nextHintSubtitle}</p>
 
-                <div className="mt-1.5 flex flex-wrap items-center gap-2">
+                <div className="mt-1 flex flex-wrap items-center gap-2">
                   {visible.showWordImage && showImage && imageSrc ? (
                     <div className="relative h-7 w-7 shrink-0 cursor-default select-none overflow-hidden rounded-lg border border-stone-300/50 bg-white/80 sm:h-9 sm:w-9">
                       <Image
@@ -1505,13 +1504,43 @@ export function Game() {
                   </div>
                 )}
               </div>
+
+              {/* Compact next-hint preview pinned at the bottom of the card. */}
+              <div
+                className="shrink-0 cursor-default select-none px-2.5 pb-1.5 pt-0.5 text-[10px] leading-snug text-stone-600 max-[480px]:px-2 sm:px-3.5 sm:pb-2 sm:text-[11px]"
+                aria-live="polite"
+              >
+                {visible.nextHintPreview.kind === "tries" ? (
+                  <>
+                    <span className="font-semibold text-amber-800/90">⏳ Next hint</span>
+                    <span className="text-stone-500"> in </span>
+                    <span className="font-mono font-semibold tabular-nums text-stone-800">
+                      {visible.nextHintPreview.tries}
+                    </span>
+                    <span className="text-stone-500">
+                      {visible.nextHintPreview.tries === 1 ? " guess" : " guesses"} ·{" "}
+                    </span>
+                    <span className="font-semibold text-stone-800">
+                      {visible.nextHintPreview.label}
+                    </span>
+                  </>
+                ) : visible.nextHintPreview.kind === "finalGuess" ? (
+                  <span className="font-semibold text-red-700">
+                    🎯 Final guess — good luck! 💪
+                  </span>
+                ) : (
+                  <span className="font-semibold text-amber-800/90">
+                    🎯 All hints unlocked
+                  </span>
+                )}
+              </div>
             </section>
           )}
 
           {visible.showHardCategoryStrip && (
             <section
               aria-label="Hard mode clues"
-              className={`game-hint-card flex max-h-[min(110px,16dvh)] shrink-0 flex-col overflow-hidden rounded-xl border border-stone-300/55 bg-[var(--hint-card-bg)] shadow-sm transition-shadow max-[480px]:max-h-[min(100px,14dvh)] sm:max-h-[140px] ${hintCardPulse ? "hint-card-pulse-once" : ""}`}
+              className={`game-hint-card flex max-h-[min(130px,18dvh)] shrink-0 flex-col overflow-hidden rounded-xl border border-stone-300/55 bg-[var(--hint-card-bg)] shadow-sm transition-shadow max-[480px]:max-h-[min(120px,17dvh)] sm:max-h-[160px] ${hintCardPulse ? "hint-card-pulse-once" : ""}`}
             >
               <div className="cursor-default px-2.5 py-2 text-left sm:px-3.5 sm:py-2.5">
                 {visible.showHintDotsRow && (
@@ -1534,8 +1563,7 @@ export function Game() {
                     </div>
                   </div>
                 )}
-                <p className="mt-0.5 cursor-default text-[9px] leading-snug text-stone-500 sm:text-[10px]">{visible.nextHintSubtitle}</p>
-                <div className="mt-1.5 flex items-center gap-2">
+                <div className="mt-1 flex items-center gap-2">
                   <button
                     type="button"
                     aria-label={`Category hint: ${safeWordDisplay.categoryUpper}. Type the Korean word that fits this category.`}
@@ -1566,6 +1594,36 @@ export function Game() {
                       First consonant/vowel of the answer is highlighted on the keyboard.
                     </p>
                   </div>
+                )}
+              </div>
+
+              {/* Compact next-hint preview pinned at the bottom of the HARD card. */}
+              <div
+                className="shrink-0 cursor-default select-none px-2.5 pb-1.5 pt-0.5 text-[10px] leading-snug text-stone-600 sm:px-3.5 sm:pb-2 sm:text-[11px]"
+                aria-live="polite"
+              >
+                {visible.nextHintPreview.kind === "tries" ? (
+                  <>
+                    <span className="font-semibold text-amber-800/90">⏳ Next hint</span>
+                    <span className="text-stone-500"> in </span>
+                    <span className="font-mono font-semibold tabular-nums text-stone-800">
+                      {visible.nextHintPreview.tries}
+                    </span>
+                    <span className="text-stone-500">
+                      {visible.nextHintPreview.tries === 1 ? " guess" : " guesses"} ·{" "}
+                    </span>
+                    <span className="font-semibold text-stone-800">
+                      {visible.nextHintPreview.label}
+                    </span>
+                  </>
+                ) : visible.nextHintPreview.kind === "finalGuess" ? (
+                  <span className="font-semibold text-red-700">
+                    🎯 Final guess — good luck! 💪
+                  </span>
+                ) : (
+                  <span className="font-semibold text-amber-800/90">
+                    🎯 All hints unlocked
+                  </span>
                 )}
               </div>
             </section>
