@@ -5,7 +5,7 @@ import Image from "next/image";
 import Hangul from "hangul-js";
 import wordsJson from "@/data/words.json";
 import { FeedbackModal } from "@/components/FeedbackModal";
-import { Grid } from "@/components/Grid";
+import { WordBoard } from "@/components/WordBoard";
 import { AppToast } from "@/components/AppToast";
 import { HangulKeyboard } from "@/components/HangulKeyboard";
 import { MaskedPlaceholderText } from "@/components/MaskedPlaceholderText";
@@ -19,6 +19,7 @@ import {
 } from "@/lib/dailyWord";
 import { evaluateGuess } from "@/lib/evaluate";
 import {
+  addPlayTime,
   appendPracticeClearedWord,
   bumpVisitCount,
   defaultStats,
@@ -41,6 +42,20 @@ import {
   getUnlockedAchievementIds,
   type AchievementDef,
 } from "@/lib/achievements";
+import { getNewlyCompletedCategories, isNewlyKpopTagCorpusMaster } from "@/lib/categoryMasters";
+import {
+  allQuestsComplete,
+  applyQuestRound,
+  loadDailyQuests,
+  saveDailyQuests,
+  type DailyQuestState,
+} from "@/lib/dailyQuests";
+import {
+  getRankProgress,
+  NEXUS_WORD_GOAL,
+  nexusProgressPercent,
+  nexusWordsLearned,
+} from "@/lib/rank";
 import {
   difficultyBadgeLabel,
   loadDifficulty,
@@ -78,6 +93,14 @@ const ROW_REVEAL_MS = 300;
 
 /** How long the “Brag” clipboard toast stays visible (read time on mobile). */
 const BRAG_TOAST_MS = 3800;
+
+function formatPlayTimeMs(ms: number): string {
+  const totalMin = Math.floor(Math.max(0, ms) / 60000);
+  const h = Math.floor(totalMin / 60);
+  const m = totalMin % 60;
+  if (h <= 0) return `${m}m`;
+  return `${h}h ${m}m`;
+}
 
 type TtsPlayingSlot = "result-word" | "bonus-phrase" | "bonus-example" | "rex-0" | "rex-1" | "rex-2";
 
@@ -225,6 +248,18 @@ export function Game() {
   /** Tier that just unlocked (1–5); drives brief text emphasis */
   const [freshHintTier, setFreshHintTier] = useState<number | null>(null);
   const hintsTimersRef = useRef<number[]>([]);
+  /** Wall-clock start of the current active round (for honest play-time tracking). */
+  const roundStartMsRef = useRef<number | null>(null);
+  /** Snapshot for result modal (distinct new word this round, etc.) */
+  const roundGamificationRef = useRef<{
+    newDistinctWord: boolean;
+    guessCount: number;
+    wonIn3OrLess: boolean;
+  }>({
+    newDistinctWord: false,
+    guessCount: 0,
+    wonIn3OrLess: false,
+  });
   const hintScrollBodyRef = useRef<HTMLDivElement>(null);
   const hintScrollTimerRef = useRef<number | null>(null);
   /** Client-mounted — avoids SSR mismatch for speech checks */
@@ -270,6 +305,14 @@ export function Game() {
   const [newlyUnlockedAchievements, setNewlyUnlockedAchievements] = useState<AchievementDef[]>(
     [],
   );
+  /** UTC daily quest progress (LoL-style dailies) */
+  const [dailyQuestSnapshot, setDailyQuestSnapshot] = useState<DailyQuestState | null>(null);
+  /** Categories that became 100% cleared on the last won round */
+  const [newlyMasteredCategories, setNewlyMasteredCategories] = useState<string[]>([]);
+  /** True when the player just crossed 100 distinct words learned (Nexus goal) */
+  const [nexus100UnlockedBanner, setNexus100UnlockedBanner] = useState(false);
+  /** True when all today's quests completed on the last finished round */
+  const [dailyQuestsMasterBanner, setDailyQuestsMasterBanner] = useState(false);
 
   /** Safe strings for UI — words.json or merged entries must never crash on missing fields */
   const safeWordDisplay = useMemo(() => {
@@ -289,7 +332,6 @@ export function Game() {
     };
   }, [answerEntry]);
 
-  const gridDense = answerLen >= 3;
 
   const firstWordJamo = useMemo(() => {
     const first = answer.charAt(0);
@@ -512,9 +554,18 @@ export function Game() {
       kind: "daily" | "practice",
       bonusPhraseId?: number,
     ) => {
+      setNewlyMasteredCategories([]);
+      setNexus100UnlockedBanner(false);
+      setDailyQuestsMasterBanner(false);
+
       const prevStats = loadStats();
       const prevLearnedCount = (prevStats.wordsLearned ?? []).length;
+      const start = roundStartMsRef.current;
+      const elapsed = start != null ? Date.now() - start : 0;
+      roundStartMsRef.current = null;
+
       let st = mergeStatsAfterGameEnd(prevStats, won, guessCount, kind);
+      st = addPlayTime(st, elapsed);
       if (kind === "practice") {
         st = appendPracticeClearedWord(st, answer);
       }
@@ -527,6 +578,21 @@ export function Game() {
       saveStats(st);
       setStats(st);
 
+      const diff = difficulty ?? "normal";
+      const beforeQuest = loadDailyQuests();
+      const catUpper = (answerEntry.category ?? "").toUpperCase() || "OTHER";
+      const nextQuest = applyQuestRound(beforeQuest, {
+        won,
+        guessCount,
+        difficulty: diff,
+        answerCategory: catUpper,
+      });
+      saveDailyQuests(nextQuest);
+      setDailyQuestSnapshot(nextQuest);
+      if (!allQuestsComplete(beforeQuest) && allQuestsComplete(nextQuest)) {
+        setDailyQuestsMasterBanner(true);
+      }
+
       const justUnlocked = getNewlyUnlocked(prevStats, st, WORDS);
       setNewlyUnlockedAchievements(justUnlocked);
       if (process.env.NODE_ENV === "development" && justUnlocked.length > 0) {
@@ -536,14 +602,35 @@ export function Game() {
         );
       }
 
+      if (won) {
+        let mastered = getNewlyCompletedCategories(prevStats, st, WORDS);
+        if (isNewlyKpopTagCorpusMaster(prevStats, st, WORDS)) {
+          mastered = [...mastered, "K-POP"];
+        }
+        if (mastered.length > 0) setNewlyMasteredCategories(mastered);
+      }
+
       const nowLearnedCount = (st.wordsLearned ?? []).length;
       if (won && nowLearnedCount > prevLearnedCount) {
         setWordsLearnedBump(true);
         window.setTimeout(() => setWordsLearnedBump(false), 1200);
       }
+      if (won && prevLearnedCount < NEXUS_WORD_GOAL && nowLearnedCount >= NEXUS_WORD_GOAL) {
+        setNexus100UnlockedBanner(true);
+      }
+      roundGamificationRef.current = {
+        newDistinctWord: won && nowLearnedCount > prevLearnedCount,
+        guessCount,
+        wonIn3OrLess: won && guessCount >= 1 && guessCount <= 3,
+      };
     },
-    [answer],
+    [answer, answerEntry.category, difficulty],
   );
+
+  useEffect(() => {
+    if (!hydrated || status !== "playing") return;
+    roundStartMsRef.current = Date.now();
+  }, [hydrated, status, answer, today]);
 
   useEffect(() => {
     setImgBroken(false);
@@ -689,6 +776,8 @@ export function Game() {
     }
 
     setStats(st);
+
+    setDailyQuestSnapshot(loadDailyQuests());
 
     if (!loaded || loaded.puzzleDate !== today) {
       saveGame(freshGame(today, { mode: "daily" }));
@@ -879,6 +968,9 @@ export function Game() {
     setRowRevealBlock(false);
     setInputNotice(null);
     setNewlyUnlockedAchievements([]);
+    setNewlyMasteredCategories([]);
+    setNexus100UnlockedBanner(false);
+    setDailyQuestsMasterBanner(false);
     if (status !== "won" && status !== "lost") return;
 
     // TODO: Premium 도입 시 여기서 게임 횟수 제한
@@ -992,9 +1084,29 @@ export function Game() {
       ? (stats.totalGuessesOnWins / stats.gamesWon).toFixed(1)
       : "—";
 
+  const bestWinTry = useMemo(() => {
+    const d = stats.guessDistribution ?? [0, 0, 0, 0, 0, 0];
+    for (let i = 0; i < 6; i++) {
+      if ((d[i] ?? 0) > 0) return i + 1;
+    }
+    return null;
+  }, [stats.guessDistribution]);
+
   const wordsLearnedList = useMemo(
     () => stats.wordsLearned ?? [],
     [stats.wordsLearned],
+  );
+  const rankProgress = useMemo(
+    () => getRankProgress(wordsLearnedList.length),
+    [wordsLearnedList.length],
+  );
+  const nexusLearnedDisplay = useMemo(
+    () => nexusWordsLearned(wordsLearnedList.length),
+    [wordsLearnedList.length],
+  );
+  const nexusPctDisplay = useMemo(
+    () => nexusProgressPercent(wordsLearnedList.length),
+    [wordsLearnedList.length],
   );
   const phrasesLearnedCount = (stats.phrasesLearned ?? []).length;
   const levelInfo = useMemo(
@@ -1019,6 +1131,16 @@ export function Game() {
     () => getCategoryProgress(stats, WORDS),
     [stats],
   );
+
+  const streakShout = useMemo(() => {
+    if (status !== "won" || sessionMode !== "daily") return null;
+    const s = stats.currentStreak;
+    if (s === 10) return "⚡ 10 STREAK! On fire!";
+    if (s === 5) return "🔥 5 in a row!";
+    return null;
+  }, [status, sessionMode, stats.currentStreak]);
+
+  const dailyQuestForUi = dailyQuestSnapshot ?? loadDailyQuests();
 
   /** Top 3 in-progress categories (for the compact result-modal preview) */
   const topInProgressCategories = useMemo(
@@ -1187,83 +1309,96 @@ export function Game() {
     <div
       className="mx-auto flex h-[100dvh] max-h-[100dvh] min-h-0 w-full max-w-[500px] flex-col overflow-hidden px-[max(0.4rem,env(safe-area-inset-left))] pr-[max(0.4rem,env(safe-area-inset-right))] pb-[max(0.25rem,env(safe-area-inset-bottom))] pt-[max(0.35rem,env(safe-area-inset-top))] font-sans text-stone-800 max-[480px]:gap-0 sm:gap-1 sm:px-3"
     >
-      <header className="flex shrink-0 flex-col gap-1 max-[480px]:gap-0.5">
-        <div className="flex items-center justify-between gap-1.5">
+      <header className="flex shrink-0 flex-col gap-0.5 max-[480px]:gap-0">
+        <div className="flex w-full min-w-0 items-center gap-0.5 overflow-x-auto overflow-y-hidden px-0.5 sm:gap-1">
           <button
             type="button"
             onClick={() => setShowStats(true)}
-            className="flex min-h-10 min-w-10 shrink-0 items-center justify-center rounded-md px-1.5 text-[11px] font-medium text-stone-700 hover:bg-stone-200/70 hover:text-stone-900 sm:min-h-11 sm:min-w-11 sm:px-2 sm:text-xs"
+            className="flex min-h-9 shrink-0 items-center justify-center rounded-md px-1.5 text-[10px] font-semibold text-stone-800 hover:bg-stone-200/70 sm:min-h-10 sm:px-2 sm:text-xs"
           >
             Stats
           </button>
-          <div className="min-w-0 flex-1 text-center leading-tight">
-            <h1 className="truncate font-serif text-[clamp(1.05rem,4.8vw,1.45rem)] tracking-tight text-stone-900 sm:text-xl">
+          <span className="shrink-0 text-stone-400" aria-hidden>
+            ·
+          </span>
+          <button
+            type="button"
+            onClick={() => setShowStats(true)}
+            aria-label={`Nexus progress ${nexusLearnedDisplay} of ${NEXUS_WORD_GOAL} words, rank ${rankProgress.name}`}
+            title="Open statistics"
+            className="shrink-0 rounded-md px-0.5 py-1 text-[10px] font-bold tabular-nums hover:bg-stone-200/70 sm:text-[11px]"
+            style={{ color: rankProgress.color }}
+          >
+            {nexusLearnedDisplay}/{NEXUS_WORD_GOAL}
+          </button>
+          <span className="shrink-0 text-stone-400" aria-hidden>
+            ·
+          </span>
+          <div className="min-w-0 flex-1 text-center">
+            <h1 className="truncate font-serif text-[0.95rem] font-semibold tracking-tight text-stone-900 sm:text-lg">
               🇰🇷 Hangle
             </h1>
-            <p className="truncate text-[10px] font-medium text-stone-600 max-[360px]:text-[9px] sm:text-[11px]">
-              Korean Wordle
-            </p>
           </div>
-          <div className="flex shrink-0 items-center gap-0.5">
-            <button
-              type="button"
-              aria-label="How to play and Korean typing help"
-              onClick={() => setWelcomeHelpOpen(true)}
-              className="flex min-h-10 min-w-10 items-center justify-center rounded-md text-stone-700 hover:bg-stone-200/70 hover:text-stone-900 sm:min-h-11 sm:min-w-11 sm:gap-1 sm:px-2"
-            >
-              <span className="text-base leading-none" aria-hidden>
-                ❓
-              </span>
-              <span className="hidden text-xs sm:inline">Help</span>
-            </button>
-            <button
-              type="button"
-              aria-label="Send feedback"
-              onClick={() => setFeedbackOpen(true)}
-              className="flex min-h-10 min-w-10 items-center justify-center rounded-md text-stone-700 hover:bg-stone-200/70 hover:text-stone-900 sm:min-h-11 sm:min-w-11 sm:gap-1 sm:px-2"
-            >
-              <span className="text-base leading-none" aria-hidden>
-                💬
-              </span>
-              <span className="hidden text-xs sm:inline">Feedback</span>
-            </button>
-            <button
-              type="button"
-              aria-label="Settings"
-              disabled={!difficulty}
-              onClick={() => {
-                if (!difficulty) return;
-                setSettingsOpen(true);
-              }}
-              className={`flex min-h-10 min-w-10 items-center justify-center rounded-md text-lg leading-none sm:min-h-11 sm:min-w-11 ${
-                difficulty
-                  ? "text-stone-700 hover:bg-stone-200/70 hover:text-stone-900"
-                  : "cursor-not-allowed text-stone-400"
-              }`}
-            >
-              ⚙️
-            </button>
-            <button
-              type="button"
-              onClick={() =>
-                (status === "won" || status === "lost") &&
-                setEndModal({ open: true, kind: status === "won" ? "won" : "lost" })
-              }
-              className={`flex min-h-10 min-w-[3.25rem] max-w-[4.75rem] shrink-0 items-center justify-center truncate rounded-md px-1 text-[10px] font-medium sm:min-h-11 sm:min-w-[4.25rem] sm:max-w-none sm:px-2 sm:text-xs ${
-                status === "won" || status === "lost"
-                  ? "text-stone-700 hover:bg-stone-200/70 hover:text-stone-900"
-                  : "pointer-events-none invisible"
-              }`}
-            >
-              Summary
-            </button>
-          </div>
+          <span className="shrink-0 text-stone-400" aria-hidden>
+            ·
+          </span>
+          <button
+            type="button"
+            aria-label="How to play and Korean typing help"
+            onClick={() => setWelcomeHelpOpen(true)}
+            className="flex min-h-9 min-w-9 shrink-0 items-center justify-center rounded-md text-stone-700 hover:bg-stone-200/70 sm:min-h-10 sm:min-w-10"
+          >
+            <span className="text-base leading-none" aria-hidden>
+              ❓
+            </span>
+          </button>
+          <button
+            type="button"
+            aria-label="Send feedback"
+            onClick={() => setFeedbackOpen(true)}
+            className="flex min-h-9 min-w-9 shrink-0 items-center justify-center rounded-md text-stone-700 hover:bg-stone-200/70 sm:min-h-10 sm:min-w-10"
+          >
+            <span className="text-base leading-none" aria-hidden>
+              💬
+            </span>
+          </button>
+          <button
+            type="button"
+            aria-label="Settings"
+            disabled={!difficulty}
+            onClick={() => {
+              if (!difficulty) return;
+              setSettingsOpen(true);
+            }}
+            className={`flex min-h-9 min-w-9 shrink-0 items-center justify-center rounded-md text-base leading-none sm:min-h-10 sm:min-w-10 ${
+              difficulty
+                ? "text-stone-700 hover:bg-stone-200/70 hover:text-stone-900"
+                : "cursor-not-allowed text-stone-400"
+            }`}
+          >
+            ⚙️
+          </button>
+          <button
+            type="button"
+            aria-label="Round summary"
+            onClick={() =>
+              (status === "won" || status === "lost") &&
+              setEndModal({ open: true, kind: status === "won" ? "won" : "lost" })
+            }
+            className={`flex min-h-9 min-w-9 shrink-0 items-center justify-center rounded-md text-sm sm:min-h-10 sm:min-w-10 ${
+              status === "won" || status === "lost"
+                ? "text-stone-700 hover:bg-stone-200/70 hover:text-stone-900"
+                : "pointer-events-none invisible"
+            }`}
+          >
+            📋
+          </button>
         </div>
 
-        <div className="flex flex-wrap items-center justify-center gap-x-1 gap-y-0.5 px-1">
+        <div className="flex flex-wrap items-center justify-center gap-x-1 gap-y-0 px-1 pb-0.5">
           <span
             aria-hidden="false"
-            className={`shrink-0 cursor-default select-none rounded-full border px-1.5 py-0.5 text-[9px] font-medium uppercase leading-tight tracking-wide sm:px-2 sm:py-0.5 sm:text-[10px] ${
+            className={`shrink-0 cursor-default select-none rounded-full border px-1.5 py-0.5 text-[8px] font-medium uppercase leading-tight tracking-wide sm:px-2 sm:py-0.5 sm:text-[9px] ${
               sessionMode === "daily"
                 ? "border-amber-400/80 bg-amber-50 text-amber-900"
                 : "border-stone-400/60 bg-stone-100 text-stone-700"
@@ -1276,16 +1411,15 @@ export function Game() {
               type="button"
               aria-label="Change difficulty"
               onClick={() => setSettingsOpen(true)}
-              className="shrink-0 rounded-full border border-amber-500/75 bg-[#f5f0e8] px-1.5 py-0.5 text-[9px] font-semibold tabular-nums leading-tight text-stone-900 shadow-sm ring-1 ring-amber-400/35 transition hover:bg-[#efe8dc] active:scale-[0.98] sm:px-2 sm:py-0.5 sm:text-[10px] sm:ring-2"
+              className="shrink-0 rounded-full border border-amber-500/75 bg-[#f5f0e8] px-1.5 py-0.5 text-[8px] font-semibold tabular-nums leading-tight text-stone-900 shadow-sm ring-1 ring-amber-400/35 transition hover:bg-[#efe8dc] active:scale-[0.98] sm:px-2 sm:py-0.5 sm:text-[9px] sm:ring-2"
             >
               {difficultyBadgeLabel(difficulty)}
             </button>
           )}
+          <span className="shrink-0 text-[8px] tabular-nums text-stone-500 sm:text-[9px]">
+            Today · {playedToday}
+          </span>
         </div>
-
-        <p className="text-center text-[10px] tabular-nums leading-tight text-stone-500 max-[480px]:leading-none sm:text-[11px] sm:text-stone-500">
-          Today · {playedToday} played
-        </p>
       </header>
 
       {/* Welcome banner — highest priority + boldest styling. Auto-dismisses in 3s. */}
@@ -1322,7 +1456,9 @@ export function Game() {
       )}
 
       <div className="shrink-0 px-0.5 text-center max-[480px]:py-0 sm:py-0.5">
-        <p className="truncate text-[12px] font-medium leading-snug text-stone-700 max-[480px]:text-[11px] sm:hidden">
+        <p
+          className={`truncate text-[12px] font-medium leading-snug text-stone-700 max-[480px]:text-[11px] sm:hidden ${difficulty ? "max-[480px]:hidden" : ""}`}
+        >
           {mobileTagline}
         </p>
         <div className="hidden space-y-0.5 sm:block">
@@ -1357,8 +1493,8 @@ export function Game() {
               aria-label="Hints"
               className={`game-hint-card flex shrink-0 flex-col overflow-hidden rounded-xl border border-stone-300/55 bg-[var(--hint-card-bg)] shadow-sm transition-shadow ${
                 visible.variant === "easy"
-                  ? "game-hint-card--easy max-h-[min(210px,28dvh)] max-[480px]:max-h-[min(185px,26dvh)] sm:max-h-[min(250px,30dvh)]"
-                  : "max-h-[min(140px,20dvh)] max-[480px]:max-h-[min(130px,18dvh)] sm:max-h-[min(180px,24dvh)]"
+                  ? "game-hint-card--easy max-h-[min(200px,26dvh)] max-[480px]:max-h-[min(150px,21dvh)] sm:max-h-[min(250px,30dvh)]"
+                  : "max-h-[min(130px,18dvh)] max-[480px]:max-h-[min(112px,15dvh)] sm:max-h-[min(180px,24dvh)]"
               } ${hintCardPulse ? "hint-card-pulse-once" : ""}`}
             >
               <div className="shrink-0 cursor-default px-2.5 pb-1 pt-1.5 text-left max-[480px]:px-2 max-[480px]:pb-1 max-[480px]:pt-1.5 sm:px-3.5 sm:pb-1.5 sm:pt-2">
@@ -1567,7 +1703,7 @@ export function Game() {
           {visible.showHardCategoryStrip && (
             <section
               aria-label="Hard mode clues"
-              className={`game-hint-card flex max-h-[min(130px,18dvh)] shrink-0 flex-col overflow-hidden rounded-xl border border-stone-300/55 bg-[var(--hint-card-bg)] shadow-sm transition-shadow max-[480px]:max-h-[min(120px,17dvh)] sm:max-h-[160px] ${hintCardPulse ? "hint-card-pulse-once" : ""}`}
+              className={`game-hint-card flex max-h-[min(120px,16dvh)] shrink-0 flex-col overflow-hidden rounded-xl border border-stone-300/55 bg-[var(--hint-card-bg)] shadow-sm transition-shadow max-[480px]:max-h-[min(104px,14dvh)] sm:max-h-[160px] ${hintCardPulse ? "hint-card-pulse-once" : ""}`}
             >
               <div className="cursor-default px-2.5 py-2 text-left sm:px-3.5 sm:py-2.5">
                 {visible.showHintDotsRow && (
@@ -1659,19 +1795,19 @@ export function Game() {
       )}
 
       <div className="flex min-h-0 flex-1 flex-col gap-0 overflow-hidden max-[480px]:gap-0 sm:gap-0.5 sm:pt-0.5">
-        <div className="relative flex min-h-0 flex-1 flex-col items-center justify-center overflow-hidden py-0">
-          <div className="flex w-full max-w-[min(100%,20rem)] shrink-0 flex-col items-center gap-0 px-0.5 sm:max-w-[22rem] sm:gap-0.5">
+        <div className="relative flex min-h-0 flex-1 flex-col items-center justify-center overflow-hidden py-0.5">
+          <div className="flex w-full min-h-0 max-w-[min(100%,22rem)] flex-1 flex-col items-center justify-center gap-0.5 px-0.5 sm:max-w-[22rem] sm:gap-1">
             {inputNotice && (
               <p
                 key={inputNotice}
                 role="alert"
-                className="animate-dict-notice max-[667px]:text-[11px] text-center text-[12px] font-semibold text-red-700"
+                className="animate-dict-notice max-[667px]:text-[11px] shrink-0 text-center text-[12px] font-semibold text-red-700"
               >
                 {inputNotice}
               </p>
             )}
             <div
-              className="flex w-full shrink-0 justify-center py-0"
+              className="flex w-full shrink-0 flex-col items-center justify-center"
               onClick={() => {
                 if (
                   status !== "playing" ||
@@ -1683,11 +1819,11 @@ export function Game() {
                 }
                 flashInfoToast("Tap a letter on the keyboard below ↓");
                 if (process.env.NODE_ENV === "development") {
-                  console.log("[Game] dead-click guard · grid tapped → keyboard hint shown");
+                  console.log("[Game] dead-click guard · board tapped → keyboard hint shown");
                 }
               }}
             >
-              <Grid
+              <WordBoard
                 guesses={guesses}
                 evaluations={evaluations}
                 currentRow={currentRow}
@@ -1697,13 +1833,24 @@ export function Game() {
                 suppressDraft={rowRevealBlock}
                 status={status}
                 answerLength={answerLen}
-                dense={gridDense}
+                showActiveRow={status === "playing"}
               />
             </div>
+            {status === "playing" && guesses.length < 6 && (
+              <p
+                className={`shrink-0 text-center text-[11px] font-medium tabular-nums max-[480px]:text-[10px] ${
+                  guesses.length === 5 ? "font-semibold text-red-600" : "text-stone-500"
+                }`}
+              >
+                {guesses.length === 5
+                  ? "Last try!"
+                  : `${6 - guesses.length} ${6 - guesses.length === 1 ? "try" : "tries"} left`}
+              </p>
+            )}
           </div>
         </div>
 
-        <div className="game-keyboard-zone mt-0 w-full shrink-0 overflow-x-hidden overflow-y-visible pt-0 max-[480px]:max-h-[min(200px,32dvh)] sm:mt-auto sm:max-h-none sm:overflow-y-auto sm:pt-0.5">
+        <div className="game-keyboard-zone mt-0 w-full shrink-0 overflow-x-hidden overflow-y-visible pt-0 max-[480px]:max-h-[min(180px,30dvh)] sm:mt-auto sm:max-h-none sm:overflow-y-auto sm:pt-0.5">
           <HangulKeyboard
             buffer={buffer}
             onBufferChange={setBuffer}
@@ -1738,9 +1885,183 @@ export function Game() {
             className="max-h-[90dvh] w-[min(100%,90vw)] max-w-[90vw] overflow-y-auto rounded-xl border border-stone-200 bg-[#fafaf9] p-4 font-sans shadow-xl sm:max-w-sm sm:p-6"
             onClick={(e) => e.stopPropagation()}
           >
-            <h2 id="stats-title" className="mb-3 font-serif text-xl text-stone-900 sm:mb-4 sm:text-2xl">
+            <h2 id="stats-title" className="mb-1 font-serif text-xl text-stone-900 sm:mb-2 sm:text-2xl">
               Statistics
             </h2>
+            <p className="mb-3 text-center text-[10px] leading-snug text-stone-500 sm:mb-4 sm:text-[11px]">
+              Korean Master (Nexus) bar and Today&apos;s Quests moved here from the home screen — see{" "}
+              <span className="font-semibold text-stone-600">🏆 Your Stats</span> below.
+            </p>
+
+            <div className="mb-5 rounded-xl border border-stone-300/70 bg-gradient-to-b from-white to-stone-50/90 p-3 shadow-sm sm:p-4">
+              <p className="text-center text-[10px] font-bold uppercase tracking-[0.12em] text-stone-500 sm:text-[11px]">
+                🏆 Your Stats
+              </p>
+              <div className="mt-2 flex items-center justify-center gap-2 text-sm font-semibold text-stone-900">
+                <span aria-hidden className="text-lg" style={{ color: rankProgress.color }}>
+                  {rankProgress.icon}
+                </span>
+                <span style={{ color: rankProgress.color }}>{rankProgress.name}</span>
+                {rankProgress.nextMin !== null && (
+                  <span className="text-xs font-normal text-stone-600">
+                    ({rankProgress.wordsToNext} to {getRankProgress(rankProgress.nextMin).name}!)
+                  </span>
+                )}
+              </div>
+              {rankProgress.nextMin !== null && (
+                <>
+                  <div
+                    className="mt-2 h-2 w-full overflow-hidden rounded-full bg-stone-200"
+                    role="progressbar"
+                    aria-valuenow={rankProgress.progressInTierPercent}
+                    aria-valuemin={0}
+                    aria-valuemax={100}
+                    aria-label="Progress toward next rank"
+                  >
+                    <div
+                      className="h-full rounded-full transition-all duration-500"
+                      style={{
+                        width: `${rankProgress.progressInTierPercent}%`,
+                        backgroundColor: rankProgress.color,
+                      }}
+                    />
+                  </div>
+                  <p className="mt-1 text-center text-[10px] text-stone-500">
+                    {rankProgress.progressInTierPercent}% toward next rank
+                  </p>
+                </>
+              )}
+
+              <p className="mt-4 text-[10px] font-bold uppercase tracking-wide text-stone-500">📊 Games</p>
+              <ul className="mt-1 space-y-0.5 text-[11px] text-stone-700 sm:text-sm">
+                <li className="flex justify-between gap-2 tabular-nums">
+                  <span>Total</span>
+                  <span className="font-semibold">{stats.gamesPlayed}</span>
+                </li>
+                <li className="flex justify-between gap-2 tabular-nums">
+                  <span>Won</span>
+                  <span className="font-semibold">
+                    {stats.gamesWon}{" "}
+                    {stats.gamesPlayed > 0
+                      ? `(${Math.round((stats.gamesWon / stats.gamesPlayed) * 100)}%)`
+                      : ""}
+                  </span>
+                </li>
+                <li className="flex justify-between gap-2 tabular-nums">
+                  <span>Avg tries (wins)</span>
+                  <span className="font-semibold">{avgGuesses}</span>
+                </li>
+                <li className="flex justify-between gap-2 tabular-nums">
+                  <span>Best</span>
+                  <span className="font-semibold">
+                    {bestWinTry !== null ? `${bestWinTry} ${bestWinTry === 1 ? "try" : "tries"} ⚡` : "—"}
+                  </span>
+                </li>
+              </ul>
+
+              <p className="mt-3 text-[10px] font-bold uppercase tracking-wide text-stone-500">🔥 Streak</p>
+              <ul className="mt-1 space-y-0.5 text-[11px] text-stone-700 sm:text-sm">
+                <li className="flex justify-between gap-2 tabular-nums">
+                  <span>Current</span>
+                  <span className="font-semibold">{stats.currentStreak} wins</span>
+                </li>
+                <li className="flex justify-between gap-2 tabular-nums">
+                  <span>Best</span>
+                  <span className="font-semibold">{stats.maxStreak} wins</span>
+                </li>
+              </ul>
+
+              <p className="mt-3 text-[10px] font-bold uppercase tracking-wide text-stone-500">📚 Words (Nexus)</p>
+              <div className="mt-1 flex justify-between text-[11px] font-semibold tabular-nums text-stone-800 sm:text-sm">
+                <span>
+                  {nexusLearnedDisplay}/{NEXUS_WORD_GOAL}
+                </span>
+                <span>{nexusPctDisplay}%</span>
+              </div>
+              <div
+                className="mt-1 h-2 w-full overflow-hidden rounded-full bg-stone-200"
+                role="progressbar"
+                aria-valuenow={nexusPctDisplay}
+                aria-valuemin={0}
+                aria-valuemax={100}
+              >
+                <div
+                  className="h-full rounded-full bg-rose-500 transition-all"
+                  style={{ width: `${nexusPctDisplay}%` }}
+                />
+              </div>
+
+              <p className="mt-3 text-[10px] font-bold uppercase tracking-wide text-stone-500">
+                🏅 Category progress
+              </p>
+              <ul className="mt-1 space-y-1 text-[10px] text-stone-700 sm:text-[11px]">
+                {categoryProgress.slice(0, 6).map((c) => (
+                  <li key={c.category} className="flex justify-between gap-2 tabular-nums">
+                    <span>
+                      {c.category === "FOOD"
+                        ? "🍔"
+                        : c.category === "EMOTION"
+                          ? "❤️"
+                          : c.category === "NATURE"
+                            ? "🌸"
+                            : "📁"}{" "}
+                      {c.category}
+                    </span>
+                    <span className="font-medium">
+                      {c.learned}/{c.total}
+                    </span>
+                  </li>
+                ))}
+              </ul>
+
+              <p className="mt-3 text-center text-[10px] text-stone-500">
+                ⏱️ Total time: {formatPlayTimeMs(stats.totalPlayTimeMs ?? 0)}
+              </p>
+              <p className="mt-0.5 text-center text-[9px] leading-snug text-stone-400">
+                Estimated from finished rounds (capped per round).
+              </p>
+
+              <p className="mt-3 text-[10px] font-bold uppercase tracking-wide text-stone-500">
+                🎯 Today&apos;s Quests
+              </p>
+              <ul className="mt-1 space-y-0.5 text-[10px] text-stone-700">
+                <li className="flex items-center gap-1.5">
+                  <span aria-hidden>{dailyQuestForUi.gamesFinished >= 3 ? "⭐" : "□"}</span>
+                  Play 3 games ({Math.min(3, dailyQuestForUi.gamesFinished)}/3)
+                </li>
+                <li className="flex items-center gap-1.5">
+                  <span aria-hidden>{dailyQuestForUi.wonInThreeOrFewer ? "⭐" : "□"}</span>
+                  Win in 3 tries or less
+                </li>
+                <li className="flex items-center gap-1.5">
+                  <span aria-hidden>{dailyQuestForUi.playedHardToday ? "⭐" : "□"}</span>
+                  Try HARD mode
+                </li>
+                <li className="flex items-center gap-1.5">
+                  <span aria-hidden>{dailyQuestForUi.wonFoodToday ? "⭐" : "□"}</span>
+                  Solve a FOOD word
+                </li>
+              </ul>
+              {allQuestsComplete(dailyQuestForUi) && (
+                <p className="mt-2 text-center text-[10px] font-bold text-amber-800">
+                  Daily Master! ⭐⭐⭐
+                </p>
+              )}
+
+              <button
+                type="button"
+                className="mt-3 w-full rounded-lg border border-stone-300 bg-white py-2 text-xs font-semibold text-stone-800 shadow-sm transition hover:bg-stone-50"
+                onClick={() => {
+                  document.getElementById("stats-word-collection")?.scrollIntoView({
+                    behavior: "smooth",
+                    block: "start",
+                  });
+                }}
+              >
+                Word Collection →
+              </button>
+            </div>
+
             <div className="mb-6 grid grid-cols-4 gap-3 text-center">
               <div>
                 <div className="text-2xl font-semibold">{stats.gamesPlayed}</div>
@@ -1960,7 +2281,7 @@ export function Game() {
                 ))}
               </div>
 
-              <p className="mt-4 cursor-default text-[9px] font-bold uppercase tracking-wide text-stone-500 sm:text-[10px]">
+              <p className="mt-4 cursor-default text-[9px] font-bold uppercase tracking-wide text-stone-500 sm:text-[10px]" id="stats-word-collection">
                 Word collection · {wordsLearnedList.length}/{WORDS.length}
               </p>
               <div className="mt-1.5 grid grid-cols-6 gap-1 sm:gap-1.5">
@@ -2030,11 +2351,13 @@ export function Game() {
             onClick={(e) => e.stopPropagation()}
           >
             <h2 id="result-title" className="font-serif text-[clamp(1.125rem,4vw,1.375rem)] text-stone-900 sm:text-2xl">
-              {endModal.kind === "won" ? "🎉 Correct!" : "Better luck next time!"}
+              {endModal.kind === "won"
+                ? `🎉 You won in ${guesses.length} ${guesses.length === 1 ? "try" : "tries"}!`
+                : "Better luck next time!"}
             </h2>
             <p className="mt-1 text-sm text-stone-600">
               {endModal.kind === "won"
-                ? `You got it · ${guesses.length}/6 ${guesses.length === 1 ? "try" : "tries"}`
+                ? `${attemptGrade.emoji ? `${attemptGrade.emoji} ` : ""}${attemptGrade.title}`
                 : `${guesses.length}/6 tries`}
             </p>
 
@@ -2054,10 +2377,113 @@ export function Game() {
                     </span>
                   ))}
                 </div>
-                <p className="cursor-default text-sm font-semibold text-stone-800">
-                  {attemptGrade.emoji ? `${attemptGrade.emoji} ` : ""}
-                  {attemptGrade.title}
+              </div>
+            )}
+
+            {nexus100UnlockedBanner && (
+              <div className="mt-3 rounded-xl border-2 border-rose-400 bg-gradient-to-b from-rose-50 to-white p-3 text-center shadow-sm">
+                <p className="font-serif text-lg font-bold text-rose-800 sm:text-xl">
+                  🎉 KOREAN MASTER UNLOCKED! 👑
                 </p>
+                <p className="mt-1 text-sm text-rose-900">You&apos;ve mastered 100 Korean words!</p>
+                <button
+                  type="button"
+                  className="mt-2 w-full rounded-lg border border-rose-300 bg-white py-2 text-xs font-semibold text-rose-900 shadow-sm hover:bg-rose-50"
+                  onClick={handleBragCopy}
+                >
+                  Share your achievement
+                </button>
+              </div>
+            )}
+
+            {dailyQuestsMasterBanner && (
+              <p className="mt-3 text-center text-sm font-bold text-amber-800">
+                Daily Master! ⭐⭐⭐
+              </p>
+            )}
+
+            {newlyMasteredCategories.length > 0 && (
+              <div className="mt-3 space-y-1 rounded-lg border border-emerald-300/70 bg-emerald-50/80 px-3 py-2">
+                {newlyMasteredCategories.map((cat) => (
+                  <p
+                    key={cat}
+                    className="text-center text-sm font-bold text-emerald-900"
+                  >
+                    🏅 {cat === "K-POP" ? "K-pop" : cat} Master unlocked!
+                  </p>
+                ))}
+              </div>
+            )}
+
+            {endModal.kind === "won" && (
+              <div className="mt-3 space-y-2 rounded-lg border border-stone-200 bg-white/80 px-3 py-2.5 shadow-sm">
+                {roundGamificationRef.current.newDistinctWord && (
+                  <>
+                    <p className="text-center text-sm font-bold text-stone-900">+1 word!</p>
+                    {nexusLearnedDisplay < NEXUS_WORD_GOAL && (
+                      <p className="text-center text-xs text-stone-600">
+                        {NEXUS_WORD_GOAL - nexusLearnedDisplay} words to Korean Master 👑
+                      </p>
+                    )}
+                  </>
+                )}
+                <p className="text-[10px] font-bold uppercase tracking-wide text-stone-500">
+                  📚 Words learned: {nexusLearnedDisplay}/{NEXUS_WORD_GOAL}
+                </p>
+                <div
+                  className="h-1.5 w-full overflow-hidden rounded-full bg-stone-200"
+                  role="progressbar"
+                  aria-valuenow={nexusPctDisplay}
+                  aria-valuemin={0}
+                  aria-valuemax={100}
+                >
+                  <div
+                    className="h-full rounded-full bg-rose-500 transition-all"
+                    style={{ width: `${nexusPctDisplay}%` }}
+                  />
+                </div>
+                <p className="text-[10px] text-stone-500">{nexusPctDisplay}%</p>
+
+                <p className="text-[10px] font-bold uppercase tracking-wide text-stone-500">
+                  🏆 Quest progress
+                </p>
+                <ul className="space-y-0.5 text-[11px] text-stone-700">
+                  <li className="flex items-start gap-1.5">
+                    <span aria-hidden>{dailyQuestForUi.gamesFinished >= 3 ? "✅" : "□"}</span>
+                    <span>
+                      Play 3 games ({Math.min(3, dailyQuestForUi.gamesFinished)}/3)
+                    </span>
+                  </li>
+                  <li className="flex items-start gap-1.5">
+                    <span aria-hidden>{dailyQuestForUi.wonInThreeOrFewer ? "✅" : "□"}</span>
+                    <span>
+                      Win in 3 tries or less
+                      {roundGamificationRef.current.wonIn3OrLess ? " (just did!)" : ""}
+                    </span>
+                  </li>
+                  <li className="flex items-start gap-1.5">
+                    <span aria-hidden>{dailyQuestForUi.playedHardToday ? "✅" : "□"}</span>
+                    <span>Try HARD mode</span>
+                  </li>
+                  <li className="flex items-start gap-1.5">
+                    <span aria-hidden>{dailyQuestForUi.wonFoodToday ? "✅" : "□"}</span>
+                    <span>Solve a FOOD word</span>
+                  </li>
+                </ul>
+
+                {streakShout && (
+                  <p className="text-center text-sm font-bold text-orange-700">{streakShout}</p>
+                )}
+                {sessionMode === "daily" && !streakShout && stats.currentStreak > 0 && (
+                  <p className="text-center text-xs font-semibold text-stone-700">
+                    Streak: {stats.currentStreak} daily win{stats.currentStreak === 1 ? "" : "s"} in a row
+                  </p>
+                )}
+                {sessionMode === "practice" && (
+                  <p className="text-center text-[10px] text-stone-500">
+                    Practice rounds don&apos;t change your daily streak.
+                  </p>
+                )}
               </div>
             )}
 

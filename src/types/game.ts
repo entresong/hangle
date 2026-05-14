@@ -72,4 +72,6 @@ export type PersistedStats = {
   firstVisitDate?: string | null;
   /** UTC YYYY-MM-DD of most recent launch */
   lastVisitDate?: string | null;
+  /** Cumulative time spent in active rounds (ms), capped per round on the client */
+  totalPlayTimeMs?: number;
 };

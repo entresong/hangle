@@ -252,7 +252,7 @@ export function getAttemptGrade(tries: number, won: boolean): AttemptGrade {
   if (!won) return { stars: 0, title: "Better luck next time!" };
   switch (tries) {
     case 1:
-      return { stars: 6, title: "Genius! Lucky guess?", emoji: "🏆" };
+      return { stars: 6, title: "GENIUS!", emoji: "🏆" };
     case 2:
       return { stars: 5, title: "Excellent!" };
     case 3:

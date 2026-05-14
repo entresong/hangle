@@ -21,6 +21,7 @@ export const defaultStats = (): PersistedStats => ({
   visits: 0,
   firstVisitDate: null,
   lastVisitDate: null,
+  totalPlayTimeMs: 0,
 });
 
 export function loadGame(): PersistedGame | null {
@@ -105,6 +106,16 @@ export function recordPhraseSeen(
   const arr = [...(stats.phrasesLearned ?? [])];
   if (!arr.includes(phraseId)) arr.push(phraseId);
   return { ...stats, phrasesLearned: arr };
+}
+
+const MAX_ROUND_MS = 20 * 60 * 1000;
+
+/** Add capped round duration to cumulative play time (honest client-side estimate). */
+export function addPlayTime(stats: PersistedStats, elapsedMs: number): PersistedStats {
+  const safe = Math.max(0, Math.min(MAX_ROUND_MS, Math.floor(elapsedMs)));
+  if (safe === 0) return stats;
+  const prev = stats.totalPlayTimeMs ?? 0;
+  return { ...stats, totalPlayTimeMs: prev + safe };
 }
 
 /**
