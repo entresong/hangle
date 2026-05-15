@@ -277,17 +277,6 @@ export function Game() {
   }, []);
 
   useEffect(() => {
-    if (!hydrated) return;
-    try {
-      if (window.localStorage.getItem(HANGLE_VISITED_KEY) !== "true") {
-        setWelcomeHelpOpen(true);
-      }
-    } catch {
-      /* ignore */
-    }
-  }, [hydrated]);
-
-  useEffect(() => {
     setTapHintConsumed(false);
   }, [answer]);
 
@@ -1027,27 +1016,6 @@ export function Game() {
           <span className="shrink-0 text-stone-400" aria-hidden>
             ·
           </span>
-          <button
-            type="button"
-            aria-label="Hearts"
-            onClick={() => setHeartModalOpen(true)}
-            className="flex shrink-0 items-center gap-px rounded-md px-0.5 py-1 transition-colors duration-300 hover:bg-stone-200/70"
-          >
-            {[0, 1, 2].map((i) => (
-              <span
-                key={i}
-                className={`text-lg leading-none transition-colors duration-300 sm:text-xl ${
-                  i < hearts.current ? "text-rose-600" : "text-stone-300"
-                }`}
-                aria-hidden
-              >
-                ❤️
-              </span>
-            ))}
-          </button>
-          <span className="shrink-0 text-stone-400" aria-hidden>
-            ·
-          </span>
           <div className="min-w-0 flex-1 text-center">
             <h1 className="truncate font-serif text-[0.95rem] font-semibold tracking-tight text-stone-900 sm:text-lg">
               🇰🇷 Hangle
@@ -1154,7 +1122,7 @@ export function Game() {
       )}
 
       {hydrated && status === "playing" && (
-        <div className="relative z-20 flex w-full shrink-0 flex-col items-center gap-1.5 px-0.5 pb-1">
+        <div className="relative z-20 flex w-full shrink-0 flex-col items-center gap-2 px-0.5 pb-1">
           <HintEconomyPanel
             categoryUpper={safeWordDisplay.categoryUpper}
             emoji={safeWordDisplay.emoji}
@@ -1178,6 +1146,56 @@ export function Game() {
               </button>
             }
           />
+          <button
+            type="button"
+            aria-label={hearts.current <= 0 ? "Out of hearts — tap to refill" : "Hearts — tap to refill"}
+            onClick={() => setHeartModalOpen(true)}
+            className={`flex w-full max-w-[min(100%,22rem)] flex-col items-center justify-center rounded-xl border-2 px-3 py-2.5 text-center shadow-sm transition hover:bg-stone-50 active:scale-[0.99] ${
+              hearts.current <= 0
+                ? "border-rose-400/85 bg-rose-50/95"
+                : "border-rose-200/90 bg-rose-50/90"
+            }`}
+          >
+            {hearts.current > 0 ? (
+              <p className="flex flex-wrap items-center justify-center gap-1.5 text-[15px] font-bold text-stone-900 sm:text-base">
+                <span>Hearts:</span>
+                <span className="text-2xl leading-none tracking-tight sm:text-[1.75rem]" aria-hidden>
+                  {[0, 1, 2].map((i) => (
+                    <span key={i}>{i < hearts.current ? "❤️" : "🤍"}</span>
+                  ))}
+                </span>
+              </p>
+            ) : (
+              <p className="text-[13px] font-semibold leading-snug text-rose-900 sm:text-[14px]">
+                <span className="text-xl leading-none sm:text-2xl" aria-hidden>
+                  🤍🤍🤍
+                </span>{" "}
+                Out of hearts · Tap to refill
+              </p>
+            )}
+          </button>
+          {nextSequentialHint !== null ? (
+            <div className="flex w-full shrink-0 justify-center">
+              <button
+                type="button"
+                disabled={hearts.current <= 0}
+                aria-disabled={hearts.current <= 0}
+                onClick={handleRevealNextHint}
+                className={`flex w-full max-w-[min(100%,22rem)] min-h-[48px] flex-col items-center justify-center rounded-xl border-2 px-3 py-2 text-center shadow-md transition active:scale-[0.99] ${
+                  hearts.current <= 0
+                    ? "cursor-not-allowed border-stone-300/80 bg-stone-200/80 text-stone-500 opacity-90"
+                    : "border-amber-500/90 bg-amber-500 text-white hover:bg-amber-600"
+                }`}
+              >
+                <span className="text-[15px] font-bold leading-tight">
+                  {hearts.current <= 0 ? "Out of hearts" : "Get next hint"}
+                </span>
+                {hearts.current > 0 ? (
+                  <span className="mt-0.5 text-xs font-semibold text-amber-50">❤️ 1</span>
+                ) : null}
+              </button>
+            </div>
+          ) : null}
         </div>
       )}
 
@@ -1231,29 +1249,6 @@ export function Game() {
             )}
           </div>
         </div>
-
-        {hydrated && status === "playing" && nextSequentialHint !== null ? (
-          <div className="flex w-full shrink-0 justify-center px-1 pb-1 pt-0 max-[480px]:px-0.5">
-            <button
-              type="button"
-              disabled={hearts.current <= 0}
-              aria-disabled={hearts.current <= 0}
-              onClick={handleRevealNextHint}
-              className={`flex w-full max-w-[min(100%,22rem)] min-h-[48px] flex-col items-center justify-center rounded-xl border-2 px-3 py-2 text-center shadow-md transition active:scale-[0.99] ${
-                hearts.current <= 0
-                  ? "cursor-not-allowed border-stone-300/80 bg-stone-200/80 text-stone-500 opacity-90"
-                  : "border-amber-500/90 bg-amber-500 text-white hover:bg-amber-600"
-              }`}
-            >
-              <span className="text-[15px] font-bold leading-tight">
-                {hearts.current <= 0 ? "Out of hearts" : "Get next hint"}
-              </span>
-              {hearts.current > 0 ? (
-                <span className="mt-0.5 text-xs font-semibold text-amber-50">❤️ 1</span>
-              ) : null}
-            </button>
-          </div>
-        ) : null}
 
         {speechNotice ? (
           <p

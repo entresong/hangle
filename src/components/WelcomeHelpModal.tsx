@@ -143,7 +143,10 @@ export function WelcomeHelpModal({ open, onClose, onMarkVisited }: Props) {
                 <span className="shrink-0" aria-hidden>
                   💡
                 </span>
-                <span>Hints unlock as you guess (depends on difficulty).</span>
+                <span>
+                  Paid hints: tap <strong>Get next hint</strong> to reveal Definition, then Example, then
+                  pronunciation (❤️ each).
+                </span>
               </li>
             </ul>
 

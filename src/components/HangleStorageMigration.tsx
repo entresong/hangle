@@ -7,7 +7,8 @@ import { runHangleStorageMigration } from "@/lib/hangleVersion";
 export const HANGLE_MIGRATION_TOAST_KEY = "hangle_migration_notice_v3";
 
 /**
- * Runs before paint so `localStorage` matches `CURRENT_VERSION` before any game code reads keys.
+ * Runs before paint. If storage was migrated, set a one-shot session flag and reload so
+ * `Game` never hydrates from stale in-memory assumptions vs cleared localStorage.
  */
 export function HangleStorageMigration() {
   useLayoutEffect(() => {
@@ -18,6 +19,7 @@ export function HangleStorageMigration() {
       } catch {
         /* ignore */
       }
+      window.location.reload();
     }
   }, []);
   return null;
