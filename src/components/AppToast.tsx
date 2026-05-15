@@ -29,6 +29,8 @@ type Props = {
   toastKey?: string;
   /** When true, play fade-out animation in place of the slide-in (caller still unmounts after) */
   exiting?: boolean;
+  /** When set, shows a dismiss control and enables pointer events on the toast shell */
+  onDismiss?: () => void;
 };
 
 const VARIANT_STYLES: Record<AppToastVariant, string> = {
@@ -46,24 +48,39 @@ export function AppToast({
   z = 70,
   toastKey,
   exiting = false,
+  onDismiss,
 }: Props) {
+  const anim = exiting ? "app-toast-fade-out" : "app-toast-slide-in";
+  const shell = `max-w-[min(90vw,22rem)] rounded-xl font-semibold leading-snug shadow-lg ${VARIANT_STYLES[variant]}`;
+
   return (
     <div
       role="status"
       aria-live="polite"
-      className="pointer-events-none fixed left-1/2 px-3"
+      className={`${onDismiss ? "pointer-events-auto" : "pointer-events-none"} fixed left-1/2 px-3`}
       style={{
         bottom: "max(15rem, calc(env(safe-area-inset-bottom, 0px) + 14rem))",
         transform: "translateX(-50%)",
         zIndex: z,
       }}
     >
-      <p
-        key={toastKey}
-        className={`${exiting ? "app-toast-fade-out" : "app-toast-slide-in"} max-w-[min(90vw,22rem)] rounded-xl text-center font-semibold leading-snug shadow-lg ${VARIANT_STYLES[variant]}`}
-      >
-        {children}
-      </p>
+      {onDismiss ? (
+        <div key={toastKey} className={`${anim} flex items-start gap-1.5 ${shell} pl-3 pr-1 py-2`}>
+          <p className="min-w-0 flex-1 text-center text-[12px] leading-snug sm:text-[13px]">{children}</p>
+          <button
+            type="button"
+            onClick={onDismiss}
+            aria-label="Dismiss notification"
+            className="flex min-h-8 min-w-8 shrink-0 items-center justify-center rounded-md text-lg leading-none text-amber-900/80 transition hover:bg-amber-200/60 hover:text-amber-950"
+          >
+            ×
+          </button>
+        </div>
+      ) : (
+        <p key={toastKey} className={`${anim} max-w-[min(90vw,22rem)] rounded-xl text-center font-semibold leading-snug shadow-lg ${VARIANT_STYLES[variant]}`}>
+          {children}
+        </p>
+      )}
     </div>
   );
 }

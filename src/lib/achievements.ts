@@ -164,7 +164,7 @@ export const ACHIEVEMENTS: readonly AchievementDef[] = [
     id: "hot_streak",
     emoji: "🔥",
     title: "Hot Streak",
-    description: "Reach a 5-day daily streak",
+    description: "Reach a 5-day win streak",
     group: "consistency",
     check: (c) => c.stats.maxStreak >= 5,
     progress: (c) => ({ value: c.stats.maxStreak, target: 5 }),

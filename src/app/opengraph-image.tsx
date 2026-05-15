@@ -41,7 +41,7 @@ export default function OpenGraphImage() {
           <span>🟩</span>
         </div>
         <div style={{ fontSize: 28, fontWeight: 500, marginTop: 28, opacity: 0.78 }}>
-          Daily Korean word · Learn through play
+          Korean word puzzles · Learn through play
         </div>
       </div>
     ),

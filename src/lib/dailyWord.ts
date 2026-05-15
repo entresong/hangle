@@ -20,6 +20,18 @@ export function pickDailyWord(words: WordEntry[], dayNumber = getUtcDayNumber())
   return words[dayNumber % words.length]!;
 }
 
+/** Next entry in `words` after `previousWord` (wrap). Avoids immediate repeat when |words| > 1. */
+export function pickNextSequentialWord(words: WordEntry[], previousWord: string): WordEntry {
+  if (words.length === 0) throw new Error("words list is empty");
+  const idx = words.findIndex((w) => w.word === previousWord);
+  const start = idx >= 0 ? idx + 1 : 0;
+  let n = start % words.length;
+  if (words.length > 1 && words[n]!.word === previousWord) {
+    n = (n + 1) % words.length;
+  }
+  return words[n]!;
+}
+
 /**
  * Random practice word: not today's daily, avoids `solved` until exhausted, then clears `solved` tracking.
  */

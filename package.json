@@ -2,7 +2,7 @@
   "name": "hangle",
   "version": "0.1.0",
   "private": true,
-  "description": "Korean two-syllable daily Wordle for learners (English UI, UTC).",
+  "description": "Korean two-syllable Wordle-style puzzles for learners (English UI, UTC).",
   "scripts": {
     "dev": "next dev",
     "build": "next build",

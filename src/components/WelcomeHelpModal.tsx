@@ -112,7 +112,7 @@ export function WelcomeHelpModal({ open, onClose, onMarkVisited }: Props) {
                   🎯
                 </span>
                 <span>
-                  Guess today&apos;s <strong>2-syllable</strong> Korean word in <strong>6 tries</strong>.
+                  Guess the <strong>2-syllable</strong> Korean word in <strong>6 tries</strong> (new rounds anytime).
                 </span>
               </li>
               <li className="flex gap-2">

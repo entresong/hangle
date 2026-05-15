@@ -1,15 +1,14 @@
 import { getUtcDateString } from "@/lib/dailyWord";
-import type { Difficulty } from "@/lib/difficulty";
 
 export type DailyQuestState = {
   /** UTC YYYY-MM-DD this blob applies to */
   date: string;
-  /** Finished games today (daily + practice) */
+  /** Finished games today */
   gamesFinished: number;
   /** Won at least one game in ≤3 tries today */
   wonInThreeOrFewer: boolean;
-  /** Finished at least one game on HARD today */
-  playedHardToday: boolean;
+  /** Spent at least one heart on a paid hint today */
+  usedPaidHintToday: boolean;
   /** Won at least one FOOD-category word today */
   wonFoodToday: boolean;
 };
@@ -21,7 +20,7 @@ export function defaultDailyQuests(date: string): DailyQuestState {
     date,
     gamesFinished: 0,
     wonInThreeOrFewer: false,
-    playedHardToday: false,
+    usedPaidHintToday: false,
     wonFoodToday: false,
   };
 }
@@ -32,13 +31,13 @@ export function loadDailyQuests(): DailyQuestState {
   try {
     const raw = localStorage.getItem(questKey(today));
     if (!raw) return defaultDailyQuests(today);
-    const parsed = JSON.parse(raw) as Partial<DailyQuestState>;
+    const parsed = JSON.parse(raw) as Partial<DailyQuestState> & { playedHardToday?: boolean };
     if (parsed.date !== today) return defaultDailyQuests(today);
     return {
       date: today,
       gamesFinished: Math.max(0, Number(parsed.gamesFinished) || 0),
       wonInThreeOrFewer: Boolean(parsed.wonInThreeOrFewer),
-      playedHardToday: Boolean(parsed.playedHardToday),
+      usedPaidHintToday: Boolean(parsed.usedPaidHintToday) || Boolean(parsed.playedHardToday),
       wonFoodToday: Boolean(parsed.wonFoodToday),
     };
   } catch {
@@ -54,7 +53,6 @@ export function saveDailyQuests(state: DailyQuestState): void {
 export type QuestRoundEvent = {
   won: boolean;
   guessCount: number;
-  difficulty: Difficulty;
   /** Uppercase category of the answer word */
   answerCategory: string;
 };
@@ -65,15 +63,24 @@ export function applyQuestRound(prev: DailyQuestState, ev: QuestRoundEvent): Dai
   const gamesFinished = base.gamesFinished + 1;
   const wonInThreeOrFewer =
     base.wonInThreeOrFewer || (ev.won && ev.guessCount >= 1 && ev.guessCount <= 3);
-  const playedHardToday = base.playedHardToday || ev.difficulty === "hard";
   const wonFoodToday =
     base.wonFoodToday || (ev.won && ev.answerCategory.toUpperCase() === "FOOD");
   return {
     date: today,
     gamesFinished,
     wonInThreeOrFewer,
-    playedHardToday,
+    usedPaidHintToday: base.usedPaidHintToday,
     wonFoodToday,
+  };
+}
+
+export function markQuestHintSpend(prev: DailyQuestState): DailyQuestState {
+  const today = getUtcDateString();
+  const base = prev.date === today ? prev : defaultDailyQuests(today);
+  return {
+    ...base,
+    date: today,
+    usedPaidHintToday: true,
   };
 }
 
@@ -81,7 +88,7 @@ export function allQuestsComplete(q: DailyQuestState): boolean {
   return (
     q.gamesFinished >= 3 &&
     q.wonInThreeOrFewer &&
-    q.playedHardToday &&
+    q.usedPaidHintToday &&
     q.wonFoodToday
   );
 }

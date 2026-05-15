@@ -1,8 +1,6 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
-import type { Difficulty } from "@/lib/difficulty";
-import { isDifficulty } from "@/lib/difficulty";
 
 const FEEDBACK_TYPES = [
   { value: "bug", label: "🐛 Bug report" },
@@ -30,22 +28,17 @@ function deviceType(): "mobile" | "tablet" | "desktop" {
 export type FeedbackModalProps = {
   open: boolean;
   onClose: () => void;
-  gameDifficulty: Difficulty | null;
-  sessionMode: "daily" | "practice";
   gamesPlayed: number;
 };
 
 export function FeedbackModal({
   open,
   onClose,
-  gameDifficulty,
-  sessionMode,
   gamesPlayed,
 }: FeedbackModalProps) {
   const [feedbackType, setFeedbackType] = useState<(typeof FEEDBACK_TYPES)[number]["value"]>("suggestion");
   const [message, setMessage] = useState("");
   const [email, setEmail] = useState("");
-  const [formDifficulty, setFormDifficulty] = useState<Difficulty>("easy");
   const [status, setStatus] = useState<"idle" | "loading" | "success" | "error">("idle");
   const [errorBanner, setErrorBanner] = useState<string | null>(null);
 
@@ -56,10 +49,9 @@ export function FeedbackModal({
     setFeedbackType("suggestion");
     setMessage("");
     setEmail("");
-    setFormDifficulty(gameDifficulty && isDifficulty(gameDifficulty) ? gameDifficulty : "easy");
     setStatus("idle");
     setErrorBanner(null);
-  }, [open, gameDifficulty]);
+  }, [open]);
 
   useEffect(() => {
     if (!open) return;
@@ -99,14 +91,13 @@ export function FeedbackModal({
       type: feedbackType,
       message: messageTrim,
       email: emailTrim || "",
-      difficulty: formDifficulty,
+      gameVersion: "hint_economy",
       timestamp,
       userAgent,
       gamesPlayed,
-      sessionMode,
       deviceType: deviceType(),
       pageUrl,
-      _subject: `Hangle feedback: ${feedbackType} (${formDifficulty})`,
+      _subject: `Hangle feedback: ${feedbackType}`,
       ...(emailTrim ? { _replyto: emailTrim } : {}),
     };
 
@@ -245,25 +236,6 @@ export function FeedbackModal({
                 {!emailOk && emailTrim.length > 0 && (
                   <p className="mt-1 text-xs font-medium text-red-700">Please enter a valid email address.</p>
                 )}
-              </div>
-
-              <div className="mt-3">
-                <label htmlFor="feedback-difficulty" className="text-xs font-semibold uppercase tracking-wide text-stone-600">
-                  Current difficulty
-                </label>
-                <select
-                  id="feedback-difficulty"
-                  value={formDifficulty}
-                  onChange={(e) => {
-                    const v = e.target.value;
-                    if (isDifficulty(v)) setFormDifficulty(v);
-                  }}
-                  className="mt-1 w-full min-h-[44px] rounded-xl border border-stone-300/80 bg-white/90 px-3 py-2 text-sm text-stone-900 shadow-inner outline-none focus:border-amber-500/70 focus:ring-2 focus:ring-amber-400/35"
-                >
-                  <option value="easy">Easy</option>
-                  <option value="normal">Normal</option>
-                  <option value="hard">Hard</option>
-                </select>
               </div>
 
               <p className="mt-4 text-center text-[10px] leading-relaxed text-stone-500">

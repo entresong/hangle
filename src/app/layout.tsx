@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Analytics } from "@vercel/analytics/react";
 import { SpeedInsights } from "@vercel/speed-insights/next";
+import { ReferralTracker } from "@/components/ReferralTracker";
 import { DM_Sans, Source_Serif_4 } from "next/font/google";
 import Script from "next/script";
 import "./globals.css";
@@ -25,11 +26,11 @@ export const metadata: Metadata = {
   metadataBase: new URL(`${siteUrl}/`),
   title: "Hangle — Korean Wordle",
   description:
-    "Daily Korean word game for K-pop & K-drama fans: spell Hangul in six tries (UTC), with hints and bonus phrases. English UI.",
+    "Korean word puzzle game for K-pop & K-drama fans: spell Hangul in six tries (UTC), with hints and bonus phrases. English UI.",
   openGraph: {
     title: "Hangle — Korean Wordle",
     description:
-      "Daily Korean word game for K-pop & K-drama fans — learn Korean through play.",
+      "Korean word puzzles for K-pop & K-drama fans — learn Korean through play.",
     url: "/",
     siteName: "Hangle",
     type: "website",
@@ -46,7 +47,7 @@ export const metadata: Metadata = {
   twitter: {
     card: "summary_large_image",
     title: "Hangle — Korean Wordle",
-    description: "Daily Korean word game — learn Korean through play.",
+    description: "Korean word puzzles — learn Korean through play.",
     images: ["/opengraph-image"],
   },
 };
@@ -69,6 +70,7 @@ export default function RootLayout({
         className={`${serif.variable} ${sans.variable} flex h-full min-h-0 flex-col overflow-hidden overscroll-none bg-[#fafaf9] font-sans antialiased`}
       >
         {children}
+        <ReferralTracker />
         <Analytics />
         <SpeedInsights />
         {clarityId && (
