@@ -29,11 +29,11 @@ export function buildViralShareText(opts: {
   const emoji = MODE_EMOJI[opts.difficulty];
   const label = MODE_LABEL[opts.difficulty];
 
-  const gridLines = opts.evaluations
+  const emojiLines = (opts.evaluations ?? [])
     .filter((row) => row.length === opts.answerLength)
     .map((row) => row.map(tileToEmoji).join(""));
 
-  const grid = gridLines.join("\n");
+  const emojiBlock = emojiLines.join("\n");
 
   const base =
     typeof opts.shareBaseUrl === "string" && opts.shareBaseUrl.trim() !== ""
@@ -46,7 +46,7 @@ export function buildViralShareText(opts: {
   return [
     `Hangle #${opts.dayNumber}${practice} ${tries}/6 ${emoji} ${label}`,
     "",
-    grid,
+    emojiBlock,
     "",
     "Can you beat me?",
     `🇰🇷 ${displayUrl}`,
