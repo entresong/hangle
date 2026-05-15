@@ -1,8 +1,8 @@
 /**
  * Client-side storage schema version. Bump when persisted shapes change incompatibly
- * (e.g. hearts + hint economy) so legacy localStorage is cleared once.
+ * (e.g. hearts + sequential paid hints) so legacy localStorage is cleared once.
  */
-export const CURRENT_VERSION = "v2_hearts";
+export const CURRENT_VERSION = "v3_sequential_hints";
 
 export const HANGLE_VERSION_KEY = "hangle_version";
 

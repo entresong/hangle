@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Analytics } from "@vercel/analytics/react";
 import { SpeedInsights } from "@vercel/speed-insights/next";
+import { HangleStorageMigration } from "@/components/HangleStorageMigration";
 import { ReferralTracker } from "@/components/ReferralTracker";
 import { DM_Sans, Source_Serif_4 } from "next/font/google";
 import Script from "next/script";
@@ -63,17 +64,20 @@ export default function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  const clarityId = process.env.NEXT_PUBLIC_CLARITY_ID;
+  const clarityRaw = process.env.NEXT_PUBLIC_CLARITY_ID?.trim() ?? "";
+  /** Inline script must stay valid JS — never interpolate raw env into a string literal. */
+  const clarityIdJs = JSON.stringify(clarityRaw);
   return (
     <html lang="en" className="h-[100dvh] max-h-[100dvh]">
       <body
         className={`${serif.variable} ${sans.variable} flex h-full min-h-0 flex-col overflow-hidden overscroll-none bg-[#fafaf9] font-sans antialiased`}
       >
+        <HangleStorageMigration />
         {children}
         <ReferralTracker />
         <Analytics />
         <SpeedInsights />
-        {clarityId && (
+        {clarityRaw.length > 0 && (
           <Script
             id="clarity-script"
             strategy="afterInteractive"
@@ -83,7 +87,7 @@ export default function RootLayout({
                   c[a]=c[a]||function(){(c[a].q=c[a].q||[]).push(arguments)};
                   t=l.createElement(r);t.async=1;t.src="https://www.clarity.ms/tag/"+i;
                   y=l.getElementsByTagName(r)[0];y.parentNode.insertBefore(t,y);
-                })(window, document, "clarity", "script", "${clarityId}");
+                })(window, document, "clarity", "script", ${clarityIdJs});
               `,
             }}
           />

@@ -55,6 +55,7 @@ import {
   defaultHintReveal,
   hintRoundStorageKey,
   loadHintRevealForRound,
+  nextPaidHintInSequence,
   resetHintReveal,
   revealHint,
   type HintRevealState,
@@ -80,7 +81,7 @@ import { getNextPhrase } from "@/lib/phraseRotation";
 import { validateWordEntries } from "@/lib/validateWords";
 import { CONTEXT_EMOJI, getWordExamples } from "@/lib/wordExamples";
 import { maskAnswerInExampleText } from "@/lib/maskAnswerInExample";
-import { runHangleStorageMigration } from "@/lib/hangleVersion";
+import { HANGLE_MIGRATION_TOAST_KEY } from "@/components/HangleStorageMigration";
 import type { PhraseEntry } from "@/types/phrase";
 import type { PersistedGame, TileState, WordEntry } from "@/types/game";
 
@@ -197,8 +198,6 @@ export function Game() {
   });
   const [heartModalOpen, setHeartModalOpen] = useState(false);
   const [sharePickerOpen, setSharePickerOpen] = useState(false);
-  const [nextGameHeartsModalOpen, setNextGameHeartsModalOpen] = useState(false);
-  const [dismissedHeartsZeroBar, setDismissedHeartsZeroBar] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [feedbackOpen, setFeedbackOpen] = useState(false);
   const [hearts, setHearts] = useState<HeartsState>({ current: 3, lastReset: "" });
@@ -289,11 +288,6 @@ export function Game() {
   }, [hydrated]);
 
   useEffect(() => {
-    if (hearts.current > 0) setDismissedHeartsZeroBar(false);
-  }, [hearts]);
-
-  useEffect(() => {
-    setDismissedHeartsZeroBar(false);
     setTapHintConsumed(false);
   }, [answer]);
 
@@ -505,11 +499,19 @@ export function Game() {
   }, [welcomeBannerExiting]);
 
   useEffect(() => {
-    const migrationResult = runHangleStorageMigration();
-    if (migrationResult === "migrated" && !migrationWelcomeShownRef.current) {
+    let showMigrationWelcome = false;
+    try {
+      if (window.sessionStorage.getItem(HANGLE_MIGRATION_TOAST_KEY) === "1") {
+        window.sessionStorage.removeItem(HANGLE_MIGRATION_TOAST_KEY);
+        showMigrationWelcome = true;
+      }
+    } catch {
+      /* ignore */
+    }
+    if (showMigrationWelcome && !migrationWelcomeShownRef.current) {
       migrationWelcomeShownRef.current = true;
       flashInfoToast(
-        "Welcome to the new Hangle! Fresh start with hearts ❤️❤️❤️",
+        "Welcome to the new Hangle! Storage was refreshed for this update (hearts & hints).",
         4000,
       );
     }
@@ -691,7 +693,6 @@ export function Game() {
       speechNoticeTimerRef.current = null;
     }
     setEndModal((m) => ({ ...m, open: false }));
-    setNextGameHeartsModalOpen(false);
     clearHintsTimers();
     setRowRevealBlock(false);
     setInputNotice(null);
@@ -711,14 +712,6 @@ export function Game() {
     saveGame({ ...freshGame(today, nextEntry.word), statsRecorded: false });
   }, [today, answer, clearHintsTimers]);
 
-  const handleResultNextGameClick = useCallback(() => {
-    if (hearts.current <= 0) {
-      setNextGameHeartsModalOpen(true);
-      return;
-    }
-    executeNextGameRound();
-  }, [hearts, executeNextGameRound]);
-
   const completeShareRefill = useCallback(
     (
       ctx: "result" | "mid_game" | "header",
@@ -730,7 +723,6 @@ export function Game() {
       hangleTrack("hearts_refilled", { source: "share" });
       setHeartModalOpen(false);
       setSharePickerOpen(false);
-      setNextGameHeartsModalOpen(false);
       flashInfoToast(
         channel === "clipboard"
           ? "Link copied! ❤️❤️❤️ Hearts refilled! Thanks for sharing!"
@@ -797,29 +789,27 @@ export function Game() {
     [getSharePayloadForContext, completeShareRefill, flashInfoToast],
   );
 
-  const handlePaidHintReveal = useCallback(
-    (id: PaidHintId) => {
-      if (hintReveal[id]) return;
-      const nextHearts = spendHeart(hearts);
-      if (!nextHearts) return;
-      setHearts(nextHearts);
-      const nextReveal = revealHint(hintReveal, id);
-      setHintReveal(nextReveal);
-      hintsUsedThisRoundRef.current += 1;
-      setPulsePaidHint(id);
-      window.setTimeout(() => setPulsePaidHint(null), 700);
-      flashInfoToast("Hint revealed!");
-      const q0 = loadDailyQuests();
-      const q1 = markQuestHintSpend(q0);
-      saveDailyQuests(q1);
-      setDailyQuestSnapshot(q1);
-      hangleTrack("hint_used", {
-        hint_type: id,
-        hearts_remaining: nextHearts.current,
-      });
-    },
-    [hearts, hintReveal, flashInfoToast],
-  );
+  const handleRevealNextHint = useCallback(() => {
+    const next = nextPaidHintInSequence(hintReveal);
+    if (!next) return;
+    if (hearts.current <= 0) return;
+    const nextHearts = spendHeart(hearts);
+    if (!nextHearts) return;
+    setHearts(nextHearts);
+    const nextReveal = revealHint(hintReveal, next);
+    setHintReveal(nextReveal);
+    hintsUsedThisRoundRef.current = countRevealedPaidHints(nextReveal);
+    setPulsePaidHint(next);
+    window.setTimeout(() => setPulsePaidHint(null), 700);
+    const q0 = loadDailyQuests();
+    const q1 = markQuestHintSpend(q0);
+    saveDailyQuests(q1);
+    setDailyQuestSnapshot(q1);
+    hangleTrack("hint_used", {
+      hint_type: next,
+      hearts_remaining: nextHearts.current,
+    });
+  }, [hearts, hintReveal]);
 
   const winRate =
     stats.gamesPlayed > 0
@@ -936,7 +926,7 @@ export function Game() {
 
   const dailyHowToLine = useMemo(() => {
     const base = `${answerLen} ${answerLen === 1 ? "syllable" : "syllables"} · 6 tries · UTC`;
-    return `Category + meaning free · paid hints cost ❤️ · ${base}`;
+    return `Category + meaning free · next paid hint costs ❤️ · ${base}`;
   }, [answerLen]);
 
   const mobileTagline = "Korean word puzzles · hints & hearts";
@@ -950,41 +940,60 @@ export function Game() {
 
   const hintsUsedCount = useMemo(() => countRevealedPaidHints(hintReveal), [hintReveal]);
 
-  const renderShareRefillBlock = (ctx: "result" | "mid_game" | "header") => (
-    <div className="mt-4 space-y-2 rounded-xl border-2 border-rose-400/70 bg-gradient-to-b from-rose-50 to-white p-3 shadow-md">
-      <p className="text-center text-sm font-bold text-rose-900">Share to refill ❤️❤️❤️</p>
-      <div className="grid grid-cols-2 gap-2">
-        <button
-          type="button"
-          className="min-h-[44px] rounded-lg border border-stone-300 bg-white py-2 text-xs font-bold text-stone-900 shadow-sm transition hover:bg-stone-50"
-          onClick={() => openSnsShare(ctx, "twitter")}
-        >
-          X / Twitter
-        </button>
-        <button
-          type="button"
-          className="min-h-[44px] rounded-lg border border-stone-300 bg-white py-2 text-xs font-bold text-stone-900 shadow-sm transition hover:bg-stone-50"
-          onClick={() => openSnsShare(ctx, "facebook")}
-        >
-          Facebook
-        </button>
-        <button
-          type="button"
-          className="min-h-[44px] rounded-lg border border-stone-300 bg-white py-2 text-xs font-bold text-stone-900 shadow-sm transition hover:bg-stone-50"
-          onClick={() => openSnsShare(ctx, "whatsapp")}
-        >
-          WhatsApp
-        </button>
-        <button
-          type="button"
-          className="min-h-[44px] rounded-lg border border-stone-300 bg-white py-2 text-xs font-bold text-stone-900 shadow-sm transition hover:bg-stone-50"
-          onClick={() => void copyShareAndRefill(ctx)}
-        >
-          Copy text
-        </button>
+  const nextSequentialHint = useMemo(() => nextPaidHintInSequence(hintReveal), [hintReveal]);
+
+  const renderShareRefillBlock = (
+    ctx: "result" | "mid_game" | "header",
+    options?: { title?: string | null; variant?: "rose" | "neutral" },
+  ) => {
+    const explicitNoTitle = options?.title === null;
+    const titleDisplay = explicitNoTitle ? null : (options?.title ?? "Share to refill ❤️❤️❤️");
+    const variant = options?.variant ?? "rose";
+    const wrap =
+      variant === "neutral"
+        ? "mt-4 space-y-2 rounded-xl border border-stone-300/80 bg-white/95 p-3 shadow-sm"
+        : "mt-4 space-y-2 rounded-xl border-2 border-rose-400/70 bg-gradient-to-b from-rose-50 to-white p-3 shadow-md";
+    const titleClass =
+      variant === "neutral"
+        ? "text-center text-sm font-bold text-stone-800"
+        : "text-center text-sm font-bold text-rose-900";
+
+    return (
+      <div className={wrap}>
+        {titleDisplay ? <p className={titleClass}>{titleDisplay}</p> : null}
+        <div className="grid grid-cols-2 gap-2">
+          <button
+            type="button"
+            className="min-h-[44px] rounded-lg border border-stone-300 bg-white py-2 text-xs font-bold text-stone-900 shadow-sm transition hover:bg-stone-50"
+            onClick={() => openSnsShare(ctx, "twitter")}
+          >
+            X / Twitter
+          </button>
+          <button
+            type="button"
+            className="min-h-[44px] rounded-lg border border-stone-300 bg-white py-2 text-xs font-bold text-stone-900 shadow-sm transition hover:bg-stone-50"
+            onClick={() => openSnsShare(ctx, "facebook")}
+          >
+            Facebook
+          </button>
+          <button
+            type="button"
+            className="min-h-[44px] rounded-lg border border-stone-300 bg-white py-2 text-xs font-bold text-stone-900 shadow-sm transition hover:bg-stone-50"
+            onClick={() => openSnsShare(ctx, "whatsapp")}
+          >
+            WhatsApp
+          </button>
+          <button
+            type="button"
+            className="min-h-[44px] rounded-lg border border-stone-300 bg-white py-2 text-xs font-bold text-stone-900 shadow-sm transition hover:bg-stone-50"
+            onClick={() => void copyShareAndRefill(ctx)}
+          >
+            Copy text
+          </button>
+        </div>
       </div>
-    </div>
-  );
+    );
+  };
 
   return (
     <div
@@ -1135,37 +1144,6 @@ export function Game() {
         </div>
       </div>
 
-      {hydrated && status === "playing" && hearts.current <= 0 && !dismissedHeartsZeroBar ? (
-        <div
-          className="relative z-30 mx-1 flex shrink-0 items-center justify-center gap-2 rounded-lg border border-rose-400/80 bg-rose-50 px-2 py-2 text-[12px] font-semibold text-rose-950 shadow-sm sm:mx-2 sm:text-[13px]"
-          role="status"
-        >
-          <span className="shrink-0" aria-hidden>
-            ❤️
-          </span>
-          <span className="min-w-0 flex-1 text-center leading-snug">
-            Out of hearts ·{" "}
-            <button
-              type="button"
-              className="font-bold text-rose-800 underline decoration-rose-400 underline-offset-2 hover:text-rose-950"
-              onClick={() => setSharePickerOpen(true)}
-            >
-              Share to refill
-            </button>
-            {" · "}
-            or play without paid hints
-          </span>
-          <button
-            type="button"
-            aria-label="Dismiss out of hearts notice"
-            className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md text-lg leading-none text-rose-800/80 hover:bg-rose-200/60"
-            onClick={() => setDismissedHeartsZeroBar(true)}
-          >
-            ×
-          </button>
-        </div>
-      ) : null}
-
       {showTapKeyboardHint && (
         <p
           className="hint-fade-in shrink-0 px-2 pb-1 text-center text-[13px] font-medium leading-snug text-amber-900/95 max-[480px]:text-[12px] sm:text-[14px]"
@@ -1176,21 +1154,7 @@ export function Game() {
       )}
 
       {hydrated && status === "playing" && (
-        <div className="relative z-20 flex w-full shrink-0 flex-col items-center gap-1 px-0.5">
-          <p
-            className="flex w-full max-w-[min(100%,22rem)] items-center justify-center gap-1 rounded-lg border border-rose-200/80 bg-rose-50/90 py-1.5 text-sm font-bold text-rose-900 shadow-sm"
-            aria-label={`Hearts: ${hearts.current} of 3 remaining`}
-          >
-            <span className="text-stone-600">Hearts</span>
-            <span className="tabular-nums tracking-tight">
-              {[0, 1, 2].map((i) => (
-                <span key={i} className={i < hearts.current ? "" : "opacity-35 grayscale"} aria-hidden>
-                  ❤️
-                </span>
-              ))}
-            </span>
-            <span className="text-xs font-semibold text-stone-600">({hearts.current} left)</span>
-          </p>
+        <div className="relative z-20 flex w-full shrink-0 flex-col items-center gap-1.5 px-0.5 pb-1">
           <HintEconomyPanel
             categoryUpper={safeWordDisplay.categoryUpper}
             emoji={safeWordDisplay.emoji}
@@ -1201,10 +1165,7 @@ export function Game() {
             imageSrc={imageSrc}
             imgBroken={imgBroken}
             onImgError={() => setImgBroken(true)}
-            hearts={hearts.current}
             reveal={hintReveal}
-            onReveal={handlePaidHintReveal}
-            onShareFromCard={() => setSharePickerOpen(true)}
             pulseHint={pulsePaidHint}
             pronunciationSlot={
               <button
@@ -1217,11 +1178,6 @@ export function Game() {
               </button>
             }
           />
-          {speechNotice ? (
-            <p className="max-w-[min(100%,22rem)] text-center text-[11px] font-medium text-amber-900/90" role="status">
-              {speechNotice}
-            </p>
-          ) : null}
         </div>
       )}
 
@@ -1275,6 +1231,38 @@ export function Game() {
             )}
           </div>
         </div>
+
+        {hydrated && status === "playing" && nextSequentialHint !== null ? (
+          <div className="flex w-full shrink-0 justify-center px-1 pb-1 pt-0 max-[480px]:px-0.5">
+            <button
+              type="button"
+              disabled={hearts.current <= 0}
+              aria-disabled={hearts.current <= 0}
+              onClick={handleRevealNextHint}
+              className={`flex w-full max-w-[min(100%,22rem)] min-h-[48px] flex-col items-center justify-center rounded-xl border-2 px-3 py-2 text-center shadow-md transition active:scale-[0.99] ${
+                hearts.current <= 0
+                  ? "cursor-not-allowed border-stone-300/80 bg-stone-200/80 text-stone-500 opacity-90"
+                  : "border-amber-500/90 bg-amber-500 text-white hover:bg-amber-600"
+              }`}
+            >
+              <span className="text-[15px] font-bold leading-tight">
+                {hearts.current <= 0 ? "Out of hearts" : "Get next hint"}
+              </span>
+              {hearts.current > 0 ? (
+                <span className="mt-0.5 text-xs font-semibold text-amber-50">❤️ 1</span>
+              ) : null}
+            </button>
+          </div>
+        ) : null}
+
+        {speechNotice ? (
+          <p
+            className="mx-auto w-full max-w-[min(100%,22rem)] shrink-0 px-1 pb-1 text-center text-[11px] font-medium text-amber-900/90"
+            role="status"
+          >
+            {speechNotice}
+          </p>
+        ) : null}
 
         <div className="game-keyboard-zone mt-0 w-full shrink-0 overflow-x-hidden overflow-y-visible pt-0 max-[480px]:max-h-[min(180px,30dvh)] sm:mt-auto sm:max-h-none sm:overflow-y-auto sm:pt-0.5">
           <HangulKeyboard
@@ -1781,35 +1769,15 @@ export function Game() {
             <div className="mt-4 rounded-xl border border-stone-200 bg-white px-3 py-3 shadow-sm">
               <p className="text-center text-[10px] font-bold uppercase tracking-wide text-stone-500">Answer</p>
               {safeAnswerForTts ? (
-                <p className="mt-1 text-center font-serif text-3xl font-semibold text-stone-900">{answer}</p>
+                <>
+                  <p className="mt-1 text-center font-serif text-3xl font-semibold text-stone-900">{answer}</p>
+                  {safeWordDisplay.meaning ? (
+                    <p className="mt-2 text-center text-sm leading-snug text-stone-700">{safeWordDisplay.meaning}</p>
+                  ) : null}
+                </>
               ) : (
                 <p className="mt-1 text-center text-sm text-stone-500">Word unavailable.</p>
               )}
-            </div>
-
-            <div
-              className={`mt-3 rounded-xl border px-3 py-2.5 ${hearts.current <= 0 ? "border-rose-400/85 bg-rose-50/95" : "border-stone-200 bg-white/90"}`}
-            >
-              <p className="text-center text-[10px] font-bold uppercase tracking-wide text-stone-500">Hearts</p>
-              <p className="mt-1 text-center text-xl leading-none tracking-tight" aria-hidden>
-                {[0, 1, 2].map((i) => (
-                  <span key={i}>{i < hearts.current ? "❤️" : "🤍"}</span>
-                ))}
-              </p>
-              <p
-                className={`mt-1 text-center text-sm font-bold ${hearts.current <= 0 ? "text-rose-800" : "text-stone-800"}`}
-              >
-                {hearts.current <= 0 ? "Out of hearts" : "Hearts remaining"}
-              </p>
-              {hearts.current <= 0 ? (
-                <button
-                  type="button"
-                  className="mt-3 flex w-full min-h-[48px] items-center justify-center rounded-xl bg-rose-600 px-4 py-3 text-sm font-bold text-white shadow-md transition hover:bg-rose-700 active:scale-[0.99]"
-                  onClick={() => setSharePickerOpen(true)}
-                >
-                  Share to refill ❤️❤️❤️
-                </button>
-              ) : null}
             </div>
 
             <ul className="mt-3 space-y-2 text-sm text-stone-800">
@@ -1818,10 +1786,16 @@ export function Game() {
               </li>
               <li className="flex flex-wrap items-center gap-1.5">
                 <span className="font-semibold">Hints used:</span>
-                <span aria-hidden className="text-base leading-none">
-                  {Array.from({ length: hintsUsedCount }, () => "❤️").join("")}
-                </span>
-                {hintsUsedCount === 0 ? <span className="text-stone-500">none</span> : null}
+                {hintsUsedCount > 0 ? (
+                  <>
+                    <span aria-hidden className="text-base leading-none">
+                      {Array.from({ length: hintsUsedCount }, () => "❤️").join("")}
+                    </span>
+                    <span className="text-stone-600">× {hintsUsedCount}</span>
+                  </>
+                ) : (
+                  <span className="text-stone-500">none</span>
+                )}
               </li>
             </ul>
 
@@ -1846,16 +1820,12 @@ export function Game() {
               </div>
             </div>
 
-            {renderShareRefillBlock("result")}
+            {renderShareRefillBlock("result", { title: "Share your result", variant: "neutral" })}
 
             <button
               type="button"
-              onClick={handleResultNextGameClick}
-              className={`mt-4 flex w-full min-h-[52px] items-center justify-center rounded-xl px-4 py-3 text-base font-bold shadow-md transition active:scale-[0.99] ${
-                hearts.current <= 0
-                  ? "border-2 border-amber-500 bg-white text-amber-950 hover:bg-amber-50"
-                  : "bg-amber-500 text-white hover:bg-amber-600"
-              }`}
+              onClick={() => executeNextGameRound()}
+              className="mt-4 flex w-full min-h-[52px] items-center justify-center rounded-xl bg-amber-500 px-4 py-3 text-base font-bold text-white shadow-md transition hover:bg-amber-600 active:scale-[0.99]"
             >
               Next game
             </button>
@@ -1910,52 +1880,6 @@ export function Game() {
         </div>
       )}
 
-      {nextGameHeartsModalOpen && (
-        <div
-          className="fixed inset-0 z-[56] flex items-end justify-center bg-black/40 p-3 sm:items-center sm:p-4"
-          role="dialog"
-          aria-modal="true"
-          aria-labelledby="next-game-hearts-title"
-          onClick={() => setNextGameHeartsModalOpen(false)}
-        >
-          <div
-            className="w-full max-w-sm rounded-2xl border border-stone-300/70 bg-[#faf7f0] p-4 shadow-2xl"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <h2 id="next-game-hearts-title" className="font-serif text-lg font-semibold text-stone-900">
-              Need hearts for hints
-            </h2>
-            <p className="mt-2 text-sm leading-snug text-stone-700">
-              Share once to refill ❤️❤️❤️, or start the next word and play without paid hints.
-            </p>
-            <button
-              type="button"
-              className="mt-4 w-full min-h-[48px] rounded-xl bg-rose-600 px-4 py-3 text-sm font-bold text-white shadow-md transition hover:bg-rose-700"
-              onClick={() => {
-                setNextGameHeartsModalOpen(false);
-                setSharePickerOpen(true);
-              }}
-            >
-              Share to refill
-            </button>
-            <button
-              type="button"
-              className="mt-2 w-full min-h-[48px] rounded-xl border border-stone-400/80 bg-white px-4 py-3 text-sm font-semibold text-stone-900 shadow-sm transition hover:bg-stone-50"
-              onClick={() => executeNextGameRound()}
-            >
-              Next word anyway
-            </button>
-            <button
-              type="button"
-              className="mt-2 w-full rounded-lg py-2 text-sm font-medium text-stone-600 hover:bg-stone-200/50"
-              onClick={() => setNextGameHeartsModalOpen(false)}
-            >
-              Cancel
-            </button>
-          </div>
-        </div>
-      )}
-
       {heartModalOpen && (
         <div
           className="fixed inset-0 z-50 flex items-end justify-center bg-black/35 p-3 sm:items-center sm:p-4"
@@ -1971,17 +1895,23 @@ export function Game() {
             <h2 id="heart-help-title" className="font-serif text-lg font-semibold text-stone-900">
               Hearts
             </h2>
-            <p className="mt-2 text-center text-xl leading-none tracking-tight" aria-hidden>
-              {[0, 1, 2].map((i) => (
-                <span key={i}>{i < hearts.current ? "❤️" : "🤍"}</span>
-              ))}
-            </p>
-            <p className="mt-2 text-sm text-stone-700">
-              {hearts.current <= 0
-                ? "Out of hearts! Share to refill ❤️❤️❤️"
-                : `Hearts: ${hearts.current}/3. Share anytime to refill to 3 ❤️`}
-            </p>
-            {renderShareRefillBlock("header")}
+            {hearts.current <= 0 ? (
+              <>
+                <p className="mt-3 text-center text-lg font-bold text-rose-900">Out of hearts</p>
+                <p className="mt-2 text-center text-sm text-stone-700">
+                  Share to refill: <span aria-hidden>❤️❤️❤️</span>
+                </p>
+              </>
+            ) : (
+              <>
+                <p className="mt-3 text-center text-sm font-semibold text-stone-900">
+                  Hearts: {hearts.current}/3
+                </p>
+                <p className="mt-1 text-center text-sm text-stone-700">Hints in game cost 1 ❤️ each.</p>
+                <p className="mt-1 text-center text-sm text-stone-700">Share to refill to 3 ❤️</p>
+              </>
+            )}
+            {renderShareRefillBlock("header", { title: null, variant: "neutral" })}
             <button
               type="button"
               className="mt-2 w-full rounded-lg py-2 text-sm font-medium text-stone-600 hover:bg-stone-200/50"

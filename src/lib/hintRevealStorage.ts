@@ -2,6 +2,9 @@ import type { TileState } from "@/types/game";
 
 export type PaidHintId = "definition" | "example" | "pronunciation";
 
+/** Paid hints always unlock in this order (one button, sequential). */
+export const PAID_HINT_ORDER: readonly PaidHintId[] = ["definition", "example", "pronunciation"];
+
 export type HintRevealState = {
   puzzleDate: string;
   definition: boolean;
@@ -39,7 +42,7 @@ export function loadHintRevealForRound(utcDate: string, answerWord: string): Hin
     };
     saveHintReveal(migrated);
     window.localStorage.removeItem(key(utcDate));
-    return migrated;
+    return normalizePaidHintsSequential(migrated);
   } catch {
     return defaultHintReveal(composite);
   }
@@ -61,12 +64,12 @@ export function loadHintReveal(puzzleDate: string): HintRevealState {
     if (!raw) return defaultHintReveal(puzzleDate);
     const p = JSON.parse(raw) as Partial<HintRevealState>;
     if (p.puzzleDate !== puzzleDate) return defaultHintReveal(puzzleDate);
-    return {
+    return normalizePaidHintsSequential({
       puzzleDate,
       definition: Boolean(p.definition),
       example: Boolean(p.example),
       pronunciation: Boolean(p.pronunciation),
-    };
+    });
   } catch {
     return defaultHintReveal(puzzleDate);
   }
@@ -95,6 +98,36 @@ export function revealHint(
 
 export function countRevealedPaidHints(s: HintRevealState): number {
   return (s.definition ? 1 : 0) + (s.example ? 1 : 0) + (s.pronunciation ? 1 : 0);
+}
+
+/** Next paid slot in fixed order, or `null` if all three are revealed. */
+export function nextPaidHintInSequence(s: HintRevealState): PaidHintId | null {
+  for (const id of PAID_HINT_ORDER) {
+    if (!s[id]) return id;
+  }
+  return null;
+}
+
+/**
+ * Older saves allowed any hint toggled in any order. Collapse to the same *count*
+ * of reveals applied from the start of `PAID_HINT_ORDER` so sequential UI stays valid.
+ */
+export function normalizePaidHintsSequential(s: HintRevealState): HintRevealState {
+  const { definition, example, pronunciation } = s;
+  const inconsistent =
+    (example && !definition) ||
+    (pronunciation && !definition) ||
+    (pronunciation && !example);
+  if (!inconsistent) return s;
+  const count = (definition ? 1 : 0) + (example ? 1 : 0) + (pronunciation ? 1 : 0);
+  const next: HintRevealState = {
+    puzzleDate: s.puzzleDate,
+    definition: count >= 1,
+    example: count >= 2,
+    pronunciation: count >= 3,
+  };
+  saveHintReveal(next);
+  return next;
 }
 
 /** Wordle-style emoji rows for share / result (only submitted rows). */

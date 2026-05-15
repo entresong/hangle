@@ -2,7 +2,7 @@
   {
     "word": "사랑",
     "length": 2,
-    "meaning": "love",
+    "meaning": "Deep caring affection between people",
     "definition": "A strong feeling of affection.",
     "emoji": "❤️",
     "category": "EMOTION",
@@ -31,7 +31,7 @@
   {
     "word": "친구",
     "length": 2,
-    "meaning": "friend",
+    "meaning": "Close companion who is not family",
     "definition": "A person you have a close bond with.",
     "emoji": "👥",
     "category": "RELATION",
@@ -57,7 +57,7 @@
   {
     "word": "가족",
     "length": 2,
-    "meaning": "family",
+    "meaning": "Parents, children, and relatives as one household",
     "definition": "People related to you.",
     "emoji": "👨‍👩‍👧",
     "category": "RELATION",
@@ -83,7 +83,7 @@
   {
     "word": "한국",
     "length": 2,
-    "meaning": "Korea",
+    "meaning": "Peninsula nation where Korean is spoken",
     "definition": "The country in East Asia.",
     "emoji": "🇰🇷",
     "category": "PLACE",
@@ -109,25 +109,25 @@
   {
     "word": "김치",
     "length": 2,
-    "meaning": "kimchi",
-    "definition": "Korean fermented vegetable side dish.",
+    "meaning": "Salted fermented vegetable side dish",
+    "definition": "Salted and fermented vegetables—often napa cabbage or radish—served as a pungent side with meals.",
     "emoji": "🥬",
     "category": "FOOD",
     "imagePrompt": "kimchi in a Korean bowl",
     "examples": [
       {
         "korean": "김치 먹고 싶어",
-        "english": "I want some kimchi",
+        "english": "I want some of that pickle",
         "context": "Daily"
       },
       {
         "korean": "엄마 김치가 제일 맛있어",
-        "english": "Mom's kimchi tastes the best",
+        "english": "Mom's batch tastes the best",
         "context": "Casual"
       },
       {
         "korean": "김치찌개 해 먹을까?",
-        "english": "Shall we make kimchi stew?",
+        "english": "Shall we make spicy stew with it?",
         "context": "Daily"
       }
     ]
@@ -135,25 +135,25 @@
   {
     "word": "라면",
     "length": 2,
-    "meaning": "ramyeon",
-    "definition": "Korean instant noodles.",
+    "meaning": "Quick noodles in hot seasoned broth",
+    "definition": "Quick-cooking wheat noodles in a seasoned broth, popular as a snack or light meal.",
     "emoji": "🍜",
     "category": "FOOD",
     "imagePrompt": "steaming bowl of Korean ramyeon",
     "examples": [
       {
         "korean": "라면 끓여 줄까?",
-        "english": "Want me to cook ramyeon?",
+        "english": "Want me to cook instant noodles?",
         "context": "Daily"
       },
       {
         "korean": "야식으로 라면 먹자",
-        "english": "Let's have ramyeon for a late-night snack",
+        "english": "Let's have noodles for a late-night snack",
         "context": "Casual"
       },
       {
         "korean": "라면은 물을 조금만 넣어요",
-        "english": "Use just a little water for ramyeon",
+        "english": "Use just a little water for these noodles",
         "context": "Daily"
       }
     ]
@@ -161,7 +161,7 @@
   {
     "word": "학교",
     "length": 2,
-    "meaning": "school",
+    "meaning": "Place where students attend lessons",
     "definition": "A place of education.",
     "emoji": "🏫",
     "category": "PLACE",
@@ -187,7 +187,7 @@
   {
     "word": "선생",
     "length": 2,
-    "meaning": "teacher",
+    "meaning": "Person who teaches learners",
     "definition": "A person who teaches; often extended with 님 in speech.",
     "emoji": "🧑‍🏫",
     "category": "PERSON",
@@ -213,7 +213,7 @@
   {
     "word": "학생",
     "length": 2,
-    "meaning": "student",
+    "meaning": "Person enrolled to study",
     "definition": "A person who learns.",
     "emoji": "🎓",
     "category": "PERSON",
@@ -239,7 +239,7 @@
   {
     "word": "시간",
     "length": 2,
-    "meaning": "time",
+    "meaning": "Hours and minutes in a day",
     "definition": "The duration of events.",
     "emoji": "⏰",
     "category": "CONCEPT",
@@ -265,7 +265,7 @@
   {
     "word": "사람",
     "length": 2,
-    "meaning": "person",
+    "meaning": "Any individual human being",
     "definition": "A human being.",
     "emoji": "👤",
     "category": "PERSON",
@@ -291,7 +291,7 @@
   {
     "word": "마음",
     "length": 2,
-    "meaning": "heart / mind",
+    "meaning": "Inner feelings, thoughts, or intent",
     "definition": "Inner feelings or thoughts.",
     "emoji": "💗",
     "category": "EMOTION",
@@ -320,7 +320,7 @@
   {
     "word": "행복",
     "length": 2,
-    "meaning": "happiness",
+    "meaning": "Lasting joy and well-being",
     "definition": "The feeling of joy.",
     "emoji": "😊",
     "category": "EMOTION",
@@ -346,7 +346,7 @@
   {
     "word": "음식",
     "length": 2,
-    "meaning": "food",
+    "meaning": "Things people eat at meals",
     "definition": "Things to eat.",
     "emoji": "🍽️",
     "category": "FOOD",
@@ -372,7 +372,7 @@
   {
     "word": "음악",
     "length": 2,
-    "meaning": "music",
+    "meaning": "Rhythm and melody for listening",
     "definition": "Sounds for listening.",
     "emoji": "🎵",
     "category": "ART",
@@ -398,7 +398,7 @@
   {
     "word": "영화",
     "length": 2,
-    "meaning": "movie",
+    "meaning": "Filmed story shown on a screen",
     "definition": "A film for watching.",
     "emoji": "🎬",
     "category": "ART",
@@ -424,7 +424,7 @@
   {
     "word": "노래",
     "length": 2,
-    "meaning": "song",
+    "meaning": "Sung melody with words",
     "definition": "Music with lyrics.",
     "emoji": "🎤",
     "category": "ART",
@@ -450,7 +450,7 @@
   {
     "word": "바다",
     "length": 2,
-    "meaning": "sea",
+    "meaning": "Large salt water beside land",
     "definition": "Large body of saltwater.",
     "emoji": "🌊",
     "category": "NATURE",
@@ -476,7 +476,7 @@
   {
     "word": "하늘",
     "length": 2,
-    "meaning": "sky",
+    "meaning": "Air and clouds overhead",
     "definition": "The space above the earth.",
     "emoji": "☁️",
     "category": "NATURE",
@@ -502,7 +502,7 @@
   {
     "word": "여름",
     "length": 2,
-    "meaning": "summer",
+    "meaning": "Hottest season with long days",
     "definition": "The hottest season.",
     "emoji": "☀️",
     "category": "TIME",
@@ -528,7 +528,7 @@
   {
     "word": "가을",
     "length": 2,
-    "meaning": "autumn",
+    "meaning": "Cool season when leaves change color",
     "definition": "The cool season with falling leaves.",
     "emoji": "🍂",
     "category": "TIME",
@@ -554,7 +554,7 @@
   {
     "word": "겨울",
     "length": 2,
-    "meaning": "winter",
+    "meaning": "Cold season with short days",
     "definition": "The coldest season.",
     "emoji": "❄️",
     "category": "TIME",
@@ -580,7 +580,7 @@
   {
     "word": "한식",
     "length": 2,
-    "meaning": "Korean cuisine",
+    "meaning": "Home-style Korean cooking",
     "definition": "Traditional or everyday Korean meals.",
     "emoji": "🍚",
     "category": "FOOD",
@@ -606,25 +606,25 @@
   {
     "word": "한글",
     "length": 2,
-    "meaning": "Hangul",
-    "definition": "The Korean alphabet.",
+    "meaning": "Writing system for Korean",
+    "definition": "The native Korean writing system: jamo letters combine into syllable blocks for consonants and vowels.",
     "emoji": "📜",
     "category": "CULTURE",
     "imagePrompt": "Hangul letters on paper educational style",
     "examples": [
       {
         "korean": "한글 배우는 중이에요",
-        "english": "I'm learning Hangul",
+        "english": "I'm learning Korean letters",
         "context": "Formal"
       },
       {
         "korean": "한글 읽을 수 있어?",
-        "english": "Can you read Hangul?",
+        "english": "Can you read Korean writing?",
         "context": "Daily"
       },
       {
         "korean": "한글 쓰는 법 알려 줄게",
-        "english": "I'll teach you how to write Hangul",
+        "english": "I'll teach you how to write Korean letters",
         "context": "Casual"
       }
     ]
@@ -632,7 +632,7 @@
   {
     "word": "독서",
     "length": 2,
-    "meaning": "reading",
+    "meaning": "Reading written pages quietly",
     "definition": "The act of reading books.",
     "emoji": "📖",
     "category": "ACTIVITY",
@@ -658,7 +658,7 @@
   {
     "word": "산책",
     "length": 2,
-    "meaning": "walk",
+    "meaning": "Slow outdoor stroll for air",
     "definition": "A leisurely walk.",
     "emoji": "🚶",
     "category": "ACTIVITY",
@@ -684,7 +684,7 @@
   {
     "word": "선물",
     "length": 2,
-    "meaning": "gift",
+    "meaning": "Item given without expecting payment",
     "definition": "Something given to others.",
     "emoji": "🎁",
     "category": "THING",
@@ -710,7 +710,7 @@
   {
     "word": "이름",
     "length": 2,
-    "meaning": "name",
+    "meaning": "What someone is called",
     "definition": "What someone is called.",
     "emoji": "📛",
     "category": "CONCEPT",
@@ -736,7 +736,7 @@
   {
     "word": "친절",
     "length": 2,
-    "meaning": "kindness",
+    "meaning": "Gentle helpful behavior to others",
     "definition": "Friendly care shown to others.",
     "emoji": "🤝",
     "category": "EMOTION",
@@ -762,7 +762,7 @@
   {
     "word": "여행",
     "length": 2,
-    "meaning": "travel",
+    "meaning": "Trip away from home for fun",
     "definition": "Going to other places.",
     "emoji": "✈️",
     "category": "ACTIVITY",
@@ -788,7 +788,7 @@
   {
     "word": "청춘",
     "length": 2,
-    "meaning": "youth",
+    "meaning": "Young adult years full of energy",
     "definition": "The time of young adulthood.",
     "emoji": "🌸",
     "category": "CONCEPT",
@@ -817,7 +817,7 @@
   {
     "word": "영원",
     "length": 2,
-    "meaning": "eternity",
+    "meaning": "Time that feels endless",
     "definition": "Something that lasts forever.",
     "emoji": "♾️",
     "category": "CONCEPT",
@@ -846,7 +846,7 @@
   {
     "word": "우주",
     "length": 2,
-    "meaning": "universe",
+    "meaning": "Space with stars and galaxies",
     "definition": "Outer space and all that exists.",
     "emoji": "🌌",
     "category": "NATURE",
@@ -872,7 +872,7 @@
   {
     "word": "봄날",
     "length": 2,
-    "meaning": "spring day",
+    "meaning": "Mild breezy day in spring",
     "definition": "A day in spring.",
     "emoji": "🌷",
     "category": "TIME",
@@ -901,7 +901,7 @@
   {
     "word": "추억",
     "length": 2,
-    "meaning": "memory",
+    "meaning": "Remembered moment from the past",
     "definition": "A fond recollection of the past.",
     "emoji": "🖼️",
     "category": "CONCEPT",
@@ -930,7 +930,7 @@
   {
     "word": "미래",
     "length": 2,
-    "meaning": "future",
+    "meaning": "Time and events still ahead",
     "definition": "Time that has not yet come.",
     "emoji": "🔮",
     "category": "TIME",
@@ -956,7 +956,7 @@
   {
     "word": "약속",
     "length": 2,
-    "meaning": "promise",
+    "meaning": "Plan to meet or do something",
     "definition": "A commitment to someone.",
     "emoji": "🤙",
     "category": "CONCEPT",
@@ -985,7 +985,7 @@
   {
     "word": "진심",
     "length": 2,
-    "meaning": "sincerity",
+    "meaning": "Honest feeling without pretense",
     "definition": "True feelings, not pretense.",
     "emoji": "💎",
     "category": "EMOTION",
@@ -1014,7 +1014,7 @@
   {
     "word": "무대",
     "length": 2,
-    "meaning": "stage",
+    "meaning": "Platform where performers appear",
     "definition": "Where performers stand.",
     "emoji": "🎭",
     "category": "PLACE",
@@ -1040,7 +1040,7 @@
   {
     "word": "운명",
     "length": 2,
-    "meaning": "fate",
+    "meaning": "Outcome that feels beyond control",
     "definition": "What seems destined to happen.",
     "emoji": "🎭",
     "category": "CONCEPT",
@@ -1069,7 +1069,7 @@
   {
     "word": "진실",
     "length": 2,
-    "meaning": "truth",
+    "meaning": "What matches real facts",
     "definition": "What is real, not a lie.",
     "emoji": "✨",
     "category": "CONCEPT",
@@ -1095,7 +1095,7 @@
   {
     "word": "비밀",
     "length": 2,
-    "meaning": "secret",
+    "meaning": "Information meant to stay unknown",
     "definition": "Something hidden from others.",
     "emoji": "🤫",
     "category": "CONCEPT",
@@ -1121,7 +1121,7 @@
   {
     "word": "결혼",
     "length": 2,
-    "meaning": "marriage",
+    "meaning": "Lifelong partnership ceremony",
     "definition": "The union of two people as spouses.",
     "emoji": "💒",
     "category": "RELATION",
@@ -1147,7 +1147,7 @@
   {
     "word": "이별",
     "length": 2,
-    "meaning": "farewell",
+    "meaning": "Parting of people who cared",
     "definition": "Parting from someone you care about.",
     "emoji": "💔",
     "category": "EMOTION",
@@ -1176,7 +1176,7 @@
   {
     "word": "우정",
     "length": 2,
-    "meaning": "friendship",
+    "meaning": "Warm bond between friends",
     "definition": "Close bond between friends.",
     "emoji": "🫶",
     "category": "RELATION",
@@ -1202,7 +1202,7 @@
   {
     "word": "사연",
     "length": 2,
-    "meaning": "story / situation",
+    "meaning": "Someone’s heavy background story",
     "definition": "A person's background or tale.",
     "emoji": "📜",
     "category": "CONCEPT",
@@ -1228,7 +1228,7 @@
   {
     "word": "위로",
     "length": 2,
-    "meaning": "comfort",
+    "meaning": "Words that soothe sadness",
     "definition": "Words or acts that ease sadness.",
     "emoji": "🫂",
     "category": "EMOTION",
@@ -1257,7 +1257,7 @@
   {
     "word": "안녕",
     "length": 2,
-    "meaning": "peace / farewell wish",
+    "meaning": "Hello or goodbye wishing peace",
     "definition": "Well-being or a parting wish; greetings use longer forms.",
     "emoji": "👋",
     "category": "CONCEPT",
@@ -1283,7 +1283,7 @@
   {
     "word": "환영",
     "length": 2,
-    "meaning": "welcome",
+    "meaning": "Greeting when someone arrives",
     "definition": "A greeting that receives someone gladly.",
     "emoji": "👏",
     "category": "CONCEPT",
@@ -1309,7 +1309,7 @@
   {
     "word": "인사",
     "length": 2,
-    "meaning": "greeting / bow",
+    "meaning": "Brief polite hello or bow",
     "definition": "Words or gestures to greet or say goodbye.",
     "emoji": "🙇",
     "category": "CONCEPT",
@@ -1335,7 +1335,7 @@
   {
     "word": "어제",
     "length": 2,
-    "meaning": "yesterday",
+    "meaning": "The calendar day before today",
     "definition": "The day before today.",
     "emoji": "📅",
     "category": "TIME",
@@ -1361,7 +1361,7 @@
   {
     "word": "내일",
     "length": 2,
-    "meaning": "tomorrow",
+    "meaning": "The calendar day after today",
     "definition": "The day after today.",
     "emoji": "🌅",
     "category": "TIME",
@@ -1387,7 +1387,7 @@
   {
     "word": "오늘",
     "length": 2,
-    "meaning": "today",
+    "meaning": "The current calendar day",
     "definition": "This present day.",
     "emoji": "📆",
     "category": "TIME",
@@ -1413,7 +1413,7 @@
   {
     "word": "지금",
     "length": 2,
-    "meaning": "now",
+    "meaning": "This very moment",
     "definition": "This very moment.",
     "emoji": "⏱️",
     "category": "TIME",
@@ -1439,7 +1439,7 @@
   {
     "word": "시작",
     "length": 2,
-    "meaning": "start",
+    "meaning": "First point of an activity",
     "definition": "The beginning of something.",
     "emoji": "🚀",
     "category": "CONCEPT",
@@ -1465,7 +1465,7 @@
   {
     "word": "미소",
     "length": 2,
-    "meaning": "smile",
+    "meaning": "Warm upturned mouth expression",
     "definition": "A happy expression on the face.",
     "emoji": "🙂",
     "category": "EMOTION",
@@ -1491,7 +1491,7 @@
   {
     "word": "성공",
     "length": 2,
-    "meaning": "success",
+    "meaning": "Reaching a wanted goal",
     "definition": "Achieving a goal.",
     "emoji": "🏆",
     "category": "CONCEPT",
@@ -1517,7 +1517,7 @@
   {
     "word": "사용",
     "length": 2,
-    "meaning": "use / usage",
+    "meaning": "Applying a tool or rule on purpose",
     "definition": "Employing something for a purpose.",
     "emoji": "🔧",
     "category": "CONCEPT",
@@ -1543,7 +1543,7 @@
   {
     "word": "노력",
     "length": 2,
-    "meaning": "effort",
+    "meaning": "Hard try toward a difficult aim",
     "definition": "Hard work toward a goal.",
     "emoji": "💪",
     "category": "ACTIVITY",
@@ -1569,7 +1569,7 @@
   {
     "word": "도전",
     "length": 2,
-    "meaning": "challenge",
+    "meaning": "Attempt at something risky",
     "definition": "Taking on something difficult.",
     "emoji": "🎯",
     "category": "ACTIVITY",
@@ -1595,7 +1595,7 @@
   {
     "word": "연습",
     "length": 2,
-    "meaning": "practice",
+    "meaning": "Repeating a skill to improve",
     "definition": "Repeating to improve a skill.",
     "emoji": "📝",
     "category": "ACTIVITY",
@@ -1621,7 +1621,7 @@
   {
     "word": "김밥",
     "length": 2,
-    "meaning": "gimbap",
+    "meaning": "Rice and fillings rolled in seaweed",
     "definition": "Rice and fillings rolled in seaweed.",
     "emoji": "🍙",
     "category": "FOOD",
@@ -1629,17 +1629,17 @@
     "examples": [
       {
         "korean": "김밥 한 줄 사 왔어",
-        "english": "I bought a roll of gimbap",
+        "english": "I bought a roll of seaweed rice",
         "context": "Daily"
       },
       {
         "korean": "소풍엔 김밥이지",
-        "english": "Gimbap is perfect for a picnic",
+        "english": "Seaweed rice rolls are perfect for a picnic",
         "context": "Casual"
       },
       {
         "korean": "참치 김밥 주세요",
-        "english": "Tuna gimbap, please",
+        "english": "Tuna roll, please",
         "context": "Daily"
       }
     ]
@@ -1647,7 +1647,7 @@
   {
     "word": "떡국",
     "length": 2,
-    "meaning": "tteokguk",
+    "meaning": "Soup with sliced rice cakes",
     "definition": "Soup with sliced rice cakes.",
     "emoji": "🥣",
     "category": "FOOD",
@@ -1655,17 +1655,17 @@
     "examples": [
       {
         "korean": "설날엔 떡국 먹자",
-        "english": "Let's have tteokguk on Lunar New Year",
+        "english": "Let's have rice-cake soup on Lunar New Year",
         "context": "Daily"
       },
       {
         "korean": "떡국 한 그릇 더 줄래?",
-        "english": "Can I have another bowl of tteokguk?",
+        "english": "Can I have another bowl of that soup?",
         "context": "Casual"
       },
       {
         "korean": "떡국 끓이는 중이에요",
-        "english": "I'm cooking tteokguk",
+        "english": "I'm cooking the soup",
         "context": "Formal"
       }
     ]
@@ -1673,7 +1673,7 @@
   {
     "word": "만두",
     "length": 2,
-    "meaning": "dumplings",
+    "meaning": "Stuffed dough pockets, steamed or fried",
     "definition": "Filled dough pockets, steamed or fried.",
     "emoji": "🥟",
     "category": "FOOD",
@@ -1699,7 +1699,7 @@
   {
     "word": "빙수",
     "length": 2,
-    "meaning": "shaved ice",
+    "meaning": "Sweet shaved ice with toppings",
     "definition": "Sweet ice dessert with toppings.",
     "emoji": "🍧",
     "category": "FOOD",
@@ -1725,7 +1725,7 @@
   {
     "word": "라떼",
     "length": 2,
-    "meaning": "latte",
+    "meaning": "Espresso with steamed milk",
     "definition": "Milk coffee drink.",
     "emoji": "☕",
     "category": "FOOD",
@@ -1751,7 +1751,7 @@
   {
     "word": "커피",
     "length": 2,
-    "meaning": "coffee",
+    "meaning": "Brewed bitter caffeinated drink",
     "definition": "A brewed drink from beans.",
     "emoji": "☕",
     "category": "FOOD",
@@ -1777,7 +1777,7 @@
   {
     "word": "우유",
     "length": 2,
-    "meaning": "milk",
+    "meaning": "White dairy drink",
     "definition": "White drink from cows or plants.",
     "emoji": "🥛",
     "category": "FOOD",
@@ -1803,7 +1803,7 @@
   {
     "word": "과일",
     "length": 2,
-    "meaning": "fruit",
+    "meaning": "Sweet plant foods like apples",
     "definition": "Sweet plant foods like apples.",
     "emoji": "🍎",
     "category": "FOOD",
@@ -1829,7 +1829,7 @@
   {
     "word": "채소",
     "length": 2,
-    "meaning": "vegetables",
+    "meaning": "Edible plants like greens or roots",
     "definition": "Edible plants like lettuce.",
     "emoji": "🥬",
     "category": "FOOD",
@@ -1855,25 +1855,25 @@
   {
     "word": "한옥",
     "length": 2,
-    "meaning": "hanok",
-    "definition": "A traditional Korean house.",
+    "meaning": "Traditional Korean wooden house with tiled roof",
+    "definition": "A traditional Korean residence with wooden frames, ondol floors, curved tile roofs, and a courtyard feel.",
     "emoji": "🏯",
     "category": "PLACE",
     "imagePrompt": "traditional Korean house curved roof",
     "examples": [
       {
         "korean": "한옥 스테이 예약했어",
-        "english": "I booked a hanok stay",
+        "english": "I booked a traditional house stay",
         "context": "Daily"
       },
       {
         "korean": "한옥 마루에 앉아 있어",
-        "english": "I'm sitting on the hanok floor",
+        "english": "I'm sitting on the wooden floor",
         "context": "Casual"
       },
       {
         "korean": "한옥에서 하룻밤 묵었어요",
-        "english": "We spent a night in a hanok",
+        "english": "We spent a night in a tiled guesthouse",
         "context": "Formal"
       }
     ]
@@ -1881,7 +1881,7 @@
   {
     "word": "부채",
     "length": 2,
-    "meaning": "fan",
+    "meaning": "Handheld tool waved to cool air",
     "definition": "A folding or round fan for air.",
     "emoji": "🪭",
     "category": "THING",
@@ -1907,7 +1907,7 @@
   {
     "word": "등불",
     "length": 2,
-    "meaning": "torch / lamp",
+    "meaning": "Portable light for dark paths",
     "definition": "A portable light in the dark.",
     "emoji": "🕯️",
     "category": "THING",
@@ -1933,20 +1933,20 @@
   {
     "word": "한지",
     "length": 2,
-    "meaning": "Korean paper",
-    "definition": "Traditional strong paper from Korea.",
+    "meaning": "Strong traditional fiber paper",
+    "definition": "Thick, fibrous handmade paper used for calligraphy, crafts, and window panels in traditional buildings.",
     "emoji": "📄",
     "category": "CULTURE",
     "imagePrompt": "Korean paper texture brush",
     "examples": [
       {
         "korean": "한지에 캘리그라피 했어",
-        "english": "I did calligraphy on hanji",
+        "english": "I did calligraphy on traditional paper",
         "context": "Daily"
       },
       {
         "korean": "한지 질이 좋네요",
-        "english": "The hanji quality is excellent",
+        "english": "The handmade paper quality is excellent",
         "context": "Formal"
       },
       {
@@ -1959,25 +1959,25 @@
   {
     "word": "추석",
     "length": 2,
-    "meaning": "Chuseok",
-    "definition": "Korean harvest thanksgiving holiday.",
+    "meaning": "Autumn harvest family holiday",
+    "definition": "A major autumn holiday for family reunions, ancestral rites, and harvest foods under a bright full moon.",
     "emoji": "🌕",
     "category": "TIME",
     "imagePrompt": "full moon rice cakes family",
     "examples": [
       {
         "korean": "추석 잘 보내세요",
-        "english": "Have a good Chuseok",
+        "english": "Have a good harvest holiday",
         "context": "Formal"
       },
       {
         "korean": "추석엔 고향 내려가?",
-        "english": "Are you going home for Chuseok?",
+        "english": "Are you going home for the harvest holiday?",
         "context": "Casual"
       },
       {
         "korean": "추석 연휴가 길어서 좋아",
-        "english": "I love the long Chuseok break",
+        "english": "I love the long harvest break",
         "context": "Daily"
       }
     ]
@@ -1985,8 +1985,8 @@
   {
     "word": "설날",
     "length": 2,
-    "meaning": "Seollal",
-    "definition": "Korean Lunar New Year.",
+    "meaning": "Lunar New Year family holiday",
+    "definition": "The lunar new year holiday marked by family gatherings, ceremonial bows, and symbolic foods.",
     "emoji": "🧧",
     "category": "TIME",
     "imagePrompt": "hanbok bow traditional new year",
@@ -1998,7 +1998,7 @@
       },
       {
         "korean": "설날엔 세배하러 가",
-        "english": "We bow to elders on Seollal",
+        "english": "We bow to elders on New Year's morning",
         "context": "Daily"
       },
       {
@@ -2011,7 +2011,7 @@
   {
     "word": "명절",
     "length": 2,
-    "meaning": "holiday",
+    "meaning": "Major traditional family celebration day",
     "definition": "A major traditional holiday.",
     "emoji": "🎊",
     "category": "TIME",
@@ -2037,7 +2037,7 @@
   {
     "word": "바람",
     "length": 2,
-    "meaning": "wind",
+    "meaning": "Moving air outdoors",
     "definition": "Moving air outdoors.",
     "emoji": "💨",
     "category": "NATURE",
@@ -2063,7 +2063,7 @@
   {
     "word": "햇살",
     "length": 2,
-    "meaning": "sunshine",
+    "meaning": "Warm sunlight rays",
     "definition": "Warm rays of the sun.",
     "emoji": "☀️",
     "category": "NATURE",
@@ -2089,7 +2089,7 @@
   {
     "word": "구름",
     "length": 2,
-    "meaning": "cloud",
+    "meaning": "Masses floating in the sky",
     "definition": "White or gray masses in the sky.",
     "emoji": "☁️",
     "category": "NATURE",
@@ -2115,7 +2115,7 @@
   {
     "word": "노을",
     "length": 2,
-    "meaning": "sunset glow",
+    "meaning": "Warm colors where sun meets horizon",
     "definition": "Red or orange sky after sunset.",
     "emoji": "🌇",
     "category": "NATURE",
@@ -2141,7 +2141,7 @@
   {
     "word": "안개",
     "length": 2,
-    "meaning": "fog",
+    "meaning": "Thick wet air hiding distance",
     "definition": "Thick mist near the ground.",
     "emoji": "🌫️",
     "category": "NATURE",
@@ -2167,7 +2167,7 @@
   {
     "word": "단풍",
     "length": 2,
-    "meaning": "autumn leaves",
+    "meaning": "Colorful autumn tree leaves",
     "definition": "Colorful fall foliage.",
     "emoji": "🍁",
     "category": "NATURE",
@@ -2193,7 +2193,7 @@
   {
     "word": "새벽",
     "length": 2,
-    "meaning": "dawn",
+    "meaning": "Very early hours before sunrise",
     "definition": "Early morning before sunrise.",
     "emoji": "🌄",
     "category": "TIME",
@@ -2222,7 +2222,7 @@
   {
     "word": "머리",
     "length": 2,
-    "meaning": "head / hair",
+    "meaning": "Top of the body with hair",
     "definition": "The top of the body or hair on it.",
     "emoji": "💇",
     "category": "THING",
@@ -2248,7 +2248,7 @@
   {
     "word": "얼굴",
     "length": 2,
-    "meaning": "face",
+    "meaning": "Front of the head with features",
     "definition": "The front of the head.",
     "emoji": "😊",
     "category": "THING",
@@ -2274,7 +2274,7 @@
   {
     "word": "어깨",
     "length": 2,
-    "meaning": "shoulder",
+    "meaning": "Where arm meets torso",
     "definition": "The joint by the upper arm.",
     "emoji": "🧍",
     "category": "THING",
@@ -2300,7 +2300,7 @@
   {
     "word": "가슴",
     "length": 2,
-    "meaning": "chest",
+    "meaning": "Front of torso over heart",
     "definition": "The front of the torso.",
     "emoji": "🫀",
     "category": "THING",
@@ -2326,7 +2326,7 @@
   {
     "word": "친척",
     "length": 2,
-    "meaning": "relatives",
+    "meaning": "Relatives beyond parents and siblings",
     "definition": "Family members beyond your household.",
     "emoji": "👪",
     "category": "RELATION",
@@ -2352,7 +2352,7 @@
   {
     "word": "손님",
     "length": 2,
-    "meaning": "guest / customer",
+    "meaning": "Visitor who may buy or dine",
     "definition": "A visitor or customer.",
     "emoji": "🚪",
     "category": "PERSON",
@@ -2378,7 +2378,7 @@
   {
     "word": "요리",
     "length": 2,
-    "meaning": "cooking",
+    "meaning": "Preparing ingredients into dishes",
     "definition": "Preparing food to eat.",
     "emoji": "👨‍🍳",
     "category": "ACTIVITY",
@@ -2404,7 +2404,7 @@
   {
     "word": "청소",
     "length": 2,
-    "meaning": "cleaning",
+    "meaning": "Removing dirt to tidy a space",
     "definition": "Making a place tidy.",
     "emoji": "🧹",
     "category": "ACTIVITY",
@@ -2430,7 +2430,7 @@
   {
     "word": "운동",
     "length": 2,
-    "meaning": "exercise",
+    "meaning": "Physical activity for health",
     "definition": "Physical activity for health.",
     "emoji": "🏃",
     "category": "ACTIVITY",
@@ -2456,7 +2456,7 @@
   {
     "word": "공부",
     "length": 2,
-    "meaning": "study",
+    "meaning": "Focused study from books or class",
     "definition": "Learning from books or class.",
     "emoji": "📚",
     "category": "ACTIVITY",
@@ -2482,7 +2482,7 @@
   {
     "word": "휴식",
     "length": 2,
-    "meaning": "rest",
+    "meaning": "Pause to recover energy",
     "definition": "Time to relax and recover.",
     "emoji": "🛋️",
     "category": "ACTIVITY",
@@ -2508,7 +2508,7 @@
   {
     "word": "등산",
     "length": 2,
-    "meaning": "hiking",
+    "meaning": "Walking trails up hills or mountains",
     "definition": "Walking up mountains.",
     "emoji": "⛰️",
     "category": "ACTIVITY",
@@ -2534,7 +2534,7 @@
   {
     "word": "수영",
     "length": 2,
-    "meaning": "swimming",
+    "meaning": "Moving through water with strokes",
     "definition": "Moving in water as sport.",
     "emoji": "🏊",
     "category": "ACTIVITY",
@@ -2560,7 +2560,7 @@
   {
     "word": "그림",
     "length": 2,
-    "meaning": "picture / drawing",
+    "meaning": "Marks on paper as art or diagram",
     "definition": "Art made with lines and colors.",
     "emoji": "🎨",
     "category": "ART",
@@ -2586,7 +2586,7 @@
   {
     "word": "사진",
     "length": 2,
-    "meaning": "photo",
+    "meaning": "Still image from a camera",
     "definition": "An image from a camera.",
     "emoji": "📷",
     "category": "ART",
@@ -2612,7 +2612,7 @@
   {
     "word": "게임",
     "length": 2,
-    "meaning": "game",
+    "meaning": "Playful contest with rules",
     "definition": "Play for fun or competition.",
     "emoji": "🎮",
     "category": "ACTIVITY",
@@ -2638,7 +2638,7 @@
   {
     "word": "눈물",
     "length": 2,
-    "meaning": "tears",
+    "meaning": "Tears from eyes when emotional",
     "definition": "Drops that come from the eyes when crying.",
     "emoji": "💧",
     "category": "EMOTION",
@@ -2667,7 +2667,7 @@
   {
     "word": "상처",
     "length": 2,
-    "meaning": "wound / hurt",
+    "meaning": "Skin damage or emotional hurt",
     "definition": "An emotional or physical hurt.",
     "emoji": "🩹",
     "category": "EMOTION",
@@ -2696,7 +2696,7 @@
   {
     "word": "별빛",
     "length": 2,
-    "meaning": "starlight",
+    "meaning": "Faint light from night stars",
     "definition": "The light coming from stars.",
     "emoji": "✨",
     "category": "NATURE",
@@ -2725,7 +2725,7 @@
   {
     "word": "달빛",
     "length": 2,
-    "meaning": "moonlight",
+    "meaning": "Soft light reflected from the moon",
     "definition": "Light from the moon.",
     "emoji": "🌙",
     "category": "NATURE",
@@ -2754,7 +2754,7 @@
   {
     "word": "인연",
     "length": 2,
-    "meaning": "fated bond",
+    "meaning": "Meaningful connection felt as destined",
     "definition": "A connection between people that feels destined.",
     "emoji": "🔗",
     "category": "CONCEPT",
@@ -2783,7 +2783,7 @@
   {
     "word": "거짓",
     "length": 2,
-    "meaning": "lie / falsehood",
+    "meaning": "Speech or claim that is not true",
     "definition": "Something that is not true.",
     "emoji": "🚫",
     "category": "CONCEPT",
@@ -2812,7 +2812,7 @@
   {
     "word": "만남",
     "length": 2,
-    "meaning": "meeting / encounter",
+    "meaning": "People coming together by plan or chance",
     "definition": "The moment of meeting someone.",
     "emoji": "🤝",
     "category": "CONCEPT",
@@ -2841,7 +2841,7 @@
   {
     "word": "그날",
     "length": 2,
-    "meaning": "that day",
+    "meaning": "One specific remembered day",
     "definition": "A specific day, often remembered.",
     "emoji": "📅",
     "category": "TIME",
@@ -2870,7 +2870,7 @@
   {
     "word": "우리",
     "length": 2,
-    "meaning": "we / us",
+    "meaning": "We, often including the listener",
     "definition": "We, the speaker plus others (also used like 'our').",
     "emoji": "👫",
     "category": "PERSON",
@@ -2899,7 +2899,7 @@
   {
     "word": "그대",
     "length": 2,
-    "meaning": "you (poetic)",
+    "meaning": "Poetic singular you, beloved",
     "definition": "A poetic or formal way to say 'you'.",
     "emoji": "💌",
     "category": "PERSON",
@@ -2928,7 +2928,7 @@
   {
     "word": "하루",
     "length": 2,
-    "meaning": "one day",
+    "meaning": "One full day from morning to night",
     "definition": "A single 24-hour day.",
     "emoji": "🌅",
     "category": "TIME",
@@ -2957,7 +2957,7 @@
   {
     "word": "향기",
     "length": 2,
-    "meaning": "fragrance",
+    "meaning": "Pleasant smell on the air",
     "definition": "A pleasant smell from flowers or perfume.",
     "emoji": "🌷",
     "category": "NATURE",
@@ -2986,7 +2986,7 @@
   {
     "word": "흔적",
     "length": 2,
-    "meaning": "trace / vestige",
+    "meaning": "Sign something or someone passed",
     "definition": "A mark left behind by someone or something.",
     "emoji": "👣",
     "category": "CONCEPT",
@@ -3015,7 +3015,7 @@
   {
     "word": "후회",
     "length": 2,
-    "meaning": "regret",
+    "meaning": "Wishing you had chosen differently",
     "definition": "A feeling of sorrow about a past choice.",
     "emoji": "😔",
     "category": "EMOTION",
@@ -3044,7 +3044,7 @@
   {
     "word": "손길",
     "length": 2,
-    "meaning": "caring touch",
+    "meaning": "Light touch or caring help",
     "definition": "A gentle, caring reach of a hand.",
     "emoji": "🤲",
     "category": "CONCEPT",
@@ -3073,7 +3073,7 @@
   {
     "word": "빗물",
     "length": 2,
-    "meaning": "rainwater",
+    "meaning": "Rain that pools or drips",
     "definition": "Water that falls as rain.",
     "emoji": "🌧️",
     "category": "NATURE",
@@ -3102,7 +3102,7 @@
   {
     "word": "파도",
     "length": 2,
-    "meaning": "wave",
+    "meaning": "Rolling motion on the sea",
     "definition": "A moving ridge of water on the sea.",
     "emoji": "🌊",
     "category": "NATURE",
@@ -3131,7 +3131,7 @@
   {
     "word": "꽃잎",
     "length": 2,
-    "meaning": "petal",
+    "meaning": "Thin colorful parts of a flower",
     "definition": "A soft colored part of a flower.",
     "emoji": "🌸",
     "category": "NATURE",
@@ -3160,7 +3160,7 @@
   {
     "word": "첫눈",
     "length": 2,
-    "meaning": "first snow",
+    "meaning": "First snow of the season",
     "definition": "The first snowfall of the season.",
     "emoji": "❄️",
     "category": "NATURE",
@@ -3189,7 +3189,7 @@
   {
     "word": "한숨",
     "length": 2,
-    "meaning": "sigh",
+    "meaning": "Long exhale showing tired stress",
     "definition": "A long breath out, often of weariness or relief.",
     "emoji": "💨",
     "category": "CONCEPT",

@@ -197,6 +197,17 @@ body {
   }
 }
 
+@keyframes hint-slide-reveal-in {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
 @keyframes hint-new-text-fade {
   0% {
     color: rgb(28 25 23);
@@ -282,6 +293,9 @@ body {
   }
   .hint-card-pulse-once {
     animation: hint-card-pulse-once 0.5s ease-out;
+  }
+  .hint-slide-reveal {
+    animation: hint-slide-reveal-in 0.38s ease-out both;
   }
   /* First-session keyboard nudge — runs 2 iterations only. */
   .first-key-pulse {
